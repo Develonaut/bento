@@ -7,6 +7,12 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
+// WorkflowSelectedMsg signals that a workflow was selected for execution
+type WorkflowSelectedMsg struct {
+	Name string
+	Path string
+}
+
 // Browser shows available workflows
 type Browser struct {
 	list list.Model
@@ -65,6 +71,18 @@ func (b Browser) Update(msg tea.Msg) (Browser, tea.Cmd) {
 	if msg, ok := msg.(tea.WindowSizeMsg); ok {
 		h, v := lipgloss.NewStyle().Margin(2, 2).GetFrameSize()
 		b.list.SetSize(msg.Width-h, msg.Height-v-4)
+	}
+
+	// Handle Enter key to select workflow
+	if msg, ok := msg.(tea.KeyMsg); ok && msg.String() == "enter" {
+		if item, ok := b.list.SelectedItem().(workflowItem); ok {
+			return b, func() tea.Msg {
+				return WorkflowSelectedMsg{
+					Name: item.name,
+					Path: item.path,
+				}
+			}
+		}
 	}
 
 	var cmd tea.Cmd

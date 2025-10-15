@@ -2,6 +2,8 @@ package omise
 
 import (
 	tea "github.com/charmbracelet/bubbletea"
+
+	"bento/pkg/omise/screens"
 )
 
 // Update handles messages and updates the model
@@ -11,6 +13,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m.handleResize(msg)
 	case tea.KeyMsg:
 		return m.handleKey(msg)
+	case screens.WorkflowSelectedMsg:
+		return m.handleWorkflowSelected(msg)
 	default:
 		return m.updateScreen(msg)
 	}
@@ -67,4 +71,11 @@ func (m Model) updateScreen(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 
 	return m, cmd
+}
+
+// handleWorkflowSelected switches to executor and starts workflow
+func (m Model) handleWorkflowSelected(msg screens.WorkflowSelectedMsg) (tea.Model, tea.Cmd) {
+	m.screen = ScreenExecutor
+	m.executor = m.executor.StartWorkflow(msg.Name, msg.Path)
+	return m, m.executor.ExecuteCmd()
 }

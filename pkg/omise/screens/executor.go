@@ -11,10 +11,12 @@ import (
 
 // Executor shows workflow execution progress
 type Executor struct {
-	spinner  spinner.Model
-	progress progress.Model
-	status   string
-	running  bool
+	spinner      spinner.Model
+	progress     progress.Model
+	status       string
+	running      bool
+	workflowName string
+	workflowPath string
 }
 
 // NewExecutor creates an executor screen
@@ -79,10 +81,27 @@ func (e Executor) runningView(title string) string {
 		lipgloss.Left,
 		title,
 		"",
+		styles.Subtle.Render("Workflow: "+e.workflowName),
+		styles.Subtle.Render("Path: "+e.workflowPath),
+		"",
 		e.spinner.View()+" "+e.status,
 		"",
 		e.progress.View(),
 		"",
 		styles.Subtle.Render("Execution in progress..."),
 	)
+}
+
+// StartWorkflow prepares the executor to run a workflow
+func (e Executor) StartWorkflow(name, path string) Executor {
+	e.workflowName = name
+	e.workflowPath = path
+	e.running = true
+	e.status = "Starting workflow..."
+	return e
+}
+
+// ExecuteCmd returns the command to start execution
+func (e Executor) ExecuteCmd() tea.Cmd {
+	return e.spinner.Tick
 }
