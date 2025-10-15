@@ -105,3 +105,8 @@ func (e Executor) StartWorkflow(name, path string) Executor {
 func (e Executor) ExecuteCmd() tea.Cmd {
 	return e.spinner.Tick
 }
+
+// IsRunning returns whether the executor is currently running
+func (e Executor) IsRunning() bool {
+	return e.running
+}

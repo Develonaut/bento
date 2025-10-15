@@ -17,7 +17,7 @@ var (
 
 	// Semantic color assignments
 	Primary   = Red    // Main theme color
-	Secondary = Green  // Secondary accents
+	Secondary = Orange // Secondary accents
 	Success   = Green  // Success states
 	Error     = Red    // Error states
 	Warning   = Yellow // Warning states
