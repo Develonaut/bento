@@ -3,8 +3,10 @@ package omise
 import (
 	tea "github.com/charmbracelet/bubbletea"
 
+	"bento/pkg/jubako"
 	"bento/pkg/omise/screens"
 	"bento/pkg/omise/styles"
+	"bento/pkg/pantry"
 )
 
 // Update handles messages and updates the model
@@ -16,6 +18,18 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m.handleKey(msg)
 	case screens.BentoSelectedMsg:
 		return m.handleBentoSelected(msg)
+	case screens.WorkflowSelectedMsg:
+		return m.handleWorkflowSelected(msg)
+	case screens.EditBentoMsg:
+		return m.handleEditBento(msg)
+	case screens.CreateBentoMsg:
+		return m.handleCreateBento(msg)
+	case screens.BentoOperationCompleteMsg:
+		return m.handleBentoOperation(msg)
+	case screens.EditorSavedMsg:
+		return m.handleEditorSaved(msg)
+	case screens.EditorCancelledMsg:
+		return m.handleEditorCancelled(msg)
 	case styles.ThemeChangedMsg:
 		return m.handleThemeChanged(msg)
 	default:
@@ -77,16 +91,75 @@ func (m Model) updateScreen(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.settings, cmd = m.settings.Update(msg)
 	case ScreenHelp:
 		m.help, cmd = m.help.Update(msg)
+	case ScreenEditor:
+		m.editor, cmd = m.editor.Update(msg)
 	}
 
 	return m, cmd
 }
 
-// handleBentoSelected switches to executor and starts bento
+// handleBentoSelected switches to executor and starts bento (legacy)
 func (m Model) handleBentoSelected(msg screens.BentoSelectedMsg) (tea.Model, tea.Cmd) {
 	m.screen = ScreenExecutor
 	m.executor = m.executor.StartBento(msg.Name, msg.Path)
 	return m, m.executor.ExecuteCmd()
+}
+
+// handleWorkflowSelected switches to executor and starts bento
+func (m Model) handleWorkflowSelected(msg screens.WorkflowSelectedMsg) (tea.Model, tea.Cmd) {
+	m.screen = ScreenExecutor
+	m.executor = m.executor.StartBento(msg.Name, msg.Path)
+	return m, m.executor.ExecuteCmd()
+}
+
+// handleEditBento switches to editor for existing bento
+func (m Model) handleEditBento(msg screens.EditBentoMsg) (tea.Model, tea.Cmd) {
+	store, err := jubako.NewStore(m.workDir)
+	if err != nil {
+		return m, nil // Stay on current screen if store creation fails
+	}
+
+	registry := pantry.New()
+	editor, err := screens.NewEditorEdit(store, registry, msg.Name, msg.Path)
+	if err != nil {
+		return m, nil // Stay on current screen if editor creation fails
+	}
+
+	m.editor = editor
+	m.screen = ScreenEditor
+	return m, nil
+}
+
+// handleCreateBento switches to editor for new bento
+func (m Model) handleCreateBento(msg screens.CreateBentoMsg) (tea.Model, tea.Cmd) {
+	store, err := jubako.NewStore(m.workDir)
+	if err != nil {
+		return m, nil // Stay on current screen if store creation fails
+	}
+
+	registry := pantry.New()
+	m.editor = screens.NewEditorCreate(store, registry)
+	m.screen = ScreenEditor
+	return m, nil
+}
+
+// handleBentoOperation handles completion of copy/delete operations
+func (m Model) handleBentoOperation(msg screens.BentoOperationCompleteMsg) (tea.Model, tea.Cmd) {
+	// Delegate to browser screen for refresh
+	return m.updateScreen(msg)
+}
+
+// handleEditorSaved returns to browser after saving
+func (m Model) handleEditorSaved(msg screens.EditorSavedMsg) (tea.Model, tea.Cmd) {
+	m.screen = ScreenBrowser
+	// Refresh browser list
+	return m.updateScreen(screens.BentoListRefreshMsg{})
+}
+
+// handleEditorCancelled returns to browser without saving
+func (m Model) handleEditorCancelled(msg screens.EditorCancelledMsg) (tea.Model, tea.Cmd) {
+	m.screen = ScreenBrowser
+	return m, nil
 }
 
 // handleThemeChanged propagates theme change to all screens

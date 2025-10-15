@@ -38,6 +38,8 @@ func (m Model) renderContent() string {
 		return m.settings.View()
 	case ScreenHelp:
 		return m.help.View()
+	case ScreenEditor:
+		return m.editor.View()
 	default:
 		return ""
 	}
