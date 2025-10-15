@@ -2,6 +2,7 @@
 package screens
 
 import (
+	"bento/pkg/omise/components"
 	"bento/pkg/omise/styles"
 
 	"github.com/charmbracelet/bubbles/list"
@@ -17,17 +18,13 @@ type WorkflowSelectedMsg struct {
 
 // Browser shows available workflows
 type Browser struct {
-	list list.Model
+	list components.StyledList
 }
 
 // NewBrowser creates a browser screen
 func NewBrowser() Browser {
-	delegate := browserDelegate()
-	l := list.New(browserItems(), delegate, 0, 0)
-	l.Title = "Available Workflows"
-	l.Styles.Title.Foreground(styles.Orange)
-	l.SetShowStatusBar(false)
-	l.SetFilteringEnabled(true)
+	items := browserItems()
+	l := components.NewStyledList(items, "Available Bentos")
 	return Browser{list: l}
 }
 
@@ -52,17 +49,6 @@ func browserItems() []list.Item {
 	}
 }
 
-// browserDelegate returns styled list delegate
-func browserDelegate() list.DefaultDelegate {
-	delegate := list.NewDefaultDelegate()
-	delegate.Styles.SelectedTitle = delegate.Styles.SelectedTitle.
-		Foreground(lipgloss.Color("205")).
-		BorderLeftForeground(lipgloss.Color("205"))
-	delegate.Styles.SelectedDesc = delegate.Styles.SelectedDesc.
-		Foreground(lipgloss.Color("241"))
-	return delegate
-}
-
 // Init initializes the browser
 func (b Browser) Init() tea.Cmd {
 	return nil
@@ -70,14 +56,19 @@ func (b Browser) Init() tea.Cmd {
 
 // Update handles browser messages
 func (b Browser) Update(msg tea.Msg) (Browser, tea.Cmd) {
+	// Handle theme changes
+	if _, ok := msg.(styles.ThemeChangedMsg); ok {
+		b.list = b.list.RebuildStyles()
+	}
+
 	// Handle window resize to update list dimensions
 	if msg, ok := msg.(tea.WindowSizeMsg); ok {
 		h, v := lipgloss.NewStyle().Margin(2, 2).GetFrameSize()
 		b.list.SetSize(msg.Width-h, msg.Height-v-4)
 	}
 
-	// Handle Enter key to select workflow
-	if msg, ok := msg.(tea.KeyMsg); ok && msg.String() == "enter" {
+	// Handle Enter or Space key to select workflow
+	if msg, ok := msg.(tea.KeyMsg); ok && (msg.String() == "enter" || msg.String() == " ") {
 		if item, ok := b.list.SelectedItem().(workflowItem); ok {
 			return b, func() tea.Msg {
 				return WorkflowSelectedMsg{
@@ -89,7 +80,7 @@ func (b Browser) Update(msg tea.Msg) (Browser, tea.Cmd) {
 	}
 
 	var cmd tea.Cmd
-	b.list, cmd = b.list.Update(msg)
+	b.list.Model, cmd = b.list.Model.Update(msg)
 	return b, cmd
 }
 

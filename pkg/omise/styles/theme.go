@@ -3,26 +3,33 @@ package styles
 
 import "github.com/charmbracelet/lipgloss"
 
-// Color palette - Custom Bento theme
+// Semantic color assignments (mutable for theme switching)
 var (
-	Purple = lipgloss.Color("#7359f8")
-	Green  = lipgloss.Color("#66f859")
-	Pink   = lipgloss.Color("#f859a8")
-	Yellow = lipgloss.Color("#f8f859")
-	Orange = lipgloss.Color("#f8b659")
-	Red    = lipgloss.Color("#f87359")
-	Cyan   = lipgloss.Color("#5cf5db")
-	White  = lipgloss.Color("#e3e2e9")
-	Muted  = lipgloss.Color("#565f89")
-
-	// Semantic color assignments
-	Primary   = Red    // Main theme color
-	Secondary = Orange // Secondary accents
-	Success   = Green  // Success states
-	Error     = Red    // Error states
-	Warning   = Yellow // Warning states
-	Text      = White  // Primary text
+	Primary   lipgloss.Color // Main theme color
+	Secondary lipgloss.Color // Secondary accents
+	Success   lipgloss.Color // Success states
+	Error     lipgloss.Color // Error states
+	Warning   lipgloss.Color // Warning states
+	Text      lipgloss.Color // Primary text
+	Muted     lipgloss.Color // Muted/subtle text
 )
+
+// currentVariant tracks the active theme variant
+var currentVariant Variant
+
+// Initialize with saved theme or default Nasu (purple) variant
+func init() {
+	currentVariant = LoadSavedTheme()
+	palette := GetPalette(currentVariant)
+	Primary = palette.Primary
+	Secondary = palette.Secondary
+	Success = palette.Success
+	Error = palette.Error
+	Warning = palette.Warning
+	Text = palette.Text
+	Muted = palette.Muted
+	rebuildStyles()
+}
 
 // Title renders a section title
 var Title = lipgloss.NewStyle().
@@ -35,7 +42,7 @@ var Header = lipgloss.NewStyle().
 	Bold(true).
 	Padding(0, 1).
 	Background(Primary).
-	Foreground(White)
+	Foreground(Text)
 
 // Footer renders the footer bar
 var Footer = lipgloss.NewStyle().

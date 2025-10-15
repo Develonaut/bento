@@ -22,6 +22,10 @@ func (h Help) Init() tea.Cmd {
 
 // Update handles help messages
 func (h Help) Update(msg tea.Msg) (Help, tea.Cmd) {
+	// Handle theme changes (styles are global, no rebuild needed for Help)
+	if _, ok := msg.(styles.ThemeChangedMsg); ok {
+		return h, nil
+	}
 	return h, nil
 }
 
@@ -91,8 +95,8 @@ func helpSections() []helpSection {
 		{
 			title: "Browser Screen",
 			items: [][]string{
-				{"enter", "Execute selected workflow"},
-				{"/", "Search workflows"},
+				{"enter/space", "Execute selected bento"},
+				{"/", "Search bentos"},
 				{"esc", "Clear search"},
 			},
 		},

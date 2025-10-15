@@ -1,0 +1,68 @@
+package components
+
+import (
+	"bento/pkg/omise/styles"
+
+	"github.com/charmbracelet/bubbles/filepicker"
+	tea "github.com/charmbracelet/bubbletea"
+)
+
+// DirSelectedMsg signals that a directory was selected
+type DirSelectedMsg struct {
+	Path string
+}
+
+// DirPicker wraps bubbles/filepicker for directory selection
+type DirPicker struct {
+	filepicker.Model
+}
+
+// NewDirPicker creates a themed directory picker
+func NewDirPicker(startDir string) DirPicker {
+	fp := filepicker.New()
+	fp.AllowedTypes = nil
+	fp.DirAllowed = true
+	fp.FileAllowed = false
+	fp.CurrentDirectory = startDir
+	fp.Height = 15
+
+	// Apply theme styling
+	fp = applyDirPickerStyles(fp)
+
+	return DirPicker{Model: fp}
+}
+
+// applyDirPickerStyles applies theme colors to filepicker
+func applyDirPickerStyles(fp filepicker.Model) filepicker.Model {
+	s := filepicker.DefaultStyles()
+	s.Cursor = s.Cursor.Foreground(styles.Primary)
+	s.Symlink = s.Symlink.Foreground(styles.Secondary)
+	s.Directory = s.Directory.Foreground(styles.Primary)
+	s.File = s.File.Foreground(styles.Text)
+	s.Permission = s.Permission.Foreground(styles.Muted)
+	s.Selected = s.Selected.Foreground(styles.Success)
+	s.FileSize = s.FileSize.Foreground(styles.Muted)
+	fp.Styles = s
+	return fp
+}
+
+// Update handles directory picker messages
+func (dp DirPicker) Update(msg tea.Msg) (DirPicker, tea.Cmd) {
+	var cmd tea.Cmd
+	dp.Model, cmd = dp.Model.Update(msg)
+
+	// Check if a directory was selected
+	if didSelect, path := dp.Model.DidSelectFile(msg); didSelect {
+		return dp, func() tea.Msg {
+			return DirSelectedMsg{Path: path}
+		}
+	}
+
+	return dp, cmd
+}
+
+// RebuildStyles updates the picker styles with current theme colors
+func (dp DirPicker) RebuildStyles() DirPicker {
+	dp.Model = applyDirPickerStyles(dp.Model)
+	return dp
+}

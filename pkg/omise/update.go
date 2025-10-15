@@ -4,6 +4,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 
 	"bento/pkg/omise/screens"
+	"bento/pkg/omise/styles"
 )
 
 // Update handles messages and updates the model
@@ -15,6 +16,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m.handleKey(msg)
 	case screens.WorkflowSelectedMsg:
 		return m.handleWorkflowSelected(msg)
+	case styles.ThemeChangedMsg:
+		return m.handleThemeChanged(msg)
 	default:
 		return m.updateScreen(msg)
 	}
@@ -78,4 +81,15 @@ func (m Model) handleWorkflowSelected(msg screens.WorkflowSelectedMsg) (tea.Mode
 	m.screen = ScreenExecutor
 	m.executor = m.executor.StartWorkflow(msg.Name, msg.Path)
 	return m, m.executor.ExecuteCmd()
+}
+
+// handleThemeChanged propagates theme change to all screens
+func (m Model) handleThemeChanged(msg styles.ThemeChangedMsg) (tea.Model, tea.Cmd) {
+	// Update all screens with new theme
+	m.browser, _ = m.browser.Update(msg)
+	m.executor, _ = m.executor.Update(msg)
+	m.pantry, _ = m.pantry.Update(msg)
+	m.settings, _ = m.settings.Update(msg)
+	m.help, _ = m.help.Update(msg)
+	return m, nil
 }

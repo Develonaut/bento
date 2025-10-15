@@ -67,6 +67,11 @@ func (p Pantry) Init() tea.Cmd {
 
 // Update handles pantry messages
 func (p Pantry) Update(msg tea.Msg) (Pantry, tea.Cmd) {
+	// Handle theme changes
+	if _, ok := msg.(styles.ThemeChangedMsg); ok {
+		p = p.rebuildStyles()
+	}
+
 	// Handle window resize to update table dimensions
 	if msg, ok := msg.(tea.WindowSizeMsg); ok {
 		p.table.SetHeight(msg.Height - 10)
@@ -75,6 +80,12 @@ func (p Pantry) Update(msg tea.Msg) (Pantry, tea.Cmd) {
 	var cmd tea.Cmd
 	p.table, cmd = p.table.Update(msg)
 	return p, cmd
+}
+
+// rebuildStyles recreates styles with current theme
+func (p Pantry) rebuildStyles() Pantry {
+	p.table.SetStyles(pantryTableStyle())
+	return p
 }
 
 // View renders the pantry

@@ -45,6 +45,11 @@ func (e Executor) Init() tea.Cmd {
 
 // Update handles executor messages
 func (e Executor) Update(msg tea.Msg) (Executor, tea.Cmd) {
+	// Handle theme changes
+	if _, ok := msg.(styles.ThemeChangedMsg); ok {
+		e = e.rebuildStyles()
+	}
+
 	if !e.running {
 		return e, nil
 	}
@@ -52,6 +57,12 @@ func (e Executor) Update(msg tea.Msg) (Executor, tea.Cmd) {
 	var cmd tea.Cmd
 	e.spinner, cmd = e.spinner.Update(msg)
 	return e, cmd
+}
+
+// rebuildStyles recreates styles with current theme
+func (e Executor) rebuildStyles() Executor {
+	e.spinner.Style = lipgloss.NewStyle().Foreground(styles.Primary)
+	return e
 }
 
 // View renders the executor
