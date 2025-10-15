@@ -1,0 +1,14 @@
+# For loop iteration example
+type: loop.for
+name: Process Multiple Endpoints
+parameters:
+  items:
+    - endpoint1
+    - endpoint2
+    - endpoint3
+  body:
+    type: http
+    name: Call API Endpoint
+    parameters:
+      method: GET
+      url: https://api.example.com/data

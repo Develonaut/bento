@@ -1,0 +1,12 @@
+# JQ transformation example
+type: transform.jq
+name: Extract Repository Names
+parameters:
+  query: ".[] | .name"
+  input:
+    - name: "bento"
+      stars: 100
+    - name: "atomiton"
+      stars: 250
+    - name: "jubako"
+      stars: 50

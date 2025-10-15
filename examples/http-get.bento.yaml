@@ -1,0 +1,9 @@
+# Simple HTTP GET request example
+type: http
+name: Fetch User Data
+parameters:
+  method: GET
+  url: https://api.github.com/users/octocat
+  headers:
+    Accept: application/json
+    User-Agent: Bento-Example

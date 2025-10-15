@@ -66,10 +66,11 @@ b3o          # Alias for bento
 ```
 
 The TUI provides:
+
 - 📂 Workflow browser
-- ▶️  Execution viewer with progress
+- ▶️ Execution viewer with progress
 - 🏪 Node type explorer
-- ⚙️  Settings
+- ⚙️ Settings
 - ❓ Help
 
 ### Direct Commands
@@ -86,19 +87,23 @@ bento taste <file>      # Dry run (alias for prepare)
 Bento comes with several built-in node types:
 
 ### Network
+
 - **http** - HTTP requests (GET, POST, PUT, DELETE)
 
 ### Data Transformation
+
 - **transform.jq** - JQ transformations
 - **transform.template** - Template rendering
 
 ### Control Flow
+
 - **conditional.if** - If/else logic
 - **conditional.switch** - Switch/case logic
 - **loop.for** - For loop iteration
 - **loop.while** - While loop iteration
 
 ### Grouping
+
 - **group.sequence** - Sequential execution
 - **group.parallel** - Parallel execution
 
@@ -164,11 +169,13 @@ Run `/code-review` (requires Claude Code) for comprehensive code review.
 **Bento** (弁当) - A traditional Japanese meal in a box, with organized compartments.
 
 **b3o** - The alias (like "a6n" for "atomiton"), representing:
+
 - **b** = bento
 - **3** = three key principles (organized, composable, simple)
 - **o** = orchestration
 
 The package names use sushi/bento terminology:
+
 - **Neta** (ネタ) - Ingredients/toppings
 - **Itamae** (板前) - Sushi chef
 - **Jubako** (重箱) - Stacked boxes
@@ -181,6 +188,7 @@ MIT License - see [LICENSE](LICENSE) for details.
 ## 🙏 Acknowledgments
 
 Built with love using:
+
 - [Bubble Tea](https://github.com/charmbracelet/bubbletea) - TUI framework
 - [Lip Gloss](https://github.com/charmbracelet/lipgloss) - Styling
 - [Cobra](https://github.com/spf13/cobra) - CLI framework

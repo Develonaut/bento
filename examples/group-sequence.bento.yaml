@@ -1,0 +1,21 @@
+# Sequential execution example
+type: group.sequence
+name: API Pipeline
+parameters:
+  nodes:
+    - type: http
+      name: Fetch User
+      parameters:
+        method: GET
+        url: https://api.github.com/users/octocat
+
+    - type: transform.jq
+      name: Extract Login
+      parameters:
+        query: ".login"
+
+    - type: http
+      name: Fetch Repos
+      parameters:
+        method: GET
+        url: https://api.github.com/users/octocat/repos
