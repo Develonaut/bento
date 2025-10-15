@@ -30,6 +30,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m.handleEditorSaved(msg)
 	case screens.EditorCancelledMsg:
 		return m.handleEditorCancelled(msg)
+	case screens.RunBentoFromEditorMsg:
+		return m.handleRunBentoFromEditor(msg)
 	case styles.ThemeChangedMsg:
 		return m.handleThemeChanged(msg)
 	default:
@@ -160,6 +162,28 @@ func (m Model) handleEditorSaved(msg screens.EditorSavedMsg) (tea.Model, tea.Cmd
 func (m Model) handleEditorCancelled(msg screens.EditorCancelledMsg) (tea.Model, tea.Cmd) {
 	m.screen = ScreenBrowser
 	return m, nil
+}
+
+// handleRunBentoFromEditor runs bento from editor
+func (m Model) handleRunBentoFromEditor(msg screens.RunBentoFromEditorMsg) (tea.Model, tea.Cmd) {
+	// Save bento first if it has a name
+	if m.editor.GetBentoName() != "" {
+		store, err := jubako.NewStore(m.workDir)
+		if err != nil {
+			return m, nil
+		}
+		// Save silently
+		_ = store.Save(m.editor.GetBentoName(), m.editor.GetDefinition())
+	}
+
+	// Switch to executor and run
+	m.screen = ScreenExecutor
+	bentoName := m.editor.GetBentoName()
+	if bentoName == "" {
+		bentoName = "unsaved-bento"
+	}
+	m.executor = m.executor.StartBento(bentoName, "")
+	return m, m.executor.ExecuteCmd()
 }
 
 // handleThemeChanged propagates theme change to all screens

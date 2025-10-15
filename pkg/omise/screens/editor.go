@@ -28,6 +28,14 @@ const (
 	StateReview
 )
 
+// ViewMode defines the view mode
+type ViewMode int
+
+const (
+	ViewModeList   ViewMode = iota // List view (Phase 7)
+	ViewModeVisual                 // Visual bento box (Phase 8)
+)
+
 // Editor screen for creating and editing bentos
 type Editor struct {
 	mode      EditorMode
@@ -45,6 +53,10 @@ type Editor struct {
 	// Current node being configured
 	currentNodeType string
 
+	// Visual navigation
+	selectedNodeIndex int
+	viewMode          ViewMode
+
 	// UI state
 	message string
 	width   int
@@ -54,12 +66,14 @@ type Editor struct {
 // NewEditorCreate creates editor in create mode
 func NewEditorCreate(store *jubako.Store, registry *pantry.Pantry) Editor {
 	return Editor{
-		mode:      EditorModeCreate,
-		state:     StateNaming,
-		store:     store,
-		registry:  registry,
-		validator: neta.NewValidator(),
-		ctx:       context.Background(),
+		mode:              EditorModeCreate,
+		state:             StateNaming,
+		store:             store,
+		registry:          registry,
+		validator:         neta.NewValidator(),
+		ctx:               context.Background(),
+		selectedNodeIndex: 0,
+		viewMode:          ViewModeList,
 		def: neta.Definition{
 			Version: neta.CurrentVersion,
 			Nodes:   []neta.Definition{},
@@ -75,15 +89,17 @@ func NewEditorEdit(store *jubako.Store, registry *pantry.Pantry, name, path stri
 	}
 
 	return Editor{
-		mode:      EditorModeEdit,
-		state:     StateReview,
-		store:     store,
-		registry:  registry,
-		validator: neta.NewValidator(),
-		ctx:       context.Background(),
-		bentoName: name,
-		bentoPath: path,
-		def:       def,
+		mode:              EditorModeEdit,
+		state:             StateReview,
+		store:             store,
+		registry:          registry,
+		validator:         neta.NewValidator(),
+		ctx:               context.Background(),
+		selectedNodeIndex: 0,
+		viewMode:          ViewModeList,
+		bentoName:         name,
+		bentoPath:         path,
+		def:               def,
 	}, nil
 }
 
@@ -108,4 +124,14 @@ func (e Editor) Update(msg tea.Msg) (Editor, tea.Cmd) {
 	}
 
 	return e, nil
+}
+
+// GetBentoName returns the bento name
+func (e Editor) GetBentoName() string {
+	return e.bentoName
+}
+
+// GetDefinition returns the bento definition
+func (e Editor) GetDefinition() neta.Definition {
+	return e.def
 }

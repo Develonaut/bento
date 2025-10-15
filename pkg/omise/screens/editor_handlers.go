@@ -65,6 +65,20 @@ func (e Editor) handleTypeSelectionKey(msg tea.KeyMsg) (Editor, tea.Cmd) {
 // handleReviewKey handles review state
 func (e Editor) handleReviewKey(msg tea.KeyMsg) (Editor, tea.Cmd) {
 	switch msg.String() {
+	case "up", "k":
+		return e.navigateUp(), nil
+	case "down", "j":
+		return e.navigateDown(), nil
+	case "e":
+		return e, e.editNode(e.selectedNodeIndex)
+	case "m":
+		return e.moveNode(e.selectedNodeIndex)
+	case "d":
+		return e.deleteNode(e.selectedNodeIndex)
+	case "r":
+		return e, e.runBento()
+	case "v":
+		return e.toggleViewMode(), nil
 	case "a":
 		e.state = StateSelectingType
 		return e, nil
@@ -138,42 +152,19 @@ func appendNode(def neta.Definition, node neta.Definition) neta.Definition {
 // launchWizard starts configuration wizard
 func (e Editor) launchWizard(nodeType string) tea.Cmd {
 	return func() tea.Msg {
-		// Get schema for this node type
 		schema, ok := e.validator.GetSchema(nodeType)
 		if !ok {
-			// No schema available, return with default parameters
-			return NodeConfiguredMsg{
-				Type:       nodeType,
-				Name:       fmt.Sprintf("New %s Node", nodeType),
-				Parameters: map[string]interface{}{},
-			}
+			return defaultNodeConfig(nodeType)
 		}
 
-		// Create and run wizard
 		wizard := NewNodeWizard(nodeType, schema)
 		params, err := wizard.Run()
 		if err != nil {
-			// Wizard cancelled or error occurred
 			return EditorCancelledMsg{}
 		}
 
-		// Extract node name from params
-		var nodeName string
-		if name, ok := params["name"]; ok {
-			if nameStr, ok := name.(*string); ok {
-				nodeName = *nameStr
-				delete(params, "name") // Remove name from parameters
-			}
-		}
-		if nodeName == "" {
-			nodeName = fmt.Sprintf("New %s Node", nodeType)
-		}
-
-		// Convert pointer values to actual values
-		actualParams := make(map[string]interface{})
-		for k, v := range params {
-			actualParams[k] = derefValue(v)
-		}
+		nodeName := extractNodeName(params, nodeType)
+		actualParams := convertParamPointers(params)
 
 		return NodeConfiguredMsg{
 			Type:       nodeType,
@@ -181,6 +172,35 @@ func (e Editor) launchWizard(nodeType string) tea.Cmd {
 			Parameters: actualParams,
 		}
 	}
+}
+
+// defaultNodeConfig returns default config when no schema
+func defaultNodeConfig(nodeType string) NodeConfiguredMsg {
+	return NodeConfiguredMsg{
+		Type:       nodeType,
+		Name:       fmt.Sprintf("New %s Node", nodeType),
+		Parameters: map[string]interface{}{},
+	}
+}
+
+// extractNodeName extracts node name from params
+func extractNodeName(params map[string]interface{}, nodeType string) string {
+	if name, ok := params["name"]; ok {
+		if nameStr, ok := name.(*string); ok {
+			delete(params, "name")
+			return *nameStr
+		}
+	}
+	return fmt.Sprintf("New %s Node", nodeType)
+}
+
+// convertParamPointers converts pointer values to actual values
+func convertParamPointers(params map[string]interface{}) map[string]interface{} {
+	actualParams := make(map[string]interface{})
+	for k, v := range params {
+		actualParams[k] = derefValue(v)
+	}
+	return actualParams
 }
 
 // derefValue dereferences pointer values

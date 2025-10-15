@@ -156,7 +156,7 @@ Storage layer - Stacked Boxes:
 ### Phase 5.5: Definition Versioning ✅
 **Duration**: 1-2 hours
 **Status**: Complete
-**File**: [phase-5.5-versioning.md](./phase-5.5-versioning.md)
+**File**: [phase-5.5-versioning.md](./archive/phase-5.5-versioning.md)
 
 Add versioning to bento definitions:
 - Version field in neta.Definition
@@ -174,10 +174,10 @@ Add versioning to bento definitions:
 
 ---
 
-### Phase 5.7: Node and Bento Validation
+### Phase 5.7: Node and Bento Validation ✅
 **Duration**: 3-4 hours
-**Status**: Pending
-**File**: [phase-5.7-validation.md](./phase-5.7-validation.md)
+**Status**: Complete
+**File**: [phase-5.7-validation.md](./archive/phase-5.7-validation.md)
 
 Add structured validation framework:
 - Schema definitions for all node types
@@ -187,19 +187,19 @@ Add structured validation framework:
 - Provide field metadata for UI
 
 **Deliverables**:
-- [ ] Validation framework implemented
-- [ ] Schemas for all node types
-- [ ] Parser integration
-- [ ] Clear error messages
-- [ ] Schema metadata for editor
-- [ ] Karen approval
+- ✅ Validation framework implemented
+- ✅ Schemas for all node types
+- ✅ Parser integration
+- ✅ Clear error messages
+- ✅ Schema metadata for editor
+- ✅ Karen approval
 
 ---
 
-### Phase 6: Enhanced Browser & CRUD
+### Phase 6: Enhanced Browser & CRUD ✅
 **Duration**: 3-4 hours
-**Status**: Pending
-**File**: [phase-6-enhanced-browser.md](./phase-6-enhanced-browser.md)
+**Status**: Complete
+**File**: [phase-6-enhanced-browser.md](./archive/phase-6-enhanced-browser.md)
 
 Full-featured bento management:
 - Keyboard shortcuts (r, e, c, d, n)
@@ -209,11 +209,11 @@ Full-featured bento management:
 - Real-time bento discovery
 
 **Deliverables**:
-- [ ] Keyboard shortcuts working
-- [ ] Jubako integration complete
-- [ ] Confirmation dialogs
-- [ ] CRUD operations
-- [ ] Karen approval
+- ✅ Keyboard shortcuts working
+- ✅ Jubako integration complete
+- ✅ Confirmation dialogs
+- ✅ CRUD operations
+- ✅ Karen approval
 
 ---
 
@@ -314,8 +314,8 @@ Week 1-2 (Foundation):
 
 Week 3 (Enhancement):
 ├── Phase 5.5: Versioning       [Complete] ✅
-├── Phase 5.7: Validation       [3-4 hours]
-├── Phase 6: Enhanced Browser   [3-4 hours]
+├── Phase 5.7: Validation       [Complete] ✅
+├── Phase 6: Enhanced Browser   [Complete] ✅
 ├── Phase 7: Editor Builder     [5-6 hours]
 ├── Phase 8: Visualization      [4-5 hours]
 └── Phase 9: Examples           [2-3 hours]

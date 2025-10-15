@@ -68,24 +68,10 @@ func (e Editor) renderConfiguration() string {
 
 // renderReview renders bento review
 func (e Editor) renderReview() string {
-	content := fmt.Sprintf("Bento: %s (v%s)\n", e.def.Name, e.def.Version)
-	content += fmt.Sprintf("Type: %s\n\n", e.def.Type)
-
-	if len(e.def.Nodes) > 0 {
-		content += "Nodes:\n"
-		content += e.renderNodeList()
+	if e.viewMode == ViewModeVisual {
+		return e.renderVisualBentoBox()
 	}
-
-	return styles.Subtle.Render(content)
-}
-
-// renderNodeList renders the list of nodes
-func (e Editor) renderNodeList() string {
-	content := ""
-	for i, node := range e.def.Nodes {
-		content += fmt.Sprintf("  %d. %s (%s)\n", i+1, node.Name, node.Type)
-	}
-	return content
+	return e.renderListView()
 }
 
 // renderFooter renders keyboard shortcuts
@@ -100,7 +86,7 @@ func (e Editor) renderFooter() string {
 // getShortcuts returns state-specific shortcuts
 func (e Editor) getShortcuts() string {
 	if e.state == StateReview {
-		return "a: Add node • s: Save • esc: Cancel"
+		return "↑/↓: Navigate • e: Edit • m: Move • d: Delete • r: Run • v: Toggle View • a: Add • s: Save • esc: Cancel"
 	}
 	return "esc: Cancel • ctrl+s: Save"
 }

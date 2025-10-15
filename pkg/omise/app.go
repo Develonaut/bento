@@ -4,6 +4,7 @@ package omise
 
 import (
 	"os"
+	"path/filepath"
 
 	tea "github.com/charmbracelet/bubbletea"
 )
@@ -16,12 +17,39 @@ func Launch() error {
 		return nil
 	}
 
+	// Get or create work directory
+	workDir, err := getWorkDir()
+	if err != nil {
+		return err
+	}
+
+	// Initialize model with work directory
+	m, err := NewModelWithWorkDir(workDir)
+	if err != nil {
+		return err
+	}
+
 	p := tea.NewProgram(
-		NewModel(),
+		m,
 		tea.WithAltScreen(),
 		tea.WithMouseCellMotion(),
 	)
 
-	_, err := p.Run()
+	_, err = p.Run()
 	return err
+}
+
+// getWorkDir returns the bento work directory
+func getWorkDir() (string, error) {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return "", err
+	}
+
+	workDir := filepath.Join(home, ".bento", "bentos")
+	if err := os.MkdirAll(workDir, 0755); err != nil {
+		return "", err
+	}
+
+	return workDir, nil
 }

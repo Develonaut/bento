@@ -32,3 +32,14 @@ type EditorCancelledMsg struct{}
 
 // ReturnToBrowserMsg signals return to browser screen
 type ReturnToBrowserMsg struct{}
+
+// EditNodeMsg signals node should be edited
+type EditNodeMsg struct {
+	Index int
+	Type  string
+}
+
+// RunBentoFromEditorMsg signals run bento from editor
+type RunBentoFromEditorMsg struct {
+	Def interface{}
+}
