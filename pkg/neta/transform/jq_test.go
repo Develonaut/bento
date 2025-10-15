@@ -3,6 +3,8 @@ package transform
 import (
 	"context"
 	"testing"
+
+	"bento/pkg/neta"
 )
 
 func TestJQ_Execute(t *testing.T) {
@@ -199,9 +201,9 @@ func TestGetStringParam_Transform(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := getStringParam(tt.params, tt.key, tt.def)
+			got := neta.GetStringParam(tt.params, tt.key, tt.def)
 			if got != tt.want {
-				t.Errorf("getStringParam() = %s, want %s", got, tt.want)
+				t.Errorf("GetStringParam() = %s, want %s", got, tt.want)
 			}
 		})
 	}

@@ -39,7 +39,7 @@ type mockExecutable struct {
 
 func (m *mockExecutable) Execute(ctx context.Context, params map[string]interface{}) (neta.Result, error) {
 	if m.err != nil {
-		return neta.Result{Error: m.err}, m.err
+		return neta.Result{}, m.err
 	}
 	return neta.Result{Output: m.output}, nil
 }

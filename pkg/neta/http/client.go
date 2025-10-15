@@ -36,25 +36,32 @@ func (c *Client) Execute(ctx context.Context, params map[string]interface{}) (ne
 	}
 	defer resp.Body.Close()
 
-	body, err := io.ReadAll(resp.Body)
+	body, err := readResponseBody(resp)
 	if err != nil {
 		return neta.Result{}, err
 	}
 
-	return neta.Result{
-		Output: string(body),
-	}, nil
+	return neta.Result{Output: body}, nil
+}
+
+// readResponseBody reads and returns the response body as a string.
+func readResponseBody(resp *http.Response) (string, error) {
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", err
+	}
+	return string(body), nil
 }
 
 // buildRequest creates an HTTP request from parameters.
 func buildRequest(ctx context.Context, params map[string]interface{}) (*http.Request, error) {
-	method := getStringParam(params, "method", "GET")
-	url := getStringParam(params, "url", "")
+	method := neta.GetStringParam(params, "method", "GET")
+	url := neta.GetStringParam(params, "url", "")
 	if url == "" {
 		return nil, fmt.Errorf("url parameter required")
 	}
 
-	body := getStringParam(params, "body", "")
+	body := neta.GetStringParam(params, "body", "")
 	req, err := http.NewRequestWithContext(ctx, method, url, strings.NewReader(body))
 	if err != nil {
 		return nil, err
@@ -82,12 +89,4 @@ func addHeaders(req *http.Request, params map[string]interface{}) error {
 		req.Header.Set(k, strVal)
 	}
 	return nil
-}
-
-// getStringParam extracts a string parameter with default.
-func getStringParam(params map[string]interface{}, key, defaultVal string) string {
-	if val, ok := params[key].(string); ok {
-		return val
-	}
-	return defaultVal
 }

@@ -1,6 +1,6 @@
 module bento/pkg/neta
 
-go 1.25.0
+go 1.23
 
 require github.com/itchyny/gojq v0.12.17
 

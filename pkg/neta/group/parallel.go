@@ -38,20 +38,24 @@ func (p *Parallel) executeParallel(ctx context.Context, nodes []neta.Definition)
 		wg.Add(1)
 		go func(idx int, n neta.Definition) {
 			defer wg.Done()
-			result, err := p.executor.Execute(ctx, n)
-			results[idx] = result
-			errs[idx] = err
+			results[idx], errs[idx] = p.executor.Execute(ctx, n)
 		}(i, node)
 	}
 
 	wg.Wait()
 
-	// Check for errors
+	if err := checkErrors(errs); err != nil {
+		return neta.Result{}, err
+	}
+	return neta.Result{Output: results}, nil
+}
+
+// checkErrors returns the first error found in the slice.
+func checkErrors(errs []error) error {
 	for _, err := range errs {
 		if err != nil {
-			return neta.Result{}, err
+			return err
 		}
 	}
-
-	return neta.Result{Output: results}, nil
+	return nil
 }

@@ -1,6 +1,6 @@
 module bento/pkg/itamae
 
-go 1.25.0
+go 1.23
 
 require bento/pkg/neta v0.0.0
 

@@ -21,7 +21,7 @@ func NewJQ() *JQ {
 
 // Execute applies a jq query to input data.
 func (j *JQ) Execute(ctx context.Context, params map[string]interface{}) (neta.Result, error) {
-	query := getStringParam(params, "query", ".")
+	query := neta.GetStringParam(params, "query", ".")
 	input := params["input"]
 
 	// If input is a string, try to parse as JSON
@@ -58,12 +58,4 @@ func applyQuery(queryStr string, data interface{}) (interface{}, error) {
 	}
 
 	return v, nil
-}
-
-// getStringParam extracts a string parameter with default.
-func getStringParam(params map[string]interface{}, key, defaultVal string) string {
-	if val, ok := params[key].(string); ok {
-		return val
-	}
-	return defaultVal
 }
