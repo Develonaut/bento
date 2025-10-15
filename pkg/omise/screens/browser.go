@@ -39,7 +39,7 @@ func NewBrowser(workDir string) (Browser, error) {
 		items = []list.Item{} // Empty list on error
 	}
 
-	l := components.NewStyledList(items, "🍱 Available Bentos")
+	l := components.NewStyledList(items, "Available Bentos")
 
 	return Browser{
 		list:      l,
@@ -300,7 +300,7 @@ func (b Browser) refreshList() (Browser, tea.Cmd) {
 		items = []list.Item{}
 	}
 
-	b.list = components.NewStyledList(items, "🍱 Available Bentos")
+	b.list = components.NewStyledList(items, "Available Bentos")
 	return b, nil
 }
 
