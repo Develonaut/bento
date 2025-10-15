@@ -15,8 +15,8 @@ func TestHistory_Clear(t *testing.T) {
 	// Create some records
 	for i := 0; i < 3; i++ {
 		rec := ExecutionRecord{
-			Workflow: "test",
-			Success:  true,
+			Bento:   "test",
+			Success: true,
 		}
 		if err := hist.Record(rec); err != nil {
 			t.Fatalf("Record() error = %v", err)

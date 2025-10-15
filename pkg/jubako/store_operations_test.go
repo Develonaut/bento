@@ -12,7 +12,7 @@ func TestNewStore(t *testing.T) {
 	tmpDir := t.TempDir()
 
 	t.Run("creates store with valid directory", func(t *testing.T) {
-		workDir := filepath.Join(tmpDir, "workflows")
+		workDir := filepath.Join(tmpDir, "bentos")
 		store, err := NewStore(workDir)
 		if err != nil {
 			t.Errorf("NewStore() error = %v", err)
@@ -29,7 +29,7 @@ func TestNewStore(t *testing.T) {
 	})
 
 	t.Run("creates nested directories", func(t *testing.T) {
-		workDir := filepath.Join(tmpDir, "nested", "path", "workflows")
+		workDir := filepath.Join(tmpDir, "nested", "path", "bentos")
 		_, err := NewStore(workDir)
 		if err != nil {
 			t.Errorf("NewStore() error = %v", err)
@@ -52,14 +52,14 @@ func TestStore_SaveAndLoad(t *testing.T) {
 	def := neta.Definition{
 		Version: "1.0",
 		Type:    "http",
-		Name:    "Test Workflow",
+		Name:    "Test Bento",
 		Parameters: map[string]interface{}{
 			"url":    "https://example.com",
 			"method": "GET",
 		},
 	}
 
-	t.Run("save and load workflow", func(t *testing.T) {
+	t.Run("save and load bento", func(t *testing.T) {
 		err := store.Save("test", def)
 		if err != nil {
 			t.Errorf("Save() error = %v", err)
@@ -93,10 +93,10 @@ func TestStore_SaveAndLoad(t *testing.T) {
 		}
 	})
 
-	t.Run("load non-existent workflow", func(t *testing.T) {
+	t.Run("load non-existent bento", func(t *testing.T) {
 		_, err := store.Load("nonexistent")
 		if err == nil {
-			t.Error("Load() expected error for non-existent workflow")
+			t.Error("Load() expected error for non-existent bento")
 		}
 	})
 }
@@ -114,12 +114,12 @@ func TestStore_Delete(t *testing.T) {
 		Name:    "Test",
 	}
 
-	// Save a workflow first
+	// Save a bento first
 	if err := store.Save("test", def); err != nil {
 		t.Fatalf("Save() error = %v", err)
 	}
 
-	t.Run("delete existing workflow", func(t *testing.T) {
+	t.Run("delete existing bento", func(t *testing.T) {
 		err := store.Delete("test")
 		if err != nil {
 			t.Errorf("Delete() error = %v", err)
@@ -132,10 +132,10 @@ func TestStore_Delete(t *testing.T) {
 		}
 	})
 
-	t.Run("delete non-existent workflow", func(t *testing.T) {
+	t.Run("delete non-existent bento", func(t *testing.T) {
 		err := store.Delete("nonexistent")
 		if err == nil {
-			t.Error("Delete() expected error for non-existent workflow")
+			t.Error("Delete() expected error for non-existent bento")
 		}
 	})
 }

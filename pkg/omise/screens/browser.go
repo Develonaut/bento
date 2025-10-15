@@ -10,13 +10,13 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
-// WorkflowSelectedMsg signals that a workflow was selected for execution
-type WorkflowSelectedMsg struct {
+// BentoSelectedMsg signals that a bento was selected for execution
+type BentoSelectedMsg struct {
 	Name string
 	Path string
 }
 
-// Browser shows available workflows
+// Browser shows available bentos
 type Browser struct {
 	list components.StyledList
 }
@@ -28,22 +28,22 @@ func NewBrowser() Browser {
 	return Browser{list: l}
 }
 
-// browserItems returns workflow list items
+// browserItems returns bento list items
 func browserItems() []list.Item {
 	return []list.Item{
-		workflowItem{
-			name: "example-workflow",
-			path: "./workflows/example.bento.yaml",
-			desc: "Example workflow demonstrating HTTP and transforms",
+		bentoItem{
+			name: "example-bento",
+			path: "./bentos/example.bento.yaml",
+			desc: "Example bento demonstrating HTTP and transforms",
 		},
-		workflowItem{
+		bentoItem{
 			name: "data-pipeline",
-			path: "./workflows/data-pipeline.bento.yaml",
+			path: "./bentos/data-pipeline.bento.yaml",
 			desc: "Data processing pipeline with JQ transformations",
 		},
-		workflowItem{
+		bentoItem{
 			name: "api-integration",
-			path: "./workflows/api-integration.bento.yaml",
+			path: "./bentos/api-integration.bento.yaml",
 			desc: "API integration with conditional logic",
 		},
 	}
@@ -67,11 +67,11 @@ func (b Browser) Update(msg tea.Msg) (Browser, tea.Cmd) {
 		b.list.SetSize(msg.Width-h, msg.Height-v-4)
 	}
 
-	// Handle Enter or Space key to select workflow
+	// Handle Enter or Space key to select bento
 	if msg, ok := msg.(tea.KeyMsg); ok && (msg.String() == "enter" || msg.String() == " ") {
-		if item, ok := b.list.SelectedItem().(workflowItem); ok {
+		if item, ok := b.list.SelectedItem().(bentoItem); ok {
 			return b, func() tea.Msg {
-				return WorkflowSelectedMsg{
+				return BentoSelectedMsg{
 					Name: item.name,
 					Path: item.path,
 				}
@@ -89,24 +89,24 @@ func (b Browser) View() string {
 	return b.list.View()
 }
 
-// workflowItem represents a .bento.yaml file
-type workflowItem struct {
+// bentoItem represents a .bento.yaml file
+type bentoItem struct {
 	name string
 	path string
 	desc string
 }
 
 // Title returns the item title
-func (i workflowItem) Title() string {
+func (i bentoItem) Title() string {
 	return i.name
 }
 
 // Description returns the item description
-func (i workflowItem) Description() string {
+func (i bentoItem) Description() string {
 	return i.desc
 }
 
 // FilterValue returns the value to filter by
-func (i workflowItem) FilterValue() string {
+func (i bentoItem) FilterValue() string {
 	return i.name
 }

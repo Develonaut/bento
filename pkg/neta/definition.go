@@ -6,7 +6,7 @@ package neta
 // It may be a single executable node or a group containing other nodes.
 //
 // Definitions are typically loaded from YAML/JSON configuration files and
-// represent the declarative workflow specification. The orchestrator (itamae)
+// represent the declarative bento specification. The orchestrator (itamae)
 // converts definitions into executable operations by looking up node types
 // in the registry (pantry).
 type Definition struct {
@@ -32,7 +32,7 @@ type Definition struct {
 	// - Transform nodes: {input: any, script: string}
 	//
 	// This flexibility enables:
-	// 1. Loading workflows from external configuration (YAML/JSON)
+	// 1. Loading bentos from external configuration (YAML/JSON)
 	// 2. Dynamic node type registration without core recompilation
 	// 3. Schema validation at the node implementation level
 	//

@@ -19,10 +19,10 @@ var (
 
 var packCmd = &cobra.Command{
 	Use:   "pack [file.bento.yaml]",
-	Short: "Execute a bento workflow",
-	Long: `Pack executes a .bento.yaml workflow file.
+	Short: "Execute a bento",
+	Long: `Pack executes a .bento.yaml file.
 
-This runs all nodes in the workflow and reports results.`,
+This runs all nodes in the bento and reports results.`,
 	Args: cobra.ExactArgs(1),
 	RunE: runPack,
 }
@@ -57,7 +57,7 @@ func runPack(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-// executeBento runs the workflow with the itamae orchestrator.
+// executeBento runs the bento with the itamae orchestrator.
 func executeBento(def neta.Definition, timeout time.Duration) (interface{}, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()

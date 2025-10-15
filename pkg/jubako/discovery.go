@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-// Discovery finds workflow files.
+// Discovery finds bento files.
 type Discovery struct {
 	searchPaths []string
 }

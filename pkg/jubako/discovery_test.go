@@ -132,12 +132,12 @@ func TestIsBentoFile(t *testing.T) {
 	}{
 		{
 			name: "valid bento file",
-			path: "/path/to/workflow.bento.yaml",
+			path: "/path/to/example.bento.yaml",
 			want: true,
 		},
 		{
 			name: "valid bento file with longer name",
-			path: "/path/to/my-complex-workflow.bento.yaml",
+			path: "/path/to/my-complex-bento.bento.yaml",
 			want: true,
 		},
 		{

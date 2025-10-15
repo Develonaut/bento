@@ -14,8 +14,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m.handleResize(msg)
 	case tea.KeyMsg:
 		return m.handleKey(msg)
-	case screens.WorkflowSelectedMsg:
-		return m.handleWorkflowSelected(msg)
+	case screens.BentoSelectedMsg:
+		return m.handleBentoSelected(msg)
 	case styles.ThemeChangedMsg:
 		return m.handleThemeChanged(msg)
 	default:
@@ -82,10 +82,10 @@ func (m Model) updateScreen(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, cmd
 }
 
-// handleWorkflowSelected switches to executor and starts workflow
-func (m Model) handleWorkflowSelected(msg screens.WorkflowSelectedMsg) (tea.Model, tea.Cmd) {
+// handleBentoSelected switches to executor and starts bento
+func (m Model) handleBentoSelected(msg screens.BentoSelectedMsg) (tea.Model, tea.Cmd) {
 	m.screen = ScreenExecutor
-	m.executor = m.executor.StartWorkflow(msg.Name, msg.Path)
+	m.executor = m.executor.StartBento(msg.Name, msg.Path)
 	return m, m.executor.ExecuteCmd()
 }
 

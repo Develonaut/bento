@@ -8,7 +8,7 @@ import (
 	"bento/pkg/neta"
 )
 
-// Store manages workflow file storage.
+// Store manages bento file storage.
 type Store struct {
 	workDir string
 	parser  *Parser
@@ -26,13 +26,13 @@ func NewStore(workDir string) (*Store, error) {
 	}, nil
 }
 
-// Load reads a workflow by name.
+// Load reads a bento by name.
 func (s *Store) Load(name string) (neta.Definition, error) {
 	path := s.pathFor(name)
 	return s.parser.Parse(path)
 }
 
-// Save writes a workflow to disk.
+// Save writes a bento to disk.
 func (s *Store) Save(name string, def neta.Definition) error {
 	path := s.pathFor(name)
 
@@ -44,21 +44,21 @@ func (s *Store) Save(name string, def neta.Definition) error {
 	return os.WriteFile(path, data, 0644)
 }
 
-// Delete removes a workflow.
+// Delete removes a bento.
 func (s *Store) Delete(name string) error {
 	path := s.pathFor(name)
 	return os.Remove(path)
 }
 
-// List returns all workflows in the store.
-func (s *Store) List() ([]WorkflowInfo, error) {
+// List returns all bentos in the store.
+func (s *Store) List() ([]BentoInfo, error) {
 	pattern := filepath.Join(s.workDir, "*.bento.yaml")
 	matches, err := filepath.Glob(pattern)
 	if err != nil {
 		return nil, err
 	}
 
-	infos := make([]WorkflowInfo, 0, len(matches))
+	infos := make([]BentoInfo, 0, len(matches))
 	for _, path := range matches {
 		info, err := s.getInfo(path)
 		if err != nil {
@@ -70,7 +70,7 @@ func (s *Store) List() ([]WorkflowInfo, error) {
 	return infos, nil
 }
 
-// pathFor returns the file path for a workflow name.
+// pathFor returns the file path for a bento name.
 func (s *Store) pathFor(name string) string {
 	if !strings.HasSuffix(name, ".bento.yaml") {
 		name += ".bento.yaml"
@@ -78,19 +78,19 @@ func (s *Store) pathFor(name string) string {
 	return filepath.Join(s.workDir, name)
 }
 
-// getInfo extracts workflow info from a file.
-func (s *Store) getInfo(path string) (WorkflowInfo, error) {
+// getInfo extracts bento info from a file.
+func (s *Store) getInfo(path string) (BentoInfo, error) {
 	def, err := s.parser.Parse(path)
 	if err != nil {
-		return WorkflowInfo{}, err
+		return BentoInfo{}, err
 	}
 
 	stat, err := os.Stat(path)
 	if err != nil {
-		return WorkflowInfo{}, err
+		return BentoInfo{}, err
 	}
 
-	return WorkflowInfo{
+	return BentoInfo{
 		Name:     filepath.Base(path),
 		Path:     path,
 		Type:     def.Type,

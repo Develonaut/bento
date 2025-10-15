@@ -68,9 +68,9 @@ func (h Help) renderSection(section helpSection) string {
 // renderAbout renders the about section
 func (h Help) renderAbout() string {
 	return "\n" + styles.Subtle.Render(
-		"Bento - Organized workflow orchestration\n"+
+		"Bento - Organized bento orchestration\n"+
 			"Version 0.1.0 (Phase 4)\n"+
-			"Omise (お店) - The shop where workflows are served",
+			"Omise (お店) - The shop where bentos are served",
 	)
 }
 

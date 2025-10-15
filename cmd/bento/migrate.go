@@ -23,7 +23,7 @@ This command:
 - Can process single files or entire directories
 
 Examples:
-  bento migrate workflow.bento.yaml
+  bento migrate example.bento.yaml
   bento migrate examples/
   bento migrate .`,
 	Args: cobra.ExactArgs(1),

@@ -17,7 +17,7 @@ var (
 
 var rootCmd = &cobra.Command{
 	Use:     "bento",
-	Short:   "🍱 Bento - Organized workflow orchestration",
+	Short:   "🍱 Bento - Organized bento orchestration",
 	Version: "0.1.0",
 	Long: `Bento is a Go-based CLI orchestration tool.
 
@@ -26,9 +26,9 @@ Or use commands directly for scripting and automation.
 
 Available commands:
   prepare - Validate a .bento.yaml file
-  pack    - Execute a workflow
+  pack    - Execute a bento
   pantry  - List/search available neta types
-  taste   - Dry run a workflow
+  taste   - Dry run a bento
 
 Also available as 'b3o' alias.`,
 	Run: func(cmd *cobra.Command, args []string) {

@@ -99,7 +99,7 @@ func (h *History) loadRecord(path string) (ExecutionRecord, error) {
 
 // matchesFilter checks if a record matches the filter.
 func matchesFilter(rec ExecutionRecord, filter HistoryFilter) bool {
-	if filter.Workflow != "" && rec.Workflow != filter.Workflow {
+	if filter.Bento != "" && rec.Bento != filter.Bento {
 		return false
 	}
 

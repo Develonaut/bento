@@ -14,20 +14,20 @@ func TestHistory_List(t *testing.T) {
 	// Create test records
 	records := []ExecutionRecord{
 		{
-			ID:       "rec1",
-			Workflow: "workflow1",
-			Success:  true,
+			ID:      "rec1",
+			Bento:   "bento1",
+			Success: true,
 		},
 		{
-			ID:       "rec2",
-			Workflow: "workflow1",
-			Success:  false,
-			Error:    "test error",
+			ID:      "rec2",
+			Bento:   "bento1",
+			Success: false,
+			Error:   "test error",
 		},
 		{
-			ID:       "rec3",
-			Workflow: "workflow2",
-			Success:  true,
+			ID:      "rec3",
+			Bento:   "bento2",
+			Success: true,
 		},
 	}
 
@@ -50,9 +50,9 @@ func TestHistory_List(t *testing.T) {
 		}
 	})
 
-	t.Run("list with workflow filter", func(t *testing.T) {
+	t.Run("list with bento filter", func(t *testing.T) {
 		filter := HistoryFilter{
-			Workflow: "workflow1",
+			Bento: "bento1",
 		}
 		list, err := hist.List(filter)
 		if err != nil {
@@ -65,10 +65,10 @@ func TestHistory_List(t *testing.T) {
 			t.Errorf("List() got %d records, want %d", len(list), expectedCount)
 		}
 
-		// Verify all records match the workflow
+		// Verify all records match the bento
 		for _, rec := range list {
-			if rec.Workflow != "workflow1" {
-				t.Errorf("List() returned record with workflow = %v, want workflow1", rec.Workflow)
+			if rec.Bento != "bento1" {
+				t.Errorf("List() returned record with bento = %v, want bento1", rec.Bento)
 			}
 		}
 	})
@@ -113,7 +113,7 @@ func TestHistory_List(t *testing.T) {
 
 	t.Run("list with combined filters", func(t *testing.T) {
 		filter := HistoryFilter{
-			Workflow:    "workflow1",
+			Bento:       "bento1",
 			SuccessOnly: true,
 			Limit:       1,
 		}
@@ -128,8 +128,8 @@ func TestHistory_List(t *testing.T) {
 		}
 
 		if len(list) > 0 {
-			if list[0].Workflow != "workflow1" {
-				t.Errorf("List() returned record with workflow = %v, want workflow1", list[0].Workflow)
+			if list[0].Bento != "bento1" {
+				t.Errorf("List() returned record with bento = %v, want bento1", list[0].Bento)
 			}
 			if !list[0].Success {
 				t.Error("List() returned failed record with SuccessOnly filter")
@@ -148,39 +148,39 @@ func TestMatchesFilter(t *testing.T) {
 		{
 			name: "empty filter matches all",
 			rec: ExecutionRecord{
-				Workflow: "test",
-				Success:  true,
+				Bento:   "test",
+				Success: true,
 			},
 			filter: HistoryFilter{},
 			want:   true,
 		},
 		{
-			name: "workflow filter matches",
+			name: "bento filter matches",
 			rec: ExecutionRecord{
-				Workflow: "test",
-				Success:  true,
+				Bento:   "test",
+				Success: true,
 			},
 			filter: HistoryFilter{
-				Workflow: "test",
+				Bento: "test",
 			},
 			want: true,
 		},
 		{
-			name: "workflow filter does not match",
+			name: "bento filter does not match",
 			rec: ExecutionRecord{
-				Workflow: "test",
-				Success:  true,
+				Bento:   "test",
+				Success: true,
 			},
 			filter: HistoryFilter{
-				Workflow: "other",
+				Bento: "other",
 			},
 			want: false,
 		},
 		{
 			name: "success only matches successful",
 			rec: ExecutionRecord{
-				Workflow: "test",
-				Success:  true,
+				Bento:   "test",
+				Success: true,
 			},
 			filter: HistoryFilter{
 				SuccessOnly: true,
@@ -190,8 +190,8 @@ func TestMatchesFilter(t *testing.T) {
 		{
 			name: "success only does not match failed",
 			rec: ExecutionRecord{
-				Workflow: "test",
-				Success:  false,
+				Bento:   "test",
+				Success: false,
 			},
 			filter: HistoryFilter{
 				SuccessOnly: true,
@@ -201,11 +201,11 @@ func TestMatchesFilter(t *testing.T) {
 		{
 			name: "combined filter matches",
 			rec: ExecutionRecord{
-				Workflow: "test",
-				Success:  true,
+				Bento:   "test",
+				Success: true,
 			},
 			filter: HistoryFilter{
-				Workflow:    "test",
+				Bento:       "test",
 				SuccessOnly: true,
 			},
 			want: true,
@@ -213,11 +213,11 @@ func TestMatchesFilter(t *testing.T) {
 		{
 			name: "combined filter does not match",
 			rec: ExecutionRecord{
-				Workflow: "test",
-				Success:  false,
+				Bento:   "test",
+				Success: false,
 			},
 			filter: HistoryFilter{
-				Workflow:    "test",
+				Bento:       "test",
 				SuccessOnly: true,
 			},
 			want: false,

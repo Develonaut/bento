@@ -22,13 +22,13 @@ func TestStore_List(t *testing.T) {
 			return
 		}
 		if len(infos) != 0 {
-			t.Errorf("List() got %d workflows, want 0", len(infos))
+			t.Errorf("List() got %d bentos, want 0", len(infos))
 		}
 	})
 
-	t.Run("list multiple workflows", func(t *testing.T) {
-		// Save multiple workflows
-		workflows := []struct {
+	t.Run("list multiple bentos", func(t *testing.T) {
+		// Save multiple bentos
+		bentos := []struct {
 			name string
 			typ  string
 		}{
@@ -37,13 +37,13 @@ func TestStore_List(t *testing.T) {
 			{"flow3", "group.sequence"},
 		}
 
-		for _, wf := range workflows {
+		for _, b := range bentos {
 			def := neta.Definition{
 				Version: "1.0",
-				Type:    wf.typ,
-				Name:    wf.name,
+				Type:    b.typ,
+				Name:    b.name,
 			}
-			if err := store.Save(wf.name, def); err != nil {
+			if err := store.Save(b.name, def); err != nil {
 				t.Fatalf("Save() error = %v", err)
 			}
 		}
@@ -54,20 +54,20 @@ func TestStore_List(t *testing.T) {
 			return
 		}
 
-		if len(infos) != len(workflows) {
-			t.Errorf("List() got %d workflows, want %d", len(infos), len(workflows))
+		if len(infos) != len(bentos) {
+			t.Errorf("List() got %d bentos, want %d", len(infos), len(bentos))
 		}
 
-		// Verify each workflow info
+		// Verify each bento info
 		for _, info := range infos {
 			if info.Name == "" {
-				t.Error("List() returned workflow with empty name")
+				t.Error("List() returned bento with empty name")
 			}
 			if info.Path == "" {
-				t.Error("List() returned workflow with empty path")
+				t.Error("List() returned bento with empty path")
 			}
 			if info.Type == "" {
-				t.Error("List() returned workflow with empty type")
+				t.Error("List() returned bento with empty type")
 			}
 		}
 	})
@@ -88,7 +88,7 @@ func TestStore_List(t *testing.T) {
 		// Should skip invalid file and return only valid ones
 		// From previous test we had 3 valid files
 		if len(infos) < 1 {
-			t.Errorf("List() got %d workflows, expected at least 1", len(infos))
+			t.Errorf("List() got %d bentos, expected at least 1", len(infos))
 		}
 	})
 }

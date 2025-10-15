@@ -11,7 +11,7 @@ import (
 
 var prepareCmd = &cobra.Command{
 	Use:   "prepare [file.bento.yaml]",
-	Short: "Validate a bento workflow file",
+	Short: "Validate a bento file",
 	Long: `Prepare validates a .bento.yaml file without executing it.
 
 This checks:

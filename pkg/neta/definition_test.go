@@ -30,7 +30,7 @@ func TestDefinition_IsGroup(t *testing.T) {
 			name: "group node has children",
 			def: Definition{
 				Type: "group",
-				Name: "Workflow",
+				Name: "Bento",
 				Nodes: []Definition{
 					{Type: "http", Name: "Step 1"},
 				},
@@ -41,7 +41,7 @@ func TestDefinition_IsGroup(t *testing.T) {
 			name: "group with multiple children",
 			def: Definition{
 				Type: "group",
-				Name: "Complex Workflow",
+				Name: "Complex Bento",
 				Nodes: []Definition{
 					{Type: "http", Name: "Step 1"},
 					{Type: "transform", Name: "Step 2"},

@@ -50,7 +50,7 @@ func TestHistory_RecordAndGet(t *testing.T) {
 
 	rec := ExecutionRecord{
 		ID:        "test-id-123",
-		Workflow:  "test-workflow",
+		Bento:     "test-bento",
 		StartTime: time.Now(),
 		EndTime:   time.Now().Add(5 * time.Second),
 		Success:   true,
@@ -73,8 +73,8 @@ func TestHistory_RecordAndGet(t *testing.T) {
 		if retrieved.ID != rec.ID {
 			t.Errorf("Get() got ID = %v, want %v", retrieved.ID, rec.ID)
 		}
-		if retrieved.Workflow != rec.Workflow {
-			t.Errorf("Get() got Workflow = %v, want %v", retrieved.Workflow, rec.Workflow)
+		if retrieved.Bento != rec.Bento {
+			t.Errorf("Get() got Bento = %v, want %v", retrieved.Bento, rec.Bento)
 		}
 		if retrieved.Success != rec.Success {
 			t.Errorf("Get() got Success = %v, want %v", retrieved.Success, rec.Success)
@@ -83,8 +83,8 @@ func TestHistory_RecordAndGet(t *testing.T) {
 
 	t.Run("record without ID generates UUID", func(t *testing.T) {
 		rec := ExecutionRecord{
-			Workflow: "test-workflow-2",
-			Success:  true,
+			Bento:   "test-bento-2",
+			Success: true,
 		}
 
 		err := hist.Record(rec)

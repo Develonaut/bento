@@ -8,8 +8,8 @@ import (
 
 var tasteCmd = &cobra.Command{
 	Use:   "taste [file.bento.yaml]",
-	Short: "Dry run a workflow (alias for prepare)",
-	Long: `Taste validates a workflow without executing it.
+	Short: "Dry run a bento (alias for prepare)",
+	Long: `Taste validates a bento without executing it.
 
 This is an alias for 'bento prepare' with more verbose output.`,
 	Args: cobra.ExactArgs(1),

@@ -8,14 +8,14 @@ import (
 	"bento/pkg/omise/styles"
 )
 
-// Executor shows workflow execution progress
+// Executor shows bento execution progress
 type Executor struct {
-	spinner      components.Spinner
-	progress     components.Progress
-	status       string
-	running      bool
-	workflowName string
-	workflowPath string
+	spinner   components.Spinner
+	progress  components.Progress
+	status    string
+	running   bool
+	bentoName string
+	bentoPath string
 }
 
 // NewExecutor creates an executor screen
@@ -23,7 +23,7 @@ func NewExecutor() Executor {
 	return Executor{
 		spinner:  components.NewSpinner(),
 		progress: components.NewProgress(40),
-		status:   "Ready to execute workflows",
+		status:   "Ready to execute bentos",
 		running:  false,
 	}
 }
@@ -51,7 +51,7 @@ func (e Executor) Update(msg tea.Msg) (Executor, tea.Cmd) {
 
 // View renders the executor
 func (e Executor) View() string {
-	title := styles.Title.Render("Workflow Executor")
+	title := styles.Title.Render("Bento Executor")
 	if !e.running {
 		return e.idleView(title)
 	}
@@ -76,8 +76,8 @@ func (e Executor) runningView(title string) string {
 		lipgloss.Left,
 		title,
 		"",
-		styles.Subtle.Render("Workflow: "+e.workflowName),
-		styles.Subtle.Render("Path: "+e.workflowPath),
+		styles.Subtle.Render("Bento: "+e.bentoName),
+		styles.Subtle.Render("Path: "+e.bentoPath),
 		"",
 		e.spinner.View()+" "+e.status,
 		"",
@@ -87,12 +87,12 @@ func (e Executor) runningView(title string) string {
 	)
 }
 
-// StartWorkflow prepares the executor to run a workflow
-func (e Executor) StartWorkflow(name, path string) Executor {
-	e.workflowName = name
-	e.workflowPath = path
+// StartBento prepares the executor to run a bento
+func (e Executor) StartBento(name, path string) Executor {
+	e.bentoName = name
+	e.bentoPath = path
 	e.running = true
-	e.status = "Starting workflow..."
+	e.status = "Starting bento..."
 	return e
 }
 

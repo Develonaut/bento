@@ -10,8 +10,8 @@ import (
 	"github.com/charmbracelet/x/exp/teatest"
 )
 
-// TestBrowserToExecutorWorkflow tests selecting and executing a workflow
-func TestBrowserToExecutorWorkflow(t *testing.T) {
+// TestBrowserToExecutorFlow tests selecting and executing a bento
+func TestBrowserToExecutorFlow(t *testing.T) {
 	m := NewModel()
 	tm := teatest.NewTestModel(
 		t, m,
@@ -21,14 +21,14 @@ func TestBrowserToExecutorWorkflow(t *testing.T) {
 	// Wait for initial render - look for Browser header
 	waitForContent(t, tm, "🍱 Bento | Browser")
 
-	// Press Enter to select first workflow
+	// Press Enter to select first bento
 	tm.Send(tea.KeyMsg{
 		Type:  tea.KeyEnter,
 		Runes: []rune{'\r'},
 	})
 
 	// Wait for Executor screen - look for both header and content
-	waitForContent(t, tm, "Workflow Executor")
+	waitForContent(t, tm, "Bento Executor")
 
 	// Send quit to finish
 	tm.Send(tea.KeyMsg{
@@ -49,7 +49,7 @@ func TestBrowserToExecutorWorkflow(t *testing.T) {
 	}
 
 	if !model.executor.IsRunning() {
-		t.Error("Expected executor to be running after workflow selection")
+		t.Error("Expected executor to be running after bento selection")
 	}
 }
 

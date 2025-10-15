@@ -105,10 +105,10 @@ func TestParser_Parse(t *testing.T) {
 	// Create temp dir for test files
 	tmpDir := t.TempDir()
 
-	// Valid workflow file
+	// Valid bento file
 	validYAML := `version: "1.0"
 type: http
-name: Test Workflow
+name: Test Bento
 parameters:
   url: https://example.com
   method: GET`
@@ -129,8 +129,8 @@ parameters:
 		if def.Type != "http" {
 			t.Errorf("Parse() got type = %v, want http", def.Type)
 		}
-		if def.Name != "Test Workflow" {
-			t.Errorf("Parse() got name = %v, want Test Workflow", def.Name)
+		if def.Name != "Test Bento" {
+			t.Errorf("Parse() got name = %v, want Test Bento", def.Name)
 		}
 	})
 
