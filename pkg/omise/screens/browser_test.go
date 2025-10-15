@@ -161,22 +161,36 @@ func TestBrowser_LoadBentos(t *testing.T) {
 		t.Fatalf("loadBentos() error = %v", err)
 	}
 
-	if len(items) != 3 {
-		t.Errorf("Expected 3 bentos, got %d", len(items))
+	// Should have 4 items: 1 create item + 3 actual bentos
+	if len(items) != 4 {
+		t.Errorf("Expected 4 items (1 create + 3 bentos), got %d", len(items))
 	}
 
-	// Verify each item has expected fields
-	for _, item := range items {
-		bi, ok := item.(bentoItem)
+	// First item should be the create item
+	if len(items) > 0 {
+		firstItem, ok := items[0].(bentoItem)
 		if !ok {
-			t.Errorf("Expected bentoItem, got %T", item)
+			t.Error("Expected first item to be bentoItem")
+		} else if !firstItem.isNewItem {
+			t.Error("Expected first item to be the create new bento item")
+		}
+	}
+
+	// Verify remaining items are actual bentos with expected fields
+	for i := 1; i < len(items); i++ {
+		bi, ok := items[i].(bentoItem)
+		if !ok {
+			t.Errorf("Expected bentoItem at index %d, got %T", i, items[i])
 			continue
 		}
+		if bi.isNewItem {
+			t.Errorf("Expected regular bento at index %d, got create item", i)
+		}
 		if bi.version != "1.0" {
-			t.Errorf("Expected version 1.0, got %s", bi.version)
+			t.Errorf("Expected version 1.0 at index %d, got %s", i, bi.version)
 		}
 		if bi.nodeType != "http" {
-			t.Errorf("Expected type http, got %s", bi.nodeType)
+			t.Errorf("Expected type http at index %d, got %s", i, bi.nodeType)
 		}
 	}
 }
@@ -206,5 +220,46 @@ func TestBrowser_HelpToggle(t *testing.T) {
 
 	if browser.showingHelp {
 		t.Error("Help should be hidden after pressing '?' again")
+	}
+}
+
+func TestBrowser_CreateNewBentoItem(t *testing.T) {
+	workDir := t.TempDir()
+
+	browser, err := NewBrowser(workDir)
+	if err != nil {
+		t.Fatalf("NewBrowser() error = %v", err)
+	}
+
+	// The create item should be present
+	selected := browser.getSelected()
+	if selected == nil {
+		t.Fatal("Expected a selected item")
+	}
+
+	if !selected.isNewItem {
+		t.Error("First item should be the create new bento item")
+	}
+
+	// Pressing enter on create item should trigger CreateBentoMsg
+	_, cmd := browser.handleRun(selected)
+	if cmd == nil {
+		t.Fatal("Expected command from handleRun on create item")
+	}
+
+	result := cmd()
+	if _, ok := result.(CreateBentoMsg); !ok {
+		t.Errorf("Expected CreateBentoMsg, got %T", result)
+	}
+
+	// Copy and delete should do nothing on create item
+	_, copyCmd := browser.handleCopy(selected)
+	if copyCmd != nil {
+		t.Error("Expected nil command from handleCopy on create item")
+	}
+
+	_, deleteCmd := browser.handleDelete(selected)
+	if deleteCmd != nil {
+		t.Error("Expected nil command from handleDelete on create item")
 	}
 }

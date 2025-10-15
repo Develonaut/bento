@@ -15,7 +15,7 @@ const (
 	ScreenPantry
 	ScreenSettings
 	ScreenHelp
-	screenCount // Editor is excluded from tab cycle
+	screenCount // Marker for tab cycle end
 
 	// Modal screens (not in tab cycle)
 	ScreenEditor
@@ -23,7 +23,11 @@ const (
 
 // String returns the screen name
 func (s Screen) String() string {
-	return [...]string{"Browser", "Executor", "Pantry", "Settings", "Help", "Editor"}[s]
+	names := [...]string{"Browser", "Executor", "Pantry", "Settings", "Help", "screenCount", "Editor"}
+	if int(s) >= len(names) {
+		return "Unknown"
+	}
+	return names[s]
 }
 
 // Model is the root Bubble Tea model for Omise

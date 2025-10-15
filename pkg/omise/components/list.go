@@ -18,8 +18,9 @@ func NewStyledList(items []list.Item, title string) StyledList {
 	l := list.New(items, delegate, 0, 0)
 	l.Title = title
 	l.Styles = listStyles()
-	l.SetShowStatusBar(false)
+	l.SetShowStatusBar(true)
 	l.SetFilteringEnabled(true)
+	l.SetStatusBarItemName("bento", "bentos")
 
 	return StyledList{Model: l}
 }

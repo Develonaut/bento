@@ -8,11 +8,22 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/x/exp/teatest"
+
+	"bento/pkg/jubako"
+	"bento/pkg/neta"
 )
 
 // TestBrowserToExecutorFlow tests selecting and executing a bento
 func TestBrowserToExecutorFlow(t *testing.T) {
-	m := NewModel()
+	// Create test bento in temp directory
+	workDir := t.TempDir()
+	createTestBento(t, workDir)
+
+	m, err := NewModelWithWorkDir(workDir)
+	if err != nil {
+		t.Fatalf("NewModelWithWorkDir error: %v", err)
+	}
+
 	tm := teatest.NewTestModel(
 		t, m,
 		teatest.WithInitialTermSize(80, 24),
@@ -21,7 +32,11 @@ func TestBrowserToExecutorFlow(t *testing.T) {
 	// Wait for initial render - look for Browser header
 	waitForContent(t, tm, "🍱 Bento | Browser")
 
-	// Press Enter to select first bento
+	// Navigate down to skip the "+ Create New Bento" item
+	tm.Send(tea.KeyMsg{Type: tea.KeyDown})
+	time.Sleep(50 * time.Millisecond)
+
+	// Press Enter to select first actual bento
 	tm.Send(tea.KeyMsg{
 		Type:  tea.KeyEnter,
 		Runes: []rune{'\r'},
@@ -194,4 +209,27 @@ func readOutput(t *testing.T, tm *teatest.TestModel) []byte {
 		t.Fatalf("Failed to read output: %v", err)
 	}
 	return output
+}
+
+// createTestBento creates a simple test bento file
+func createTestBento(t *testing.T, workDir string) {
+	t.Helper()
+
+	store, err := jubako.NewStore(workDir)
+	if err != nil {
+		t.Fatalf("Failed to create store: %v", err)
+	}
+
+	def := neta.Definition{
+		Version: "1.0",
+		Type:    "http",
+		Name:    "test-bento",
+		Parameters: map[string]interface{}{
+			"url": "https://httpbin.org/get",
+		},
+	}
+
+	if err := store.Save("test-bento", def); err != nil {
+		t.Fatalf("Failed to save test bento: %v", err)
+	}
 }

@@ -155,8 +155,14 @@ func (b Browser) handleItemKey(msg tea.KeyMsg) (Browser, tea.Cmd) {
 	}
 }
 
-// handleRun runs the selected bento
+// handleRun runs the selected bento or creates new if special item
 func (b Browser) handleRun(item *bentoItem) (Browser, tea.Cmd) {
+	if item.isNewItem {
+		return b, func() tea.Msg {
+			return CreateBentoMsg{}
+		}
+	}
+
 	return b, func() tea.Msg {
 		return WorkflowSelectedMsg{
 			Name: item.name,
@@ -167,6 +173,13 @@ func (b Browser) handleRun(item *bentoItem) (Browser, tea.Cmd) {
 
 // handleEdit edits the selected bento
 func (b Browser) handleEdit(item *bentoItem) (Browser, tea.Cmd) {
+	if item.isNewItem {
+		// Create new instead of edit for the special item
+		return b, func() tea.Msg {
+			return CreateBentoMsg{}
+		}
+	}
+
 	return b, func() tea.Msg {
 		return EditBentoMsg{
 			Name: item.name,
@@ -177,11 +190,18 @@ func (b Browser) handleEdit(item *bentoItem) (Browser, tea.Cmd) {
 
 // handleCopy initiates bento copy
 func (b Browser) handleCopy(item *bentoItem) (Browser, tea.Cmd) {
+	if item.isNewItem {
+		return b, nil // Can't copy the "Create New" item
+	}
 	return b, b.copyBento(item)
 }
 
 // handleDelete shows delete confirmation
 func (b Browser) handleDelete(item *bentoItem) (Browser, tea.Cmd) {
+	if item.isNewItem {
+		return b, nil // Can't delete the "Create New" item
+	}
+
 	b.confirmDialog = NewConfirmDialog(
 		"Delete Bento",
 		fmt.Sprintf("Are you sure you want to delete '%s'?", item.name),
@@ -299,7 +319,18 @@ func (b Browser) View() string {
 		return b.helpView()
 	}
 
-	return b.list.View()
+	return lipgloss.JoinVertical(
+		lipgloss.Left,
+		b.list.View(),
+		"",
+		b.renderFooter(),
+	)
+}
+
+// renderFooter shows keyboard shortcuts
+func (b Browser) renderFooter() string {
+	shortcuts := "n: New • enter: Run • e: Edit • c: Copy • d: Delete • ?: Help"
+	return styles.Subtle.Render(shortcuts)
 }
 
 // helpView renders keyboard shortcuts
@@ -323,25 +354,35 @@ Press ? again to return to list.
 
 // bentoItem represents a bento in the list
 type bentoItem struct {
-	name     string
-	path     string
-	version  string
-	nodeType string
-	modified time.Time
+	name      string
+	path      string
+	version   string
+	nodeType  string
+	modified  time.Time
+	isNewItem bool // Special item for creating new bentos
 }
 
 // Title returns the item title
 func (i bentoItem) Title() string {
+	if i.isNewItem {
+		return "+ Create New Bento"
+	}
 	return fmt.Sprintf("%s (v%s)", i.name, i.version)
 }
 
 // Description returns the item description
 func (i bentoItem) Description() string {
+	if i.isNewItem {
+		return "Start building a new bento from scratch"
+	}
 	return fmt.Sprintf("%s • Modified: %s", i.nodeType, i.modified.Format("2006-01-02 15:04"))
 }
 
 // FilterValue returns the value to filter by
 func (i bentoItem) FilterValue() string {
+	if i.isNewItem {
+		return "new create"
+	}
 	return i.name
 }
 
@@ -352,7 +393,13 @@ func loadBentos(store *jubako.Store) ([]list.Item, error) {
 		return nil, err
 	}
 
-	items := make([]list.Item, 0, len(infos))
+	// Start with "Create New" item
+	items := make([]list.Item, 0, len(infos)+1)
+	items = append(items, bentoItem{
+		isNewItem: true,
+	})
+
+	// Add existing bentos
 	for _, info := range infos {
 		def, err := store.Load(extractBentoName(info.Name))
 		if err != nil {
