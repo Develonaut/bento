@@ -28,7 +28,11 @@ func NewStyledList(items []list.Item, title string) StyledList {
 // listStyles returns list styles with theme colors
 func listStyles() list.Styles {
 	s := list.DefaultStyles()
-	s.Title = lipgloss.NewStyle().Foreground(styles.Primary).Bold(true)
+	s.Title = lipgloss.NewStyle().
+		Foreground(styles.Primary).
+		Bold(true).
+		MarginLeft(2).
+		MarginBottom(1)
 	s.Spinner = lipgloss.NewStyle().Foreground(styles.Primary)
 	s.FilterPrompt = lipgloss.NewStyle().Foreground(styles.Primary)
 	s.FilterCursor = lipgloss.NewStyle().Foreground(styles.Primary)
