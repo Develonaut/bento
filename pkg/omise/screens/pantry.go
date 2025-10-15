@@ -67,6 +67,11 @@ func (p Pantry) Init() tea.Cmd {
 
 // Update handles pantry messages
 func (p Pantry) Update(msg tea.Msg) (Pantry, tea.Cmd) {
+	// Handle window resize to update table dimensions
+	if msg, ok := msg.(tea.WindowSizeMsg); ok {
+		p.table.SetHeight(msg.Height - 10)
+	}
+
 	var cmd tea.Cmd
 	p.table, cmd = p.table.Update(msg)
 	return p, cmd

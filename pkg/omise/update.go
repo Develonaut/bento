@@ -16,11 +16,13 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 }
 
-// handleResize updates dimensions
+// handleResize updates dimensions and propagates to screens
 func (m Model) handleResize(msg tea.WindowSizeMsg) (tea.Model, tea.Cmd) {
 	m.width = msg.Width
 	m.height = msg.Height
-	return m, nil
+
+	// Pass resize to all screens so they can update their dimensions
+	return m.updateScreen(msg)
 }
 
 // handleKey processes keyboard input

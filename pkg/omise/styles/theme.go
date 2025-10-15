@@ -16,7 +16,7 @@ var (
 	Muted  = lipgloss.Color("#565f89")
 
 	// Semantic color assignments
-	Primary   = Orange // Main theme color
+	Primary   = Red    // Main theme color
 	Secondary = Green  // Secondary accents
 	Success   = Green  // Success states
 	Error     = Red    // Error states

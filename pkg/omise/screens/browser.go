@@ -61,6 +61,12 @@ func (b Browser) Init() tea.Cmd {
 
 // Update handles browser messages
 func (b Browser) Update(msg tea.Msg) (Browser, tea.Cmd) {
+	// Handle window resize to update list dimensions
+	if msg, ok := msg.(tea.WindowSizeMsg); ok {
+		h, v := lipgloss.NewStyle().Margin(2, 2).GetFrameSize()
+		b.list.SetSize(msg.Width-h, msg.Height-v-4)
+	}
+
 	var cmd tea.Cmd
 	b.list, cmd = b.list.Update(msg)
 	return b, cmd
