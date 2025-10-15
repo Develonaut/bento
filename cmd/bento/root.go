@@ -6,6 +6,8 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+
+	"bento/pkg/omise"
 )
 
 var (
@@ -30,10 +32,10 @@ Available commands:
 
 Also available as 'b3o' alias.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		// Phase 4 will launch TUI here
-		fmt.Println("🍱 Bento TUI coming in Phase 4!")
-		fmt.Println("For now, use commands: prepare, pack, pantry, taste")
-		_ = cmd.Help()
+		if err := omise.Launch(); err != nil {
+			fmt.Fprintf(os.Stderr, "TUI error: %v\n", err)
+			os.Exit(1)
+		}
 	},
 }
 
