@@ -1,6 +1,8 @@
 # Binaries
 /bin/
 /dist/
+/bento
+/cmd/bento/bento
 *.exe
 *.dll
 *.so
