@@ -1,13 +1,16 @@
+version: "1.0"
 type: parallel
 name: Parallel Execution
 nodes:
-  - type: http
-    name: Request 1
-    parameters:
-      url: https://httpbin.org/json
-      method: GET
-  - type: http
-    name: Request 2
-    parameters:
-      url: https://httpbin.org/headers
-      method: GET
+    - version: "1.0"
+      type: http
+      name: Request 1
+      parameters:
+        method: GET
+        url: https://httpbin.org/json
+    - version: "1.0"
+      type: http
+      name: Request 2
+      parameters:
+        method: GET
+        url: https://httpbin.org/headers

@@ -50,8 +50,9 @@ func TestStore_SaveAndLoad(t *testing.T) {
 	}
 
 	def := neta.Definition{
-		Type: "http",
-		Name: "Test Workflow",
+		Version: "1.0",
+		Type:    "http",
+		Name:    "Test Workflow",
 		Parameters: map[string]interface{}{
 			"url":    "https://example.com",
 			"method": "GET",
@@ -108,8 +109,9 @@ func TestStore_Delete(t *testing.T) {
 	}
 
 	def := neta.Definition{
-		Type: "http",
-		Name: "Test",
+		Version: "1.0",
+		Type:    "http",
+		Name:    "Test",
 	}
 
 	// Save a workflow first

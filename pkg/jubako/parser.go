@@ -52,6 +52,11 @@ func (p *Parser) Format(def neta.Definition) ([]byte, error) {
 
 // validateDefinition ensures a definition is well-formed.
 func validateDefinition(def neta.Definition) error {
+	// Validate version first
+	if err := neta.ValidateVersion(def.Version); err != nil {
+		return fmt.Errorf("version error: %w", err)
+	}
+
 	if def.Type == "" {
 		return fmt.Errorf("type is required")
 	}

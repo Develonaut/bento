@@ -39,8 +39,9 @@ func TestStore_List(t *testing.T) {
 
 		for _, wf := range workflows {
 			def := neta.Definition{
-				Type: wf.typ,
-				Name: wf.name,
+				Version: "1.0",
+				Type:    wf.typ,
+				Name:    wf.name,
 			}
 			if err := store.Save(wf.name, def); err != nil {
 				t.Fatalf("Save() error = %v", err)

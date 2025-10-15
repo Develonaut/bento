@@ -10,11 +10,16 @@ package neta
 // converts definitions into executable operations by looking up node types
 // in the registry (pantry).
 type Definition struct {
+	// Version specifies the definition schema version (e.g., "1.0")
+	// REQUIRED: Must be present in all .bento.yaml files
+	// Format: MAJOR.MINOR (semantic versioning)
+	Version string `yaml:"version" json:"version"`
+
 	// Type identifies what kind of node this is (http, transform, group, etc)
-	Type string
+	Type string `yaml:"type" json:"type"`
 
 	// Name is the human-readable identifier for this node
-	Name string
+	Name string `yaml:"name" json:"name"`
 
 	// Parameters contains type-specific configuration.
 	//
@@ -33,13 +38,22 @@ type Definition struct {
 	//
 	// Parameter validation happens when the node is executed, not when the
 	// definition is created, allowing late binding and runtime configuration.
-	Parameters map[string]interface{}
+	Parameters map[string]interface{} `yaml:"parameters,omitempty" json:"parameters,omitempty"`
 
 	// Nodes contains child nodes (for group types)
 	// If empty/nil, this is a leaf node
-	Nodes []Definition
+	Nodes []Definition `yaml:"nodes,omitempty" json:"nodes,omitempty"`
 }
 
+// CurrentVersion is the version of definitions this build supports
+const CurrentVersion = "1.0"
+
+// IsGroup returns true if this definition contains child nodes
 func (d Definition) IsGroup() bool {
 	return len(d.Nodes) > 0
+}
+
+// IsVersionCompatible checks if the definition version is compatible
+func (d Definition) IsVersionCompatible() bool {
+	return isCompatibleVersion(d.Version)
 }

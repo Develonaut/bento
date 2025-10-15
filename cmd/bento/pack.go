@@ -8,6 +8,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"bento/pkg/itamae"
+	"bento/pkg/jubako"
 	"bento/pkg/neta"
 )
 
@@ -36,7 +37,9 @@ func init() {
 func runPack(cmd *cobra.Command, args []string) error {
 	filename := args[0]
 
-	def, err := loadDefinition(filename)
+	// Use jubako.Parser which includes version validation
+	parser := jubako.NewParser()
+	def, err := parser.Parse(filename)
 	if err != nil {
 		return fmt.Errorf("failed to load: %w", err)
 	}

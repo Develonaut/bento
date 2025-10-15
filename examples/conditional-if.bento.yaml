@@ -1,17 +1,17 @@
-# Conditional execution example
+version: "1.0"
 type: conditional.if
 name: Environment-Based Deployment
 parameters:
-  condition: true  # In real use, this would be dynamic
-  then:
-    type: http
-    name: Deploy to Production
-    parameters:
-      method: POST
-      url: https://api.example.com/deploy/production
-  else:
-    type: http
-    name: Deploy to Staging
-    parameters:
-      method: POST
-      url: https://api.example.com/deploy/staging
+    condition: true
+    else:
+        name: Deploy to Staging
+        parameters:
+            method: POST
+            url: https://api.example.com/deploy/staging
+        type: http
+    then:
+        name: Deploy to Production
+        parameters:
+            method: POST
+            url: https://api.example.com/deploy/production
+        type: http

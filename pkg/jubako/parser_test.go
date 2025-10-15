@@ -16,7 +16,8 @@ func TestParser_ParseBytes(t *testing.T) {
 	}{
 		{
 			name: "valid http node",
-			yaml: `type: http
+			yaml: `version: "1.0"
+type: http
 name: Test
 parameters:
   url: https://example.com
@@ -25,22 +26,43 @@ parameters:
 		},
 		{
 			name: "valid group node",
-			yaml: `type: group.sequence
+			yaml: `version: "1.0"
+type: group.sequence
 name: Test Group
 nodes:
-  - type: http
+  - version: "1.0"
+    type: http
     name: Step 1
     parameters:
       url: https://example.com
-  - type: http
+  - version: "1.0"
+    type: http
     name: Step 2
     parameters:
       url: https://example.com/api`,
 			wantErr: false,
 		},
 		{
+			name: "missing version",
+			yaml: `type: http
+name: Test
+parameters:
+  url: https://example.com`,
+			wantErr: true,
+		},
+		{
+			name: "incompatible version",
+			yaml: `version: "2.0"
+type: http
+name: Test
+parameters:
+  url: https://example.com`,
+			wantErr: true,
+		},
+		{
 			name: "missing type",
-			yaml: `name: Test
+			yaml: `version: "1.0"
+name: Test
 parameters:
   url: https://example.com`,
 			wantErr: true,
@@ -51,11 +73,13 @@ parameters:
 			wantErr: true,
 		},
 		{
-			name: "group with invalid child",
-			yaml: `type: group.sequence
+			name: "group with invalid child version",
+			yaml: `version: "1.0"
+type: group.sequence
 name: Test Group
 nodes:
-  - name: Missing Type
+  - type: http
+    name: Missing Version
     parameters:
       url: https://example.com`,
 			wantErr: true,
@@ -82,7 +106,8 @@ func TestParser_Parse(t *testing.T) {
 	tmpDir := t.TempDir()
 
 	// Valid workflow file
-	validYAML := `type: http
+	validYAML := `version: "1.0"
+type: http
 name: Test Workflow
 parameters:
   url: https://example.com
@@ -121,8 +146,9 @@ func TestParser_Format(t *testing.T) {
 	parser := NewParser()
 
 	def := neta.Definition{
-		Type: "http",
-		Name: "Test",
+		Version: "1.0",
+		Type:    "http",
+		Name:    "Test",
 		Parameters: map[string]interface{}{
 			"url":    "https://example.com",
 			"method": "GET",
@@ -159,37 +185,70 @@ func TestValidateDefinition(t *testing.T) {
 		{
 			name: "valid single node",
 			def: neta.Definition{
-				Type: "http",
-				Name: "Test",
+				Version: "1.0",
+				Type:    "http",
+				Name:    "Test",
 			},
 			wantErr: false,
 		},
 		{
 			name: "valid group node",
 			def: neta.Definition{
-				Type: "group.sequence",
-				Name: "Test Group",
+				Version: "1.0",
+				Type:    "group.sequence",
+				Name:    "Test Group",
 				Nodes: []neta.Definition{
-					{Type: "http", Name: "Step 1"},
-					{Type: "http", Name: "Step 2"},
+					{Version: "1.0", Type: "http", Name: "Step 1"},
+					{Version: "1.0", Type: "http", Name: "Step 2"},
 				},
 			},
 			wantErr: false,
 		},
 		{
+			name: "missing version",
+			def: neta.Definition{
+				Type: "http",
+				Name: "Test",
+			},
+			wantErr: true,
+		},
+		{
+			name: "incompatible version",
+			def: neta.Definition{
+				Version: "2.0",
+				Type:    "http",
+				Name:    "Test",
+			},
+			wantErr: true,
+		},
+		{
 			name: "missing type",
 			def: neta.Definition{
-				Name: "Test",
+				Version: "1.0",
+				Name:    "Test",
 			},
 			wantErr: true,
 		},
 		{
 			name: "group with invalid child",
 			def: neta.Definition{
-				Type: "group.sequence",
-				Name: "Test Group",
+				Version: "1.0",
+				Type:    "group.sequence",
+				Name:    "Test Group",
 				Nodes: []neta.Definition{
-					{Name: "Missing Type"},
+					{Version: "1.0", Name: "Missing Type"},
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "group with child missing version",
+			def: neta.Definition{
+				Version: "1.0",
+				Type:    "group.sequence",
+				Name:    "Test Group",
+				Nodes: []neta.Definition{
+					{Type: "http", Name: "Missing Version"},
 				},
 			},
 			wantErr: true,

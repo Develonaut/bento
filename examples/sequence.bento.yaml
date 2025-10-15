@@ -1,13 +1,16 @@
+version: "1.0"
 type: sequence
 name: Sequential Workflow
 nodes:
-  - type: http
-    name: Fetch data
-    parameters:
-      url: https://httpbin.org/json
-      method: GET
-  - type: jq
-    name: Transform data
-    parameters:
-      query: "."
-      input: "{\"test\": \"value\"}"
+    - version: "1.0"
+      type: http
+      name: Fetch data
+      parameters:
+        method: GET
+        url: https://httpbin.org/json
+    - version: "1.0"
+      type: jq
+      name: Transform data
+      parameters:
+        input: '{"test": "value"}'
+        query: .

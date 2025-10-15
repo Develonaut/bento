@@ -132,10 +132,10 @@ Bubble Tea TUI - The Shop:
 
 ---
 
-### Phase 5: Jubako (Storage)
+### Phase 5: Jubako (Storage) ✅
 **Duration**: 2-3 hours
-**Status**: Pending
-**File**: [phase-5-jubako.md](./phase-5-jubako.md)
+**Status**: Complete
+**File**: [phase-5-jubako.md](./archive/phase-5-jubako.md)
 
 Storage layer - Stacked Boxes:
 - .bento.yaml parsing
@@ -144,29 +144,184 @@ Storage layer - Stacked Boxes:
 - Import/export
 
 **Deliverables**:
-- [ ] YAML parser
-- [ ] File operations
-- [ ] History tracking
-- [ ] Migration support
-- [ ] Storage tests
+- ✅ YAML parser
+- ✅ File operations
+- ✅ History tracking
+- ✅ Migration support
+- ✅ Storage tests
+- ✅ Karen approval
+
+---
+
+### Phase 5.5: Definition Versioning ✅
+**Duration**: 1-2 hours
+**Status**: Complete
+**File**: [phase-5.5-versioning.md](./phase-5.5-versioning.md)
+
+Add versioning to bento definitions:
+- Version field in neta.Definition
+- Version validation in parser
+- Future-proof for breaking changes
+- Migration framework foundation
+
+**Deliverables**:
+- ✅ Version field added
+- ✅ Validation implemented
+- ✅ Tests passing
+- ✅ Migration tool created
+- ✅ CLI commands enforce version validation
+- ✅ Karen approval
+
+---
+
+### Phase 5.7: Node and Bento Validation
+**Duration**: 3-4 hours
+**Status**: Pending
+**File**: [phase-5.7-validation.md](./phase-5.7-validation.md)
+
+Add structured validation framework:
+- Schema definitions for all node types
+- Parameter validation with clear errors
+- Integration with Huh forms in editor
+- Prevent invalid bento compartments
+- Provide field metadata for UI
+
+**Deliverables**:
+- [ ] Validation framework implemented
+- [ ] Schemas for all node types
+- [ ] Parser integration
+- [ ] Clear error messages
+- [ ] Schema metadata for editor
 - [ ] Karen approval
+
+---
+
+### Phase 6: Enhanced Browser & CRUD
+**Duration**: 3-4 hours
+**Status**: Pending
+**File**: [phase-6-enhanced-browser.md](./phase-6-enhanced-browser.md)
+
+Full-featured bento management:
+- Keyboard shortcuts (r, e, c, d, n)
+- Jubako integration for dynamic lists
+- Delete confirmation dialogs
+- Copy and delete operations
+- Real-time bento discovery
+
+**Deliverables**:
+- [ ] Keyboard shortcuts working
+- [ ] Jubako integration complete
+- [ ] Confirmation dialogs
+- [ ] CRUD operations
+- [ ] Karen approval
+
+---
+
+### Phase 7: Bento Editor - Node Builder
+**Duration**: 5-6 hours
+**Status**: Pending
+**File**: [phase-7-bento-editor-builder.md](./phase-7-bento-editor-builder.md)
+
+Guided bento creation:
+- New Editor screen
+- Pantry integration for node selection
+- Huh wizards for parameter configuration
+- Definition building
+- Create and edit modes
+
+**Deliverables**:
+- [ ] Editor screen created
+- [ ] Create/edit modes
+- [ ] Pantry integration
+- [ ] Huh wizards
+- [ ] Save to Jubako
+- [ ] Karen approval
+
+---
+
+### Phase 8: Bento Editor - Visualization
+**Duration**: 4-5 hours
+**Status**: Pending
+**File**: [phase-8-bento-visualization.md](./phase-8-bento-visualization.md)
+
+Visual bento box with navigation:
+- Text-based bento box rendering
+- Arrow key navigation
+- Edit node in-place
+- Move/delete nodes
+- Run from editor
+
+**Deliverables**:
+- [ ] Visual bento box
+- [ ] Navigation working
+- [ ] Node operations (edit/move/delete)
+- [ ] Run from editor
+- [ ] Karen approval
+
+---
+
+### Phase 9: Examples & Templates
+**Duration**: 2-3 hours
+**Status**: Pending
+**File**: [phase-9-examples.md](./phase-9-examples.md)
+
+Built-in examples and templates:
+- Embedded example .bento.yaml files
+- Examples section in browser
+- Copy-from-template functionality
+- Examples for each node type
+
+**Deliverables**:
+- [ ] 7+ example templates
+- [ ] go:embed integration
+- [ ] Examples browser mode
+- [ ] Copy functionality
+- [ ] Karen approval
+
+---
+
+### Phase 10: Real-World Proof-of-Concept
+**Duration**: 1-2 hours
+**Status**: Pending
+**File**: [phase-10-proof-of-concept.md](./phase-10-proof-of-concept.md)
+
+Validate system with real use case:
+- Create actual bento for user's workflow
+- Test editor/flow with real requirements
+- Validate all phases work together
+- Final system validation
+
+**Deliverables**:
+- [ ] User's bento created
+- [ ] Editor validated
+- [ ] System integration verified
+- [ ] Documentation complete
 
 ---
 
 ## Timeline
 
-**Total Estimated Duration**: 14-20 hours
+**Total Estimated Duration**: 31-42 hours
 
 ```
-Week 1:
+Week 1-2 (Foundation):
 ├── Phase 0: Bootstrap          [Complete] ✅
-├── Phase 1: Foundation         [2-3 hours]
-└── Phase 2: Neta Library       [3-4 hours]
+├── Phase 1: Foundation         [Complete] ✅
+├── Phase 2: Neta Library       [Complete] ✅
+├── Phase 3: CLI Commands       [Complete] ✅
+├── Phase 4: Omise TUI          [Complete] ✅
+└── Phase 5: Jubako Storage     [Complete] ✅
 
-Week 2:
-├── Phase 3: CLI Commands       [2-3 hours]
-├── Phase 4: Omise TUI          [4-5 hours]
-└── Phase 5: Jubako Storage     [2-3 hours]
+Week 3 (Enhancement):
+├── Phase 5.5: Versioning       [Complete] ✅
+├── Phase 5.7: Validation       [3-4 hours]
+├── Phase 6: Enhanced Browser   [3-4 hours]
+├── Phase 7: Editor Builder     [5-6 hours]
+├── Phase 8: Visualization      [4-5 hours]
+└── Phase 9: Examples           [2-3 hours]
+
+Week 4 (Validation):
+└── Phase 10: Proof-of-Concept  [1-2 hours]
 ```
 
 ## Agent Responsibilities
@@ -204,8 +359,19 @@ Each phase follows this workflow:
 2. **Confirm** understanding of Bento Box Principle
 3. **Plan** with TodoWrite tool
 4. **Implement** following Go standards
-5. **Validate** with Karen's checklist
-6. **Get approval** from Karen before proceeding
+5. **Clean up** old/deprecated code:
+   - Remove unused views or components
+   - Delete deprecated functions
+   - Clean up commented-out code
+   - Remove obsolete tests
+6. **Validate** with quality checks:
+   - Run `go fmt ./...`
+   - Run `golangci-lint run`
+   - Run `go test -race ./...`
+   - Check file sizes (< 250 lines)
+   - Check function sizes (< 20 lines)
+7. **Code Review** - Run `/code-review` command
+8. **Get approval** from Karen before proceeding
 
 ## Critical Rules
 
@@ -215,12 +381,17 @@ Each phase follows this workflow:
 - Keep functions under 20 lines
 - Organize by domain (no utils/)
 - Use TodoWrite for tracking
+- Clean up old/deprecated code as you go
+- Remove unused views and components
+- Run `/code-review` after implementation
 - Get Karen's approval before completing phase
 
 ### ❌ DON'T
 - Create utils/ packages (INSTANT REJECTION)
 - Exceed file/function limits
+- Leave unused/deprecated code behind
 - Skip validation steps
+- Skip `/code-review` command
 - Proceed without Karen approval
 - Ignore Bento Box violations
 
@@ -236,7 +407,8 @@ Each phase is complete when:
 6. ✅ Files < 250 lines
 7. ✅ Functions < 20 lines
 8. ✅ Zero utils packages
-9. ✅ **Karen's approval granted**
+9. ✅ **`/code-review` command run** - Peer review complete
+10. ✅ **Karen's approval granted**
 
 ## Getting Started
 
