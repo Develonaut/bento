@@ -16,7 +16,7 @@ Also available as 'b3o' alias.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		// Phase 4 will launch TUI here
 		// For now, show help
-		cmd.Help()
+		_ = cmd.Help()
 	},
 }
 
