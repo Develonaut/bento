@@ -2,6 +2,8 @@
 package screens
 
 import (
+	"bento/pkg/omise/styles"
+
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -23,6 +25,7 @@ func NewBrowser() Browser {
 	delegate := browserDelegate()
 	l := list.New(browserItems(), delegate, 0, 0)
 	l.Title = "Available Workflows"
+	l.Styles.Title.Foreground(styles.Orange)
 	l.SetShowStatusBar(false)
 	l.SetFilteringEnabled(true)
 	return Browser{list: l}

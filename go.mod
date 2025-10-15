@@ -7,6 +7,8 @@ require (
 	github.com/charmbracelet/bubbletea v1.3.10
 	github.com/charmbracelet/lipgloss v1.1.0
 	github.com/charmbracelet/x/exp/teatest v0.0.0-20251013190359-01371c2be815
+	github.com/google/uuid v1.6.0
+	gopkg.in/yaml.v3 v3.0.1
 )
 
 require (
