@@ -27,7 +27,7 @@ parameters:
 		{
 			name: "valid group node",
 			yaml: `version: "1.0"
-type: group.sequence
+type: sequence
 name: Test Group
 nodes:
   - version: "1.0"
@@ -75,7 +75,7 @@ parameters:
 		{
 			name: "group with invalid child version",
 			yaml: `version: "1.0"
-type: group.sequence
+type: sequence
 name: Test Group
 nodes:
   - type: http
@@ -188,6 +188,9 @@ func TestValidateDefinition(t *testing.T) {
 				Version: "1.0",
 				Type:    "http",
 				Name:    "Test",
+				Parameters: map[string]interface{}{
+					"url": "https://example.com",
+				},
 			},
 			wantErr: false,
 		},
@@ -195,11 +198,11 @@ func TestValidateDefinition(t *testing.T) {
 			name: "valid group node",
 			def: neta.Definition{
 				Version: "1.0",
-				Type:    "group.sequence",
+				Type:    "sequence",
 				Name:    "Test Group",
 				Nodes: []neta.Definition{
-					{Version: "1.0", Type: "http", Name: "Step 1"},
-					{Version: "1.0", Type: "http", Name: "Step 2"},
+					{Version: "1.0", Type: "http", Name: "Step 1", Parameters: map[string]interface{}{"url": "https://example.com"}},
+					{Version: "1.0", Type: "http", Name: "Step 2", Parameters: map[string]interface{}{"url": "https://example.com"}},
 				},
 			},
 			wantErr: false,
@@ -233,7 +236,7 @@ func TestValidateDefinition(t *testing.T) {
 			name: "group with invalid child",
 			def: neta.Definition{
 				Version: "1.0",
-				Type:    "group.sequence",
+				Type:    "sequence",
 				Name:    "Test Group",
 				Nodes: []neta.Definition{
 					{Version: "1.0", Name: "Missing Type"},
@@ -245,10 +248,10 @@ func TestValidateDefinition(t *testing.T) {
 			name: "group with child missing version",
 			def: neta.Definition{
 				Version: "1.0",
-				Type:    "group.sequence",
+				Type:    "sequence",
 				Name:    "Test Group",
 				Nodes: []neta.Definition{
-					{Type: "http", Name: "Missing Version"},
+					{Type: "http", Name: "Missing Version", Parameters: map[string]interface{}{"url": "https://example.com"}},
 				},
 			},
 			wantErr: true,

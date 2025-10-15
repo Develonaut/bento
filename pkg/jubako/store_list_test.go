@@ -27,23 +27,32 @@ func TestStore_List(t *testing.T) {
 	})
 
 	t.Run("list multiple bentos", func(t *testing.T) {
-		// Save multiple bentos
+		// Save multiple bentos with valid parameters
 		bentos := []struct {
 			name string
-			typ  string
+			def  neta.Definition
 		}{
-			{"flow1", "http"},
-			{"flow2", "transform.jq"},
-			{"flow3", "group.sequence"},
+			{"flow1", neta.Definition{
+				Version:    "1.0",
+				Type:       "http",
+				Name:       "flow1",
+				Parameters: map[string]interface{}{"url": "https://example.com"},
+			}},
+			{"flow2", neta.Definition{
+				Version:    "1.0",
+				Type:       "jq",
+				Name:       "flow2",
+				Parameters: map[string]interface{}{"query": "."},
+			}},
+			{"flow3", neta.Definition{
+				Version: "1.0",
+				Type:    "sequence",
+				Name:    "flow3",
+			}},
 		}
 
 		for _, b := range bentos {
-			def := neta.Definition{
-				Version: "1.0",
-				Type:    b.typ,
-				Name:    b.name,
-			}
-			if err := store.Save(b.name, def); err != nil {
+			if err := store.Save(b.name, b.def); err != nil {
 				t.Fatalf("Save() error = %v", err)
 			}
 		}

@@ -52,20 +52,36 @@ func (p *Parser) Format(def neta.Definition) ([]byte, error) {
 
 // validateDefinition ensures a definition is well-formed.
 func validateDefinition(def neta.Definition) error {
-	// Validate version first
+	// Validate version and type first
+	if err := validateStructure(def); err != nil {
+		return err
+	}
+
+	// Validate node parameters using validation framework
+	validator := neta.NewValidator()
+	if err := validator.ValidateRecursive(def); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// validateStructure recursively validates version and type of a definition and its children.
+func validateStructure(def neta.Definition) error {
+	// Validate version
 	if err := neta.ValidateVersion(def.Version); err != nil {
 		return fmt.Errorf("version error: %w", err)
 	}
 
+	// Validate type is present
 	if def.Type == "" {
 		return fmt.Errorf("type is required")
 	}
 
-	if def.IsGroup() {
-		for i, child := range def.Nodes {
-			if err := validateDefinition(child); err != nil {
-				return fmt.Errorf("node %d: %w", i, err)
-			}
+	// Recursively validate child nodes
+	for i, child := range def.Nodes {
+		if err := validateStructure(child); err != nil {
+			return fmt.Errorf("node %d: %w", i, err)
 		}
 	}
 
