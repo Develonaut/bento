@@ -44,7 +44,7 @@ func TestPantry_Register(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			p := New()
 			if tt.duplicate {
-				p.Register(tt.nodeType, tt.exec)
+				_ = p.Register(tt.nodeType, tt.exec)
 			}
 
 			err := p.Register(tt.nodeType, tt.exec)
@@ -58,7 +58,7 @@ func TestPantry_Register(t *testing.T) {
 func TestPantry_Get(t *testing.T) {
 	p := New()
 	exec := &mockExecutable{name: "test"}
-	p.Register("test", exec)
+	_ = p.Register("test", exec)
 
 	tests := []struct {
 		name     string
@@ -89,8 +89,8 @@ func TestPantry_Get(t *testing.T) {
 
 func TestPantry_List(t *testing.T) {
 	p := New()
-	p.Register("http", &mockExecutable{name: "http"})
-	p.Register("transform", &mockExecutable{name: "transform"})
+	_ = p.Register("http", &mockExecutable{name: "http"})
+	_ = p.Register("transform", &mockExecutable{name: "transform"})
 
 	types := p.List()
 	if len(types) != 2 {

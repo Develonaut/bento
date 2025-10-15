@@ -13,10 +13,11 @@ Build the Bubble Tea TUI - "Omise" (お店 - shop). This is the interactive cust
 Before starting, you MUST:
 
 1. ✅ Read [BENTO_BOX_PRINCIPLE.md](../BENTO_BOX_PRINCIPLE.md)
-2. ✅ Read [CHARM_STACK_GUIDE.md](../ CHARM_STACK_GUIDE.md)
-3. ✅ Confirm: "I understand the Bento Box Principle and will follow it"
-4. ✅ Use TodoWrite to track all tasks
-5. ✅ Phase 3 approved by Karen
+2. ✅ Read [CHARM_STACK_GUIDE.md](../CHARM_STACK_GUIDE.md)
+3. ✅ Read [Cross-Platform Compatibility Research](../research/cross-platform-compatibility.md)
+4. ✅ Confirm: "I understand the Bento Box Principle and will follow it"
+5. ✅ Use TodoWrite to track all tasks
+6. ✅ Phase 3 approved by Karen
 
 ## Goals
 
@@ -26,7 +27,41 @@ Before starting, you MUST:
 4. Integrate Bubbles components (list, spinner, progress, viewport)
 5. Use Huh for forms and wizards
 6. Keyboard navigation and shortcuts
-7. Validate Bento Box compliance
+7. **Ensure cross-platform terminal compatibility** (see guidelines below)
+8. Validate Bento Box compliance
+
+## Cross-Platform Requirements
+
+**CRITICAL**: TUI must work on all platforms (Linux, macOS, Windows).
+
+### Terminal/TTY Detection (from [research](../research/cross-platform-compatibility.md)):
+```go
+// Check if stdout is a terminal (cross-platform)
+if fileInfo, _ := os.Stdout.Stat(); (fileInfo.Mode() & os.ModeCharDevice) != 0 {
+    // Terminal attached - safe to use TUI
+}
+```
+
+### Signal Handling:
+```go
+// Cross-platform signal handling
+sigChan := make(chan os.Signal, 1)
+signal.Notify(sigChan, os.Interrupt) // Works on all platforms
+
+// SIGTERM is Unix-only - use build tags if needed:
+//go:build !windows
+signal.Notify(sigChan, syscall.SIGTERM)
+```
+
+### File Operations:
+- ✅ Use `filepath.Join()` for all paths
+- ✅ Use `os.UserHomeDir()` or `os.UserConfigDir()` for config locations
+- ✅ Never assume Unix-style paths
+
+### Bubble Tea Notes:
+- Bubble Tea is fully cross-platform
+- Color output works on all platforms (including Windows Terminal)
+- Mouse support works on all platforms
 
 ## TUI Structure
 

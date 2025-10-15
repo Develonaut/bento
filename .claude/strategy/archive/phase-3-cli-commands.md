@@ -13,9 +13,10 @@ Implement Cobra-based CLI commands for direct workflow operations. Users can eit
 Before starting, you MUST:
 
 1. ✅ Read [BENTO_BOX_PRINCIPLE.md](../BENTO_BOX_PRINCIPLE.md)
-2. ✅ Confirm: "I understand the Bento Box Principle and will follow it"
-3. ✅ Use TodoWrite to track all tasks
-4. ✅ Phase 2 approved by Karen
+2. ✅ Read [Cross-Platform Compatibility Research](../research/cross-platform-compatibility.md)
+3. ✅ Confirm: "I understand the Bento Box Principle and will follow it"
+4. ✅ Use TodoWrite to track all tasks
+5. ✅ Phase 2 approved by Karen
 
 ## Goals
 
@@ -24,7 +25,31 @@ Before starting, you MUST:
 3. Add error handling and user feedback
 4. Create help documentation
 5. Integration tests for each command
-6. Validate Bento Box compliance
+6. **Ensure cross-platform compatibility** (see guidelines below)
+7. Validate Bento Box compliance
+
+## Cross-Platform Requirements
+
+**CRITICAL**: All file operations must be cross-platform compatible.
+
+### Required Practices (from [research](../research/cross-platform-compatibility.md)):
+- ✅ Use `filepath.Join()` for all path construction
+- ✅ Use `os.UserHomeDir()` for home directory detection
+- ✅ Use `os.TempDir()` for temporary files
+- ✅ Never hard-code `/` or `\` path separators
+- ✅ Use `os.PathSeparator` when needed
+- ✅ Test file operations on multiple platforms via CI
+
+### Examples:
+```go
+// CORRECT:
+configPath := filepath.Join(homeDir, ".bento.yaml")
+tmpFile, err := os.CreateTemp("", "bento-*.json")
+
+// WRONG:
+configPath := homeDir + "/.bento.yaml"  // Hard-coded separator!
+tmpFile := "/tmp/bento.json"            // Unix-only path!
+```
 
 ## Command Structure
 
@@ -103,6 +128,7 @@ func initConfig() {
     if cfgFile != "" {
         viper.SetConfigFile(cfgFile)
     } else {
+        // Cross-platform: Use os.UserHomeDir() (Go 1.12+)
         home, err := os.UserHomeDir()
         if err != nil {
             fmt.Fprintf(os.Stderr, "Error finding home: %v\n", err)
@@ -587,6 +613,8 @@ Phase 3 is complete when:
 3. ❌ **Poor error messages** - User-friendly errors are critical
 4. ❌ **No help text** - Every command needs good documentation
 5. ❌ **Skipping integration tests** - Test the actual CLI experience
+6. ❌ **Hard-coded paths** - Always use `filepath.Join()` and `os.UserHomeDir()`
+7. ❌ **Platform assumptions** - Test on Linux, macOS, and Windows
 
 ## Next Phase
 

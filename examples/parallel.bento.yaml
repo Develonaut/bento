@@ -1,0 +1,13 @@
+type: parallel
+name: Parallel Execution
+nodes:
+  - type: http
+    name: Request 1
+    parameters:
+      url: https://httpbin.org/json
+      method: GET
+  - type: http
+    name: Request 2
+    parameters:
+      url: https://httpbin.org/headers
+      method: GET

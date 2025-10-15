@@ -1,25 +1,76 @@
 package main
 
 import (
+	"fmt"
+	"os"
+
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
+)
+
+var (
+	cfgFile string
+	verbose bool
 )
 
 var rootCmd = &cobra.Command{
-	Use:   "bento",
-	Short: "Bento - Organized workflow orchestration",
+	Use:     "bento",
+	Short:   "🍱 Bento - Organized workflow orchestration",
+	Version: "0.1.0",
 	Long: `Bento is a Go-based CLI orchestration tool.
 
-Run 'bento' without arguments to launch the interactive TUI.
-Or use commands directly: prepare, pack, pantry, taste.
+Run 'bento' without arguments to launch the interactive TUI (Phase 4).
+Or use commands directly for scripting and automation.
+
+Available commands:
+  prepare - Validate a .bento.yaml file
+  pack    - Execute a workflow
+  pantry  - List/search available neta types
+  taste   - Dry run a workflow
 
 Also available as 'b3o' alias.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		// Phase 4 will launch TUI here
-		// For now, show help
+		fmt.Println("🍱 Bento TUI coming in Phase 4!")
+		fmt.Println("For now, use commands: prepare, pack, pantry, taste")
 		_ = cmd.Help()
 	},
 }
 
+func Execute() error {
+	return rootCmd.Execute()
+}
+
 func init() {
-	// Phase 3 will add subcommands here
+	cobra.OnInitialize(initConfig)
+
+	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.bento.yaml)")
+	rootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "verbose output")
+
+	_ = viper.BindPFlag("verbose", rootCmd.PersistentFlags().Lookup("verbose"))
+}
+
+func initConfig() {
+	if cfgFile != "" {
+		viper.SetConfigFile(cfgFile)
+	} else {
+		// Cross-platform: Use os.UserHomeDir() (Go 1.12+)
+		home, err := os.UserHomeDir()
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error finding home: %v\n", err)
+			os.Exit(1)
+		}
+
+		viper.AddConfigPath(home)
+		viper.SetConfigType("yaml")
+		viper.SetConfigName(".bento")
+	}
+
+	viper.AutomaticEnv()
+
+	if err := viper.ReadInConfig(); err == nil {
+		if verbose {
+			fmt.Fprintln(os.Stderr, "Using config file:", viper.ConfigFileUsed())
+		}
+	}
 }

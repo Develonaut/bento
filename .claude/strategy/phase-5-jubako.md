@@ -13,9 +13,10 @@ Implement the storage layer - "Jubako" (重箱 - stacked boxes). This package ha
 Before starting, you MUST:
 
 1. ✅ Read [BENTO_BOX_PRINCIPLE.md](../BENTO_BOX_PRINCIPLE.md)
-2. ✅ Confirm: "I understand the Bento Box Principle and will follow it"
-3. ✅ Use TodoWrite to track all tasks
-4. ✅ Phase 4 approved by Karen
+2. ✅ Read [Cross-Platform Compatibility Research](../research/cross-platform-compatibility.md) - **CRITICAL**
+3. ✅ Confirm: "I understand the Bento Box Principle and will follow it"
+4. ✅ Use TodoWrite to track all tasks
+5. ✅ Phase 4 approved by Karen
 
 ## Goals
 
@@ -24,7 +25,89 @@ Before starting, you MUST:
 3. Add execution history tracking
 4. Implement import/export functionality
 5. File watching for auto-reload (optional)
-6. Validate Bento Box compliance
+6. **Ensure 100% cross-platform file operations** (see guidelines below)
+7. Validate Bento Box compliance
+
+## Cross-Platform Requirements
+
+**CRITICAL**: Phase 5 has the MOST file operations - strict cross-platform compliance required.
+
+### Mandatory Practices (from [research](../research/cross-platform-compatibility.md)):
+
+#### Path Construction:
+```go
+// ALWAYS use filepath.Join()
+workflowPath := filepath.Join(homeDir, ".bento", "workflows", name+".bento.yaml")
+
+// NEVER use string concatenation
+workflowPath := homeDir + "/.bento/workflows/" + name + ".bento.yaml"  // WRONG!
+```
+
+#### Path Separator:
+```go
+// Use when needed
+sep := string(filepath.Separator)  // or os.PathSeparator
+```
+
+#### Directory Detection:
+```go
+// Cross-platform home directory
+home, err := os.UserHomeDir()  // Go 1.12+
+
+// Cross-platform config directory
+configDir, err := os.UserConfigDir()  // Go 1.13+
+
+// Platform-specific config locations:
+// Linux:   $XDG_CONFIG_HOME or ~/.config/bento/
+// macOS:   ~/Library/Application Support/bento/
+// Windows: %APPDATA%\bento\
+```
+
+#### File Permissions:
+```go
+// Go handles Windows conversion automatically
+os.MkdirAll(dir, 0755)        // Works on all platforms
+os.WriteFile(file, data, 0644) // Works on all platforms
+```
+
+#### filepath.Walk:
+```go
+// Already cross-platform - no changes needed
+err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
+    // Handle files
+})
+```
+
+### Testing Requirements:
+- ✅ Test file operations on Windows, macOS, Linux
+- ✅ Test path handling with spaces in names
+- ✅ Test Unicode filenames
+- ✅ Use `t.TempDir()` in tests (cross-platform temp dirs)
+
+### Examples from Code:
+```go
+// pathFor - CORRECT implementation
+func (s *Store) pathFor(name string) string {
+    if !filepath.Ext(name) == ".bento.yaml" {
+        name += ".bento.yaml"
+    }
+    return filepath.Join(s.workDir, name)  // ✅ Cross-platform
+}
+
+// defaultPaths - CORRECT implementation
+func defaultPaths() []string {
+    home, err := os.UserHomeDir()  // ✅ Cross-platform
+    if err != nil {
+        return []string{"."}
+    }
+
+    return []string{
+        ".",
+        filepath.Join(home, ".bento"),      // ✅ Cross-platform
+        filepath.Join(home, "bento"),       // ✅ Cross-platform
+    }
+}
+```
 
 ## Storage Structure
 
@@ -713,6 +796,10 @@ Phase 5 is complete when:
 3. ❌ **No validation** - Always validate YAML before parsing
 4. ❌ **Hardcoded paths** - Use configurable directories
 5. ❌ **Large files** - Split if approaching limits
+6. ❌ **Hard-coded separators** - NEVER use `/` or `\` - always use `filepath.Join()`
+7. ❌ **Unix-only assumptions** - No `/tmp`, `/home`, etc.
+8. ❌ **String path manipulation** - Use `filepath` package functions
+9. ❌ **Not testing cross-platform** - Test on Windows/macOS/Linux
 
 ## Final Integration
 
