@@ -34,7 +34,10 @@ type settingItem struct {
 func NewSettings() Settings {
 	tm := styles.NewManager()
 	cfg := config.Load()
-	dp := components.NewDirPicker(cfg.SaveDirectory)
+	defaultCfg := config.Default()
+
+	// Create DirPicker: start at current directory, but reset goes to app default
+	dp := components.NewDirPicker(cfg.SaveDirectory, defaultCfg.SaveDirectory)
 
 	s := Settings{
 		cursor:          0,
@@ -65,7 +68,7 @@ func (s *Settings) buildSettings() []settingItem {
 		{
 			name:     "Save Directory",
 			value:    s.config.GetSaveDirectory(),
-			desc:     "Directory for saving workflow data (press Enter/Space to change)",
+			desc:     "Directory for all app data (press Enter/Space to change)",
 			editable: true,
 		},
 	}
@@ -76,56 +79,62 @@ func (s Settings) Init() tea.Cmd {
 	return s.dirPicker.Init()
 }
 
+// InModalMode returns true if settings is in modal picker mode
+func (s Settings) InModalMode() bool {
+	return s.selectingDir || s.selectingTheme
+}
+
 // Update handles settings messages
 func (s Settings) Update(msg tea.Msg) (Settings, tea.Cmd) {
 	// Handle directory selection
 	if msg, ok := msg.(components.DirSelectedMsg); ok {
-		s.config.SaveDirectory = msg.Path
-		_ = config.Save(s.config) // Save config (ignore errors for now)
-		s.items = s.buildSettings() // Rebuild items to show new directory
-		s.selectingDir = false
-		return s, nil
+		return s.handleDirectorySelected(msg)
 	}
 
 	// Handle directory picker mode
 	if s.selectingDir {
-		switch msg := msg.(type) {
-		case tea.KeyMsg:
-			switch msg.String() {
-			case "esc":
-				s.selectingDir = false
-				return s, nil
-			}
-		case styles.ThemeChangedMsg:
-			s.dirPicker = s.dirPicker.RebuildStyles()
-		}
-
-		var cmd tea.Cmd
-		s.dirPicker, cmd = s.dirPicker.Update(msg)
-		return s, cmd
+		return s.handleDirectoryPickerMode(msg)
 	}
 
-	switch msg := msg.(type) {
-	case styles.ThemeChangedMsg:
-		// Rebuild items to update theme color
-		s.items = s.buildSettings()
-		s.dirPicker = s.dirPicker.RebuildStyles()
-	case tea.KeyMsg:
-		// Handle theme selection mode
-		if s.selectingTheme {
-			return s.handleThemeSelection(msg)
-		}
-
-		// Normal settings navigation
-		switch msg.String() {
-		case "up", "k":
-			s = s.moveCursorUp()
-		case "down", "j":
-			s = s.moveCursorDown()
-		case "enter", " ":
-			return s.activateSetting()
-		}
+	// Handle theme changes and rebuild styles
+	if _, ok := msg.(styles.ThemeChangedMsg); ok {
+		return s.handleThemeChanged()
 	}
+
+	// Handle keyboard input
+	if msg, ok := msg.(tea.KeyMsg); ok {
+		return s.handleKeyInput(msg)
+	}
+
+	return s, nil
+}
+
+// handleThemeChanged rebuilds items and styles when theme changes
+func (s Settings) handleThemeChanged() (Settings, tea.Cmd) {
+	s.items = s.buildSettings()
+	s.dirPicker = s.dirPicker.RebuildStyles()
+	return s, nil
+}
+
+// handleKeyInput processes keyboard input
+func (s Settings) handleKeyInput(msg tea.KeyMsg) (Settings, tea.Cmd) {
+	// Handle theme selection mode
+	if s.selectingTheme {
+		return s.handleThemeSelection(msg)
+	}
+
+	// Normal settings navigation
+	switch msg.String() {
+	case "up", "k":
+		return s.moveCursorUp(), nil
+	case "down", "j":
+		return s.moveCursorDown(), nil
+	case "enter", " ":
+		return s.activateSetting()
+	case "r":
+		return s.resetCurrentSetting()
+	}
+
 	return s, nil
 }
 
@@ -167,24 +176,38 @@ func (s Settings) activateSetting() (Settings, tea.Cmd) {
 	return s, nil
 }
 
+// resetCurrentSetting resets the current setting to its default value
+func (s Settings) resetCurrentSetting() (Settings, tea.Cmd) {
+	item := s.items[s.cursor]
+	if !item.editable {
+		return s, nil
+	}
+
+	// Check if this is the theme setting
+	if item.name == "Theme" {
+		// Reset to default theme (Maguro)
+		s.themeManager.SetVariant(styles.VariantMaguro)
+		s.items = s.buildSettings()
+		return s, func() tea.Msg {
+			return styles.ThemeChangedMsg{}
+		}
+	}
+
+	// Check if this is the save directory setting
+	if item.name == "Save Directory" {
+		return s.resetDirectorySetting()
+	}
+
+	return s, nil
+}
+
 // View renders the settings
 func (s Settings) View() string {
 	title := styles.Title.Render("Settings")
 
 	// Show directory picker if in directory selection mode
 	if s.selectingDir {
-		pickerView := s.dirPicker.View()
-		hint := styles.Subtle.Render("↑/↓: Navigate • Enter: Select Directory • Esc: Cancel")
-		return lipgloss.JoinVertical(
-			lipgloss.Left,
-			title,
-			"",
-			styles.Subtle.Render("Select save directory:"),
-			"",
-			pickerView,
-			"",
-			hint,
-		)
+		return s.renderDirectoryPickerView(title)
 	}
 
 	// Show theme selector if in selection mode
@@ -192,8 +215,14 @@ func (s Settings) View() string {
 		return s.renderThemeSelector(title)
 	}
 
+	// Show normal settings list
+	return s.renderSettingsListView(title)
+}
+
+// renderSettingsListView renders the normal settings list
+func (s Settings) renderSettingsListView(title string) string {
 	settingsView := s.renderSettings()
-	hint := styles.Subtle.Render("↑/↓: Navigate • Enter/Space: Select • Esc: Back")
+	hint := styles.Subtle.Render("↑/↓: Navigate • Enter/Space: Select • r: Reset to Default • Esc: Back")
 	return lipgloss.JoinVertical(
 		lipgloss.Left,
 		title,

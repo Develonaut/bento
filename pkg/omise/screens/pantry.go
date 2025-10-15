@@ -5,24 +5,24 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 
+	"bento/pkg/omise/components"
 	"bento/pkg/omise/styles"
 )
 
 // Pantry shows available neta types
 type Pantry struct {
-	table table.Model
+	table components.StyledTable
 }
 
 // NewPantry creates a pantry screen
 func NewPantry() Pantry {
-	t := table.New(
-		table.WithColumns(pantryColumns()),
-		table.WithRows(pantryRows()),
-		table.WithFocused(true),
-		table.WithHeight(10),
-	)
-	t.SetStyles(pantryTableStyle())
-	return Pantry{table: t}
+	return Pantry{
+		table: components.NewStyledTable(
+			pantryColumns(),
+			pantryRows(),
+			10,
+		),
+	}
 }
 
 // pantryColumns returns table column definitions
@@ -46,20 +46,6 @@ func pantryRows() []table.Row {
 	}
 }
 
-// pantryTableStyle returns styled table configuration
-func pantryTableStyle() table.Styles {
-	s := table.DefaultStyles()
-	s.Header = s.Header.
-		BorderStyle(lipgloss.NormalBorder()).
-		BorderForeground(styles.Primary).
-		BorderBottom(true).
-		Bold(true)
-	s.Selected = s.Selected.
-		Foreground(styles.Primary).
-		Bold(true)
-	return s
-}
-
 // Init initializes the pantry
 func (p Pantry) Init() tea.Cmd {
 	return nil
@@ -69,7 +55,7 @@ func (p Pantry) Init() tea.Cmd {
 func (p Pantry) Update(msg tea.Msg) (Pantry, tea.Cmd) {
 	// Handle theme changes
 	if _, ok := msg.(styles.ThemeChangedMsg); ok {
-		p = p.rebuildStyles()
+		p.table = p.table.RebuildStyles()
 	}
 
 	// Handle window resize to update table dimensions
@@ -82,12 +68,6 @@ func (p Pantry) Update(msg tea.Msg) (Pantry, tea.Cmd) {
 	return p, cmd
 }
 
-// rebuildStyles recreates styles with current theme
-func (p Pantry) rebuildStyles() Pantry {
-	p.table.SetStyles(pantryTableStyle())
-	return p
-}
-
 // View renders the pantry
 func (p Pantry) View() string {
 	title := styles.Title.Render("Pantry - Available Neta Types")
@@ -97,6 +77,6 @@ func (p Pantry) View() string {
 		"",
 		p.table.View(),
 		"",
-		styles.Subtle.Render("Use ↑/↓ to navigate • Press Enter for details"),
+		styles.Subtle.Render("↑/↓: Navigate • Enter/Space: View details (coming soon)"),
 	)
 }

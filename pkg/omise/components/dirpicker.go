@@ -15,21 +15,28 @@ type DirSelectedMsg struct {
 // DirPicker wraps bubbles/filepicker for directory selection
 type DirPicker struct {
 	filepicker.Model
+	defaultDir string
 }
 
 // NewDirPicker creates a themed directory picker
-func NewDirPicker(startDir string) DirPicker {
+// startDir is where the picker opens initially
+// defaultDir is the directory to return to when reset is pressed
+func NewDirPicker(startDir string, defaultDir string) DirPicker {
 	fp := filepicker.New()
 	fp.AllowedTypes = nil
 	fp.DirAllowed = true
 	fp.FileAllowed = false
+	fp.ShowHidden = true // Show hidden directories like .bento
 	fp.CurrentDirectory = startDir
 	fp.Height = 15
 
 	// Apply theme styling
 	fp = applyDirPickerStyles(fp)
 
-	return DirPicker{Model: fp}
+	return DirPicker{
+		Model:      fp,
+		defaultDir: defaultDir,
+	}
 }
 
 // applyDirPickerStyles applies theme colors to filepicker
@@ -64,5 +71,11 @@ func (dp DirPicker) Update(msg tea.Msg) (DirPicker, tea.Cmd) {
 // RebuildStyles updates the picker styles with current theme colors
 func (dp DirPicker) RebuildStyles() DirPicker {
 	dp.Model = applyDirPickerStyles(dp.Model)
+	return dp
+}
+
+// ResetToDefault resets the directory picker to the default directory
+func (dp DirPicker) ResetToDefault() DirPicker {
+	dp.Model.CurrentDirectory = dp.defaultDir
 	return dp
 }

@@ -34,6 +34,12 @@ func (m Model) handleResize(msg tea.WindowSizeMsg) (tea.Model, tea.Cmd) {
 
 // handleKey processes keyboard input
 func (m Model) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+	// Check if Settings screen is in modal mode (picker open)
+	// If so, let the screen handle tab/shift+tab instead of global handler
+	if m.screen == ScreenSettings && m.settings.InModalMode() {
+		return m.updateScreen(msg)
+	}
+
 	switch msg.String() {
 	case "q", "ctrl+c":
 		m.quitting = true

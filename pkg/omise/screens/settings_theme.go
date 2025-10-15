@@ -16,7 +16,8 @@ func (s Settings) handleThemeSelection(msg tea.KeyMsg) (Settings, tea.Cmd) {
 		s = s.moveThemeCursorDown()
 	case "enter", " ":
 		return s.selectTheme()
-	case "esc":
+	case "esc", "tab", "shift+tab":
+		// Exit theme selection mode
 		s.selectingTheme = false
 	}
 	return s, nil

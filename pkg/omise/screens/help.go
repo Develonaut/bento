@@ -104,7 +104,7 @@ func helpSections() []helpSection {
 			title: "Pantry Screen",
 			items: [][]string{
 				{"↑/↓", "Navigate neta types"},
-				{"enter", "View details (coming soon)"},
+				{"enter/space", "View details (coming soon)"},
 			},
 		},
 		{
