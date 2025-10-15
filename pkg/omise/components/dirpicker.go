@@ -28,7 +28,7 @@ func NewDirPicker(startDir string, defaultDir string) DirPicker {
 	fp.FileAllowed = false
 	fp.ShowHidden = true // Show hidden directories like .bento
 	fp.CurrentDirectory = startDir
-	fp.Height = 15
+	fp.SetHeight(15)
 
 	// Apply theme styling
 	fp = applyDirPickerStyles(fp)
