@@ -61,14 +61,15 @@ func TestSettingsResetKey(t *testing.T) {
 	updated, _ := s.Update(msg)
 
 	// Should have processed the key (not panic or error)
-	if updated.cursor < 0 {
+	// Verify the settings object is still valid
+	if updated.list.Model.Items() == nil {
 		t.Error("Reset key 'r' caused invalid state")
 	}
 }
 
 func TestSettingsSpaceKey(t *testing.T) {
 	s := NewSettings()
-	s.cursor = 0 // Position on Theme setting
+	s.list.Select(0) // Position on Theme setting
 
 	// Test space key activates setting
 	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{' '}}
@@ -82,7 +83,7 @@ func TestSettingsSpaceKey(t *testing.T) {
 
 func TestSettingsEnterKey(t *testing.T) {
 	s := NewSettings()
-	s.cursor = 0 // Position on Theme setting
+	s.list.Select(0) // Position on Theme setting
 
 	// Test enter key activates setting
 	msg := tea.KeyMsg{Type: tea.KeyEnter}
@@ -148,46 +149,46 @@ func TestSettingsEscExitsThemePicker(t *testing.T) {
 
 func TestSettingsNavigation(t *testing.T) {
 	tests := []struct {
-		name           string
-		key            tea.KeyMsg
-		initialCursor  int
-		expectedCursor int
+		name          string
+		key           tea.KeyMsg
+		initialIndex  int
+		expectedIndex int
 	}{
 		{
-			name:           "down moves cursor",
-			key:            tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'j'}},
-			initialCursor:  0,
-			expectedCursor: 1,
+			name:          "down moves selection",
+			key:           tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'j'}},
+			initialIndex:  0,
+			expectedIndex: 1,
 		},
 		{
-			name:           "up moves cursor",
-			key:            tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'k'}},
-			initialCursor:  1,
-			expectedCursor: 0,
+			name:          "up moves selection",
+			key:           tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'k'}},
+			initialIndex:  1,
+			expectedIndex: 0,
 		},
 		{
-			name:           "down at bottom stays",
-			key:            tea.KeyMsg{Type: tea.KeyDown},
-			initialCursor:  1,
-			expectedCursor: 1,
+			name:          "down at bottom stays",
+			key:           tea.KeyMsg{Type: tea.KeyDown},
+			initialIndex:  1,
+			expectedIndex: 1,
 		},
 		{
-			name:           "up at top stays",
-			key:            tea.KeyMsg{Type: tea.KeyUp},
-			initialCursor:  0,
-			expectedCursor: 0,
+			name:          "up at top stays",
+			key:           tea.KeyMsg{Type: tea.KeyUp},
+			initialIndex:  0,
+			expectedIndex: 0,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			s := NewSettings()
-			s.cursor = tt.initialCursor
+			s.list.Select(tt.initialIndex)
 
 			updated, _ := s.Update(tt.key)
 
-			if updated.cursor != tt.expectedCursor {
-				t.Errorf("cursor = %d, want %d", updated.cursor, tt.expectedCursor)
+			if updated.list.Index() != tt.expectedIndex {
+				t.Errorf("list index = %d, want %d", updated.list.Index(), tt.expectedIndex)
 			}
 		})
 	}
@@ -203,23 +204,31 @@ func TestSettingsBuildSettings(t *testing.T) {
 	}
 
 	// Verify Theme setting
-	if items[0].name != "Theme" {
-		t.Errorf("First setting should be Theme, got %s", items[0].name)
+	themeItem, ok := items[0].(settingItem)
+	if !ok {
+		t.Fatal("First item is not a settingItem")
 	}
-	if !items[0].editable {
+	if themeItem.name != "Theme" {
+		t.Errorf("First setting should be Theme, got %s", themeItem.name)
+	}
+	if !themeItem.editable {
 		t.Error("Theme setting should be editable")
 	}
 
 	// Verify Save Directory setting
-	if items[1].name != "Save Directory" {
-		t.Errorf("Second setting should be Save Directory, got %s", items[1].name)
+	dirItem, ok := items[1].(settingItem)
+	if !ok {
+		t.Fatal("Second item is not a settingItem")
 	}
-	if !items[1].editable {
+	if dirItem.name != "Save Directory" {
+		t.Errorf("Second setting should be Save Directory, got %s", dirItem.name)
+	}
+	if !dirItem.editable {
 		t.Error("Save Directory setting should be editable")
 	}
 
 	// Verify description mentions "all app data"
-	if items[1].desc != "Directory for all app data (press Enter/Space to change)" {
-		t.Errorf("Save Directory desc = %s, want 'Directory for all app data (press Enter/Space to change)'", items[1].desc)
+	if dirItem.desc != "Directory for all app data (press Enter/Space to change)" {
+		t.Errorf("Save Directory desc = %s, want 'Directory for all app data (press Enter/Space to change)'", dirItem.desc)
 	}
 }

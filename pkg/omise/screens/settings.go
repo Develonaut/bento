@@ -1,6 +1,7 @@
 package screens
 
 import (
+	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 
@@ -11,8 +12,7 @@ import (
 
 // Settings shows configuration options
 type Settings struct {
-	cursor          int
-	items           []settingItem
+	list            components.StyledList
 	themeManager    *styles.Manager
 	selectingTheme  bool
 	themeCursor     int
@@ -33,6 +33,23 @@ type settingItem struct {
 	valueStyle lipgloss.Style // Optional custom style
 }
 
+// Implement list.Item interface
+func (s settingItem) FilterValue() string { return s.name }
+func (s settingItem) Title() string {
+	editIndicator := ""
+	if s.editable {
+		editIndicator = " [↵]"
+	}
+	return s.name + editIndicator
+}
+func (s settingItem) Description() string {
+	valueStyle := styles.Subtle
+	if s.valueStyle.GetBold() || s.valueStyle.GetForeground() != lipgloss.Color("") {
+		valueStyle = s.valueStyle
+	}
+	return valueStyle.Render(s.value) + " • " + s.desc
+}
+
 // NewSettings creates a settings screen
 func NewSettings() Settings {
 	tm := styles.NewManager()
@@ -43,7 +60,6 @@ func NewSettings() Settings {
 	dp := components.NewDirPicker(cfg.SaveDirectory, defaultCfg.SaveDirectory)
 
 	s := Settings{
-		cursor:          0,
 		themeManager:    tm,
 		selectingTheme:  false,
 		selectingDir:    false,
@@ -55,14 +71,18 @@ func NewSettings() Settings {
 		keys:            components.NewSettingsKeyMap(),
 		pickerKeys:      components.NewPickerKeyMap(),
 	}
-	s.items = s.buildSettings()
+
+	items := s.buildSettings()
+	s.list = components.NewStyledList(items, "")
+	s.list.SetSize(80, 20) // Set default size, will be updated on window resize
+
 	return s
 }
 
 // buildSettings creates setting items with theme manager
-func (s *Settings) buildSettings() []settingItem {
-	return []settingItem{
-		{
+func (s *Settings) buildSettings() []list.Item {
+	return []list.Item{
+		settingItem{
 			name:     "Theme",
 			value:    string(s.themeManager.GetVariant()),
 			desc:     "Sushi-themed color variant (press Enter/Space to select)",
@@ -71,7 +91,7 @@ func (s *Settings) buildSettings() []settingItem {
 				Foreground(styles.Primary).
 				Bold(true),
 		},
-		{
+		settingItem{
 			name:     "Save Directory",
 			value:    s.config.GetSaveDirectory(),
 			desc:     "Directory for all app data (press Enter/Space to change)",
@@ -107,6 +127,13 @@ func (s Settings) Update(msg tea.Msg) (Settings, tea.Cmd) {
 		return s.handleThemeChanged()
 	}
 
+	// Handle window resize
+	if msg, ok := msg.(tea.WindowSizeMsg); ok {
+		h, v := lipgloss.NewStyle().Margin(2, 2).GetFrameSize()
+		s.list.SetSize(msg.Width-h, msg.Height-v-4)
+		return s, nil
+	}
+
 	// Handle keyboard input
 	if msg, ok := msg.(tea.KeyMsg); ok {
 		return s.handleKeyInput(msg)
@@ -117,7 +144,9 @@ func (s Settings) Update(msg tea.Msg) (Settings, tea.Cmd) {
 
 // handleThemeChanged rebuilds items and styles when theme changes
 func (s Settings) handleThemeChanged() (Settings, tea.Cmd) {
-	s.items = s.buildSettings()
+	items := s.buildSettings()
+	s.list.SetItems(items)
+	s.list = s.list.RebuildStyles()
 	s.dirPicker = s.dirPicker.RebuildStyles()
 	return s, nil
 }
@@ -129,41 +158,29 @@ func (s Settings) handleKeyInput(msg tea.KeyMsg) (Settings, tea.Cmd) {
 		return s.handleThemeSelection(msg)
 	}
 
-	// Normal settings navigation
+	// Handle setting-specific actions
 	switch msg.String() {
-	case "up", "k":
-		return s.moveCursorUp(), nil
-	case "down", "j":
-		return s.moveCursorDown(), nil
 	case "enter", " ":
 		return s.activateSetting()
 	case "r":
 		return s.resetCurrentSetting()
 	}
 
-	return s, nil
-}
-
-// moveCursorUp moves cursor to previous item
-func (s Settings) moveCursorUp() Settings {
-	if s.cursor > 0 {
-		s.cursor--
-	}
-	return s
-}
-
-// moveCursorDown moves cursor to next item
-func (s Settings) moveCursorDown() Settings {
-	if s.cursor < len(s.items)-1 {
-		s.cursor++
-	}
-	return s
+	// Delegate navigation to list
+	var cmd tea.Cmd
+	s.list.Model, cmd = s.list.Model.Update(msg)
+	return s, cmd
 }
 
 // activateSetting activates the current setting (e.g., opens theme selector)
 func (s Settings) activateSetting() (Settings, tea.Cmd) {
-	item := s.items[s.cursor]
-	if !item.editable {
+	selected := s.list.SelectedItem()
+	if selected == nil {
+		return s, nil
+	}
+
+	item, ok := selected.(settingItem)
+	if !ok || !item.editable {
 		return s, nil
 	}
 
@@ -184,8 +201,13 @@ func (s Settings) activateSetting() (Settings, tea.Cmd) {
 
 // resetCurrentSetting resets the current setting to its default value
 func (s Settings) resetCurrentSetting() (Settings, tea.Cmd) {
-	item := s.items[s.cursor]
-	if !item.editable {
+	selected := s.list.SelectedItem()
+	if selected == nil {
+		return s, nil
+	}
+
+	item, ok := selected.(settingItem)
+	if !ok || !item.editable {
 		return s, nil
 	}
 
@@ -193,7 +215,8 @@ func (s Settings) resetCurrentSetting() (Settings, tea.Cmd) {
 	if item.name == "Theme" {
 		// Reset to default theme (Maguro)
 		s.themeManager.SetVariant(styles.VariantMaguro)
-		s.items = s.buildSettings()
+		items := s.buildSettings()
+		s.list.SetItems(items)
 		return s, func() tea.Msg {
 			return styles.ThemeChangedMsg{}
 		}

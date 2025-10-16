@@ -49,35 +49,40 @@ func (e Editor) renderBentoHeader() string {
 
 // renderCompartment renders a node as a compartment
 func (e Editor) renderCompartment(node neta.Definition, selected bool, number int) string {
-	// Border style
-	border := lipgloss.RoundedBorder()
-	borderColor := styles.Muted
+	border, borderColor := e.getCompartmentStyle(selected)
+	content := e.buildCompartmentContent(node, number)
+	return e.renderCompartmentBox(content, border, borderColor)
+}
 
+// getCompartmentStyle returns border style based on selection state
+func (e Editor) getCompartmentStyle(selected bool) (lipgloss.Border, lipgloss.Color) {
 	if selected {
-		border = lipgloss.ThickBorder()
-		borderColor = styles.Primary
+		return lipgloss.ThickBorder(), styles.Primary
 	}
+	return lipgloss.RoundedBorder(), styles.Muted
+}
 
-	// Content
+// buildCompartmentContent builds the content for a compartment
+func (e Editor) buildCompartmentContent(node neta.Definition, number int) string {
 	title := fmt.Sprintf("%d. %s [%s]", number, node.Name, node.Type)
 	params := e.formatParameters(node)
 
 	titleStyle := lipgloss.NewStyle().Bold(true).Foreground(styles.Text)
-	content := lipgloss.JoinVertical(
+	return lipgloss.JoinVertical(
 		lipgloss.Left,
 		titleStyle.Render(title),
 		styles.Subtle.Render(params),
 	)
+}
 
-	// Box
-	box := lipgloss.NewStyle().
+// renderCompartmentBox renders the final compartment box with styling
+func (e Editor) renderCompartmentBox(content string, border lipgloss.Border, borderColor lipgloss.Color) string {
+	return lipgloss.NewStyle().
 		Border(border).
 		BorderForeground(borderColor).
 		Padding(1, 2).
 		Width(56).
 		Render(content)
-
-	return box
 }
 
 // formatParameters formats node parameters for display

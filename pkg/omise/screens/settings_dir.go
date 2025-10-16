@@ -12,8 +12,9 @@ import (
 // handleDirectorySelected processes directory selection message
 func (s Settings) handleDirectorySelected(msg components.DirSelectedMsg) (Settings, tea.Cmd) {
 	s.config.SaveDirectory = msg.Path
-	_ = config.Save(s.config)   // Save config (ignore errors for now)
-	s.items = s.buildSettings() // Rebuild items to show new directory
+	_ = config.Save(s.config) // Save config (ignore errors for now)
+	items := s.buildSettings()
+	s.list.SetItems(items) // Rebuild items to show new directory
 	s.selectingDir = false
 	return s, nil
 }
@@ -63,7 +64,8 @@ func (s Settings) resetDirectorySetting() (Settings, tea.Cmd) {
 	defaultCfg := config.Default()
 	s.config.SaveDirectory = defaultCfg.SaveDirectory
 	_ = config.Save(s.config)
-	s.items = s.buildSettings()
+	items := s.buildSettings()
+	s.list.SetItems(items)
 	// Recreate DirPicker with app default
 	s.dirPicker = components.NewDirPicker(defaultCfg.SaveDirectory, defaultCfg.SaveDirectory)
 	return s, nil

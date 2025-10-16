@@ -96,3 +96,8 @@ func (h HelpView) RenderFooterWithBack(message string, screenKeys interface{ Sho
 
 	return styles.Subtle.Render(helpText)
 }
+
+// RenderKeys renders a list of key bindings using help component
+func (h HelpView) RenderKeys(keys []key.Binding) string {
+	return h.help.ShortHelpView(keys)
+}

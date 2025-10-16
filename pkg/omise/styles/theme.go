@@ -1,7 +1,10 @@
 // Package styles provides Lip Gloss styles for the Omise TUI.
 package styles
 
-import "github.com/charmbracelet/lipgloss"
+import (
+	"github.com/charmbracelet/huh"
+	"github.com/charmbracelet/lipgloss"
+)
 
 // Semantic color assignments (mutable for theme switching)
 var (
@@ -97,3 +100,13 @@ var HelpKey = lipgloss.NewStyle().
 // HelpDesc renders keyboard shortcut descriptions
 var HelpDesc = lipgloss.NewStyle().
 	Foreground(Muted)
+
+// FormTheme returns a Huh theme matching our color scheme
+func FormTheme() *huh.Theme {
+	theme := huh.ThemeCharm()
+	theme.Focused.Base = theme.Focused.Base.BorderForeground(Secondary)
+	theme.Focused.Title = theme.Focused.Title.Foreground(Primary)
+	theme.Focused.SelectedOption = theme.Focused.SelectedOption.Foreground(Secondary)
+	theme.Focused.UnselectedOption = theme.Focused.UnselectedOption.Foreground(Muted)
+	return theme
+}

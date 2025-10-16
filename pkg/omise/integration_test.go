@@ -36,10 +36,10 @@ func TestBrowserToExecutorFlow(t *testing.T) {
 	tm.Send(tea.KeyMsg{Type: tea.KeyDown})
 	time.Sleep(50 * time.Millisecond)
 
-	// Press Enter to select first actual bento
+	// Press 'r' to quick run first actual bento (bypasses action menu)
 	tm.Send(tea.KeyMsg{
-		Type:  tea.KeyEnter,
-		Runes: []rune{'\r'},
+		Type:  tea.KeyRunes,
+		Runes: []rune{'r'},
 	})
 
 	// Wait for Executor screen - look for both header and content

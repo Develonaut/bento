@@ -88,9 +88,9 @@ func TestValidator_JQNode(t *testing.T) {
 		{
 			name: "missing query",
 			def: Definition{
-				Version: "1.0",
-				Type:    "jq",
-				Name:    "Transform",
+				Version:    "1.0",
+				Type:       "jq",
+				Name:       "Transform",
 				Parameters: map[string]interface{}{},
 			},
 			wantErr: true,

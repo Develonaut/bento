@@ -18,9 +18,8 @@ func NewStyledList(items []list.Item, title string) StyledList {
 	l := list.New(items, delegate, 0, 0)
 	l.Title = title
 	l.Styles = listStyles()
-	l.SetShowStatusBar(true)
+	l.SetShowStatusBar(false) // Hide status bar showing item count
 	l.SetFilteringEnabled(true)
-	l.SetStatusBarItemName("bento", "bentos")
 	l.SetShowHelp(false) // Disable built-in help (use custom HelpView instead)
 
 	return StyledList{Model: l}
