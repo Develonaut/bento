@@ -74,22 +74,24 @@ func (e Executor) Update(msg tea.Msg) (Executor, tea.Cmd) {
 			WaitForExecutionCmd(),
 			ProgressTickCmd(msg.Progress),
 		)
+	case executionStillRunningMsg:
+		// Continue polling for completion
+		return e, WaitForExecutionCmd()
 	case ExecutionCompleteMsg:
 		e.running = false
 		e.complete = true
 		e.success = msg.Success
 		e.result = formatResult(msg.Result)
-		if msg.Success {
-			e.status = "Execution completed successfully!"
-			progressCmd := e.progress.SetPercent(1.0)
-			return e, progressCmd
-		} else {
+		e.status = "Execution completed successfully!"
+		if !msg.Success {
 			e.status = "Execution failed"
 			if msg.Error != nil {
 				e.errorMsg = msg.Error.Error()
 			}
 		}
-		return e, nil
+		// Always set progress to 100% on completion
+		progressCmd := e.progress.SetPercent(1.0)
+		return e, progressCmd
 	case CopyResultMsg:
 		e.copyFeedback = string(msg)
 		return e, nil
