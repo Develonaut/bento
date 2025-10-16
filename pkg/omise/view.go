@@ -15,7 +15,8 @@ func (m Model) View() string {
 
 	header := components.Header(m.screen, m.width)
 	content := m.renderContent()
-	footer := components.Footer(m.width)
+	contextualKeys := m.getContextualKeys()
+	footer := components.Footer(m.width, contextualKeys)
 
 	return lipgloss.JoinVertical(
 		lipgloss.Left,
@@ -24,6 +25,26 @@ func (m Model) View() string {
 		"",
 		footer,
 	)
+}
+
+// getContextualKeys returns contextual keys from the active screen
+func (m Model) getContextualKeys() []components.KeyHelp {
+	switch m.screen {
+	case ScreenBrowser:
+		return m.browser.ContextualKeys()
+	case ScreenExecutor:
+		return m.executor.ContextualKeys()
+	case ScreenPantry:
+		return m.pantry.ContextualKeys()
+	case ScreenSettings:
+		return m.settings.ContextualKeys()
+	case ScreenHelp:
+		return m.help.ContextualKeys()
+	case ScreenEditor:
+		return m.editor.ContextualKeys()
+	default:
+		return []components.KeyHelp{}
+	}
 }
 
 // renderContent renders the active screen

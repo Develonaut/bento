@@ -246,3 +246,24 @@ func (b Browser) executeAction(action BentoAction, item *bentoItem) (Browser, te
 		return b, nil
 	}
 }
+
+// ContextualKeys returns the most important contextual keys for the footer
+func (b Browser) ContextualKeys() []components.KeyHelp {
+	// Check if we have an item selected
+	selected := b.getSelected()
+
+	// If no item selected or it's the "new" item, show basic keys
+	if selected == nil || selected.isNewItem {
+		return []components.KeyHelp{
+			{Key: "n", Desc: "new bento"},
+		}
+	}
+
+	// For selected items, show action keys
+	return []components.KeyHelp{
+		{Key: "enter", Desc: "actions"},
+		{Key: "r", Desc: "run"},
+		{Key: "e", Desc: "edit"},
+		{Key: "d", Desc: "delete"},
+	}
+}

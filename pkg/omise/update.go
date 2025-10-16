@@ -113,14 +113,14 @@ func (m Model) updateScreen(msg tea.Msg) (tea.Model, tea.Cmd) {
 // handleBentoSelected switches to executor and starts bento (legacy)
 func (m Model) handleBentoSelected(msg screens.BentoSelectedMsg) (tea.Model, tea.Cmd) {
 	m.screen = ScreenExecutor
-	m.executor = m.executor.StartBento(msg.Name, msg.Path)
+	m.executor = m.executor.StartBento(msg.Name, msg.Path, m.workDir)
 	return m, m.executor.ExecuteCmd()
 }
 
 // handleWorkflowSelected switches to executor and starts bento
 func (m Model) handleWorkflowSelected(msg screens.WorkflowSelectedMsg) (tea.Model, tea.Cmd) {
 	m.screen = ScreenExecutor
-	m.executor = m.executor.StartBento(msg.Name, msg.Path)
+	m.executor = m.executor.StartBento(msg.Name, msg.Path, m.workDir)
 	return m, m.executor.ExecuteCmd()
 }
 
@@ -184,14 +184,14 @@ func (m Model) handleRunBentoFromEditor(msg screens.RunBentoFromEditorMsg) (tea.
 		if err != nil {
 			// If store creation fails, still attempt to run with in-memory definition
 			m.screen = ScreenExecutor
-			m.executor = m.executor.StartBento(m.editor.GetBentoName(), "")
+			m.executor = m.executor.StartBento(m.editor.GetBentoName(), "", m.workDir)
 			return m, m.executor.ExecuteCmd()
 		}
 
 		if err := store.Save(m.editor.GetBentoName(), m.editor.GetDefinition()); err != nil {
 			// Save failed, but still attempt to run with in-memory definition
 			m.screen = ScreenExecutor
-			m.executor = m.executor.StartBento(m.editor.GetBentoName(), "")
+			m.executor = m.executor.StartBento(m.editor.GetBentoName(), "", m.workDir)
 			return m, m.executor.ExecuteCmd()
 		}
 	}
@@ -202,7 +202,7 @@ func (m Model) handleRunBentoFromEditor(msg screens.RunBentoFromEditorMsg) (tea.
 	if bentoName == "" {
 		bentoName = "unsaved-bento"
 	}
-	m.executor = m.executor.StartBento(bentoName, "")
+	m.executor = m.executor.StartBento(bentoName, "", m.workDir)
 	return m, m.executor.ExecuteCmd()
 }
 

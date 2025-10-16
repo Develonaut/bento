@@ -82,3 +82,9 @@ func (p Pantry) View() string {
 		p.table.View(),
 	)
 }
+
+// ContextualKeys returns the most important contextual keys for the footer
+func (p Pantry) ContextualKeys() []components.KeyHelp {
+	// Pantry is read-only, no contextual actions
+	return []components.KeyHelp{}
+}

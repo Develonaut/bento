@@ -26,14 +26,7 @@ func (b Browser) View() string {
 		return b.renderFullHelp()
 	}
 
-	// Show available actions for selected item
-	actionsHint := b.renderActionsHint()
-
-	return lipgloss.JoinVertical(
-		lipgloss.Left,
-		b.list.View(),
-		actionsHint,
-	)
+	return b.list.View()
 }
 
 // renderFullHelp renders full help view
@@ -49,18 +42,4 @@ func (b Browser) renderFullHelp() string {
 		help,
 		footer,
 	)
-}
-
-// renderActionsHint shows available keyboard shortcuts for selected item
-func (b Browser) renderActionsHint() string {
-	selected := b.getSelected()
-	if selected == nil || selected.isNewItem {
-		return ""
-	}
-
-	// Use help component to render action keys consistently
-	actionKeys := b.keys.ActionHelp()
-	hint := b.helpView.RenderKeys(actionKeys)
-
-	return styles.Subtle.Render(hint)
 }

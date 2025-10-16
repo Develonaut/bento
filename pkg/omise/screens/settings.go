@@ -229,3 +229,17 @@ func (s Settings) resetCurrentSetting() (Settings, tea.Cmd) {
 
 	return s, nil
 }
+
+// ContextualKeys returns the most important contextual keys for the footer
+func (s Settings) ContextualKeys() []components.KeyHelp {
+	// When in theme picker or directory picker mode, don't show main settings keys
+	if s.selectingTheme || s.selectingDir {
+		return []components.KeyHelp{}
+	}
+
+	// Main settings keys
+	return []components.KeyHelp{
+		{Key: "enter", Desc: "edit"},
+		{Key: "r", Desc: "reset"},
+	}
+}

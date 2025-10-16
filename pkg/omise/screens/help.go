@@ -4,6 +4,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 
+	"bento/pkg/omise/components"
 	"bento/pkg/omise/styles"
 )
 
@@ -112,4 +113,10 @@ func helpSections() []helpSection {
 			},
 		},
 	}
+}
+
+// ContextualKeys returns the most important contextual keys for the footer
+func (h Help) ContextualKeys() []components.KeyHelp {
+	// Help screen is read-only, no contextual actions
+	return []components.KeyHelp{}
 }
