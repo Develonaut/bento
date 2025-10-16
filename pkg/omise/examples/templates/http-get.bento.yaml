@@ -1,0 +1,6 @@
+version: "1.0"
+type: http
+name: Simple GET Request
+parameters:
+  method: GET
+  url: https://api.github.com/users/octocat

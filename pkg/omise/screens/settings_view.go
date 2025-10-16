@@ -30,7 +30,7 @@ func (s Settings) renderSettingsListView(title string) string {
 		"",
 		settingsView,
 		"",
-		s.helpView.RenderFooter("", s.keys),
+		s.helpView.RenderFooterWithBack("", s.keys),
 	)
 }
 

@@ -35,10 +35,8 @@ func NewBrowser(workDir string) (Browser, error) {
 		items = []list.Item{}
 	}
 
-	l := components.NewStyledList(items, "Available Bentos Test")
-
 	return Browser{
-		list:      l,
+		list:      components.NewStyledList(items, "My Bentos"),
 		store:     store,
 		discovery: discovery,
 		helpView:  components.NewHelpView(),
@@ -61,6 +59,7 @@ func (b Browser) Update(msg tea.Msg) (Browser, tea.Cmd) {
 		return newBrowser, cmd
 	}
 
+	// Update the list
 	var cmd tea.Cmd
 	b.list.Model, cmd = b.list.Model.Update(msg)
 	return b, cmd
@@ -179,6 +178,6 @@ func (b Browser) refreshList() (Browser, tea.Cmd) {
 		items = []list.Item{}
 	}
 
-	b.list = components.NewStyledList(items, "Available Bentos")
+	b.list = components.NewStyledList(items, "My Bentos")
 	return b, nil
 }

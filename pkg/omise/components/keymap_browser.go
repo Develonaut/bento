@@ -7,6 +7,7 @@ import (
 type BrowserKeyMap struct {
 	Navigation  NavigationKeyMap
 	Execute     key.Binding
+	New         key.Binding
 	Search      key.Binding
 	ClearSearch key.Binding
 	Edit        key.Binding
@@ -18,8 +19,12 @@ func NewBrowserKeyMap() BrowserKeyMap {
 	return BrowserKeyMap{
 		Navigation: NewNavigationKeyMap(),
 		Execute: key.NewBinding(
-			key.WithKeys("enter", " "),
-			key.WithHelp("enter", "execute"),
+			key.WithKeys("enter", " ", "r"),
+			key.WithHelp("enter/r", "run"),
+		),
+		New: key.NewBinding(
+			key.WithKeys("n"),
+			key.WithHelp("n", "new bento"),
 		),
 		Search: key.NewBinding(
 			key.WithKeys("/"),
@@ -46,9 +51,6 @@ func NewBrowserKeyMap() BrowserKeyMap {
 
 func (k BrowserKeyMap) ShortHelp() []key.Binding {
 	return []key.Binding{
-		k.Navigation.Up,
-		k.Execute,
-		k.Edit,
 		k.Search,
 	}
 }
@@ -56,7 +58,7 @@ func (k BrowserKeyMap) ShortHelp() []key.Binding {
 func (k BrowserKeyMap) FullHelp() [][]key.Binding {
 	return [][]key.Binding{
 		{k.Navigation.Up, k.Navigation.Down},
-		{k.Execute, k.Edit, k.Copy, k.Delete},
+		{k.Execute, k.New, k.Edit, k.Copy, k.Delete},
 		{k.Search, k.ClearSearch},
 	}
 }

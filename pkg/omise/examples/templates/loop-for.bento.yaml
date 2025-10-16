@@ -1,0 +1,12 @@
+version: "1.0"
+type: loop.for
+name: Process Multiple Users
+parameters:
+  items: [1, 2, 3, 4, 5]
+  body:
+    version: "1.0"
+    type: http
+    name: Fetch User
+    parameters:
+      method: GET
+      url: https://api.github.com/users/{{item}}

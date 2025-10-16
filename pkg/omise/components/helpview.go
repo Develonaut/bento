@@ -54,7 +54,7 @@ func (h HelpView) IsFullHelpShowing() bool {
 
 // ShortHelp renders short help with screen-specific keys
 func (h HelpView) ShortHelp(screenKeys interface{ ShortHelp() []key.Binding }) string {
-	keys := append(screenKeys.ShortHelp(), h.global.Help, h.global.Quit)
+	keys := append(screenKeys.ShortHelp(), h.global.ShortHelp()...)
 	return h.help.ShortHelpView(keys)
 }
 
@@ -77,6 +77,18 @@ func (h HelpView) View(screenKeys interface {
 // RenderFooter renders a footer with optional message and help
 func (h HelpView) RenderFooter(message string, screenKeys interface{ ShortHelp() []key.Binding }) string {
 	helpText := h.ShortHelp(screenKeys)
+
+	if message != "" {
+		helpText = styles.SuccessStyle.Render(message) + " • " + helpText
+	}
+
+	return styles.Subtle.Render(helpText)
+}
+
+// RenderFooterWithBack renders a footer with back key instead of settings
+func (h HelpView) RenderFooterWithBack(message string, screenKeys interface{ ShortHelp() []key.Binding }) string {
+	keys := append(screenKeys.ShortHelp(), h.global.ShortHelpWithBack()...)
+	helpText := h.help.ShortHelpView(keys)
 
 	if message != "" {
 		helpText = styles.SuccessStyle.Render(message) + " • " + helpText

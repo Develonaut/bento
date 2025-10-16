@@ -25,13 +25,8 @@ func (b Browser) View() string {
 		lipgloss.Left,
 		b.list.View(),
 		"",
-		b.renderFooter(),
+		b.helpView.RenderFooter("", b.keys),
 	)
-}
-
-// renderFooter shows keyboard shortcuts
-func (b Browser) renderFooter() string {
-	return b.helpView.RenderFooter("", b.keys)
 }
 
 // renderFullHelp renders full help view

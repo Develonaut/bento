@@ -34,12 +34,15 @@ func (h Help) View() string {
 	title := styles.Title.Render("Help - Keyboard Shortcuts")
 	content := h.renderSections()
 	about := h.renderAbout()
+	footer := styles.Subtle.Render("esc: back • q: quit")
 
 	return lipgloss.JoinVertical(
 		lipgloss.Left,
 		title,
 		content,
 		about,
+		"",
+		footer,
 	)
 }
 
@@ -85,26 +88,23 @@ func helpSections() []helpSection {
 		{
 			title: "Navigation",
 			items: [][]string{
-				{"tab", "Next screen"},
-				{"shift+tab", "Previous screen"},
 				{"↑/k", "Move up"},
 				{"↓/j", "Move down"},
-				{"?/h", "Show help"},
+				{"?/h", "Help"},
+				{"s", "Settings"},
+				{"esc", "Go back to Browser"},
 			},
 		},
 		{
 			title: "Browser Screen",
 			items: [][]string{
-				{"enter/space", "Execute selected bento"},
-				{"/", "Search bentos"},
+				{"enter/space/r", "Run selected bento"},
+				{"e", "Edit bento"},
+				{"c", "Copy bento"},
+				{"d", "Delete bento"},
+				{"n", "Create new bento"},
+				{"/", "Search"},
 				{"esc", "Clear search"},
-			},
-		},
-		{
-			title: "Pantry Screen",
-			items: [][]string{
-				{"↑/↓", "Navigate neta types"},
-				{"enter/space", "View details (coming soon)"},
 			},
 		},
 		{

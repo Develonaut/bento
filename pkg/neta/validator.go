@@ -18,13 +18,21 @@ func NewValidator() *Validator {
 		schemas: make(map[string]schemas.Schema),
 	}
 
-	// Register built-in schemas (matching pantry registration names)
+	// Register built-in schemas with both short and full names
+	// Short names (for pantry compatibility)
 	v.Register("http", schemas.NewHTTPSchema())
 	v.Register("jq", schemas.NewJQSchema())
 	v.Register("sequence", schemas.NewSequenceSchema())
 	v.Register("parallel", schemas.NewParallelSchema())
 	v.Register("for", schemas.NewForLoopSchema())
 	v.Register("if", schemas.NewIfSchema())
+
+	// Full names (for YAML compatibility)
+	v.Register("transform.jq", schemas.NewJQSchema())
+	v.Register("group.sequence", schemas.NewSequenceSchema())
+	v.Register("group.parallel", schemas.NewParallelSchema())
+	v.Register("loop.for", schemas.NewForLoopSchema())
+	v.Register("conditional.if", schemas.NewIfSchema())
 
 	return v
 }

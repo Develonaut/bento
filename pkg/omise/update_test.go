@@ -37,33 +37,15 @@ func TestHandleKeyQuit(t *testing.T) {
 	}
 }
 
-func TestHandleKeyTab(t *testing.T) {
+func TestHandleKeySettings(t *testing.T) {
 	m := NewModel()
 	m.screen = ScreenBrowser
 
-	msg := tea.KeyMsg{Type: tea.KeyTab}
+	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'s'}}
 	updated, _ := m.handleKey(msg)
 	model := updated.(Model)
 
-	if model.screen != ScreenExecutor {
-		t.Errorf("Expected screen to change to Executor, got %v", model.screen)
-	}
-}
-
-// Note: Modal mode blocking tests are in screens/settings_test.go
-// where we can access the internal state of Settings
-
-func TestHandleKeyTabWorksWhenNotInModalMode(t *testing.T) {
-	m := NewModel()
-	m.screen = ScreenSettings
-	// NOT in modal mode (both false by default)
-
-	msg := tea.KeyMsg{Type: tea.KeyTab}
-	updated, _ := m.handleKey(msg)
-	model := updated.(Model)
-
-	// Tab SHOULD switch screens when not in modal mode
-	if model.screen != ScreenHelp {
-		t.Errorf("Expected screen to switch to Help, got %v", model.screen)
+	if model.screen != ScreenSettings {
+		t.Errorf("Expected screen to change to Settings, got %v", model.screen)
 	}
 }

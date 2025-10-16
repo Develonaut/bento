@@ -1,0 +1,38 @@
+version: "1.0"
+type: group.sequence
+name: Complete API Workflow Example
+nodes:
+  - version: "1.0"
+    type: http
+    name: Fetch User List
+    parameters:
+      method: GET
+      url: https://api.github.com/users
+
+  - version: "1.0"
+    type: transform.jq
+    name: Extract Active Users
+    parameters:
+      query: '.[] | select(.type == "User") | {login, id}'
+
+  - version: "1.0"
+    type: conditional.if
+    name: Check Results
+    parameters:
+      condition: true
+      then:
+        version: "1.0"
+        type: http
+        name: Post Success
+        parameters:
+          method: POST
+          url: https://httpbin.org/post
+          body: "Found {{length}} users"
+      else:
+        version: "1.0"
+        type: http
+        name: Post Empty
+        parameters:
+          method: POST
+          url: https://httpbin.org/post
+          body: "No users found"

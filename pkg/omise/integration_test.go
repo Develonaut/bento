@@ -68,39 +68,6 @@ func TestBrowserToExecutorFlow(t *testing.T) {
 	}
 }
 
-// TestScreenNavigation tests tab cycling through all screens
-func TestScreenNavigation(t *testing.T) {
-	m := NewModel()
-	tm := teatest.NewTestModel(
-		t, m,
-		teatest.WithInitialTermSize(80, 24),
-	)
-
-	// Send multiple tabs to cycle through screens
-	for i := 0; i < 5; i++ {
-		tm.Send(tea.KeyMsg{Type: tea.KeyTab})
-		time.Sleep(50 * time.Millisecond) // Give time for screen to update
-	}
-
-	// Quit
-	tm.Send(tea.KeyMsg{
-		Type:  tea.KeyRunes,
-		Runes: []rune{'q'},
-	})
-
-	tm.WaitFinished(t, teatest.WithFinalTimeout(time.Second))
-
-	// Verify final model state - should have cycled back to Browser
-	fm := tm.FinalModel(t)
-	model, ok := fm.(Model)
-	if !ok {
-		t.Fatal("Final model is not Model type")
-	}
-	if model.screen != ScreenBrowser {
-		t.Errorf("Expected screen to be Browser after full cycle, got %v", model.screen)
-	}
-}
-
 // TestQuitBehavior tests that 'q' and ctrl+c quit the app
 func TestQuitBehavior(t *testing.T) {
 	tests := []struct {

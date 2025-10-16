@@ -1,0 +1,9 @@
+version: "1.0"
+type: http
+name: POST with JSON Body
+parameters:
+  method: POST
+  url: https://httpbin.org/post
+  headers:
+    Content-Type: application/json
+  body: '{"message": "Hello from Bento!"}'

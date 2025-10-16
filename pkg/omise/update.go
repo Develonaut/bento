@@ -67,17 +67,21 @@ func (m Model) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		m.quitting = true
 		return m, tea.Quit
 
-	case "tab":
-		m.screen = m.NextScreen()
-		return m, nil
-
-	case "shift+tab":
-		m.screen = m.PrevScreen()
-		return m, nil
-
 	case "?", "h":
 		m.screen = ScreenHelp
 		return m, nil
+
+	case "s":
+		m.screen = ScreenSettings
+		return m, nil
+
+	case "esc":
+		// ESC returns to Browser from any screen (unless in modal mode)
+		if m.screen != ScreenBrowser && m.screen != ScreenExecutor && m.screen != ScreenEditor {
+			m.screen = ScreenBrowser
+			return m, nil
+		}
+		return m.updateScreen(msg)
 
 	default:
 		return m.updateScreen(msg)
