@@ -22,6 +22,7 @@ func New() *Pantry {
 	}
 }
 
+
 // Register adds a node type to the pantry.
 func (p *Pantry) Register(nodeType string, exec neta.Executable) error {
 	p.mu.Lock()

@@ -10,6 +10,11 @@ import (
 
 	"bento/pkg/itamae"
 	"bento/pkg/jubako"
+	"bento/pkg/neta/conditional"
+	"bento/pkg/neta/group"
+	"bento/pkg/neta/http"
+	"bento/pkg/neta/loop"
+	"bento/pkg/neta/transform"
 	"bento/pkg/pantry"
 )
 
@@ -56,9 +61,17 @@ func ExecuteBentoCmd(bentoName string, workDir string) tea.Cmd {
 			return ExecutionErrorMsg{Error: err}
 		}
 
-		// Create itamae with pantry
+		// Create pantry and register all standard node types
 		registry := pantry.New()
 		chef := itamae.New(registry)
+
+		// Register all standard neta types
+		_ = registry.Register("http", http.New())
+		_ = registry.Register("jq", transform.NewJQ())
+		_ = registry.Register("sequence", group.NewSequence(chef))
+		_ = registry.Register("parallel", group.NewParallel(chef))
+		_ = registry.Register("if", conditional.NewIf(chef))
+		_ = registry.Register("for", loop.NewFor(chef))
 
 		// Execute with context
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)

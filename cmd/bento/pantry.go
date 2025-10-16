@@ -72,17 +72,17 @@ func printTypes(types []string) {
 // initializePantry creates and populates the pantry with all node types.
 func initializePantry() *pantry.Pantry {
 	p := pantry.New()
+	chef := itamae.New(p)
 
-	// We need to create a dummy itamae for nodes that require an executor.
-	// This is safe because pantry command only lists types, never executes them.
-	dummyItamae := itamae.New(p)
-
+	// Register all standard neta types
+	// Note: We create a chef for group nodes that need an executor,
+	// but it's safe here since pantry command only lists types, never executes them.
 	_ = p.Register("http", http.New())
 	_ = p.Register("jq", transform.NewJQ())
-	_ = p.Register("sequence", group.NewSequence(dummyItamae))
-	_ = p.Register("parallel", group.NewParallel(dummyItamae))
-	_ = p.Register("if", conditional.NewIf(dummyItamae))
-	_ = p.Register("for", loop.NewFor(dummyItamae))
+	_ = p.Register("sequence", group.NewSequence(chef))
+	_ = p.Register("parallel", group.NewParallel(chef))
+	_ = p.Register("if", conditional.NewIf(chef))
+	_ = p.Register("for", loop.NewFor(chef))
 
 	return p
 }
