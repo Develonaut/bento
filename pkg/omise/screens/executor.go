@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/charmbracelet/bubbles/progress"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 
@@ -45,6 +46,8 @@ func (e Executor) Init() tea.Cmd {
 
 // Update handles executor messages
 func (e Executor) Update(msg tea.Msg) (Executor, tea.Cmd) {
+	var cmds []tea.Cmd
+
 	// Handle theme changes
 	if _, ok := msg.(styles.ThemeChangedMsg); ok {
 		e.spinner = e.spinner.RebuildStyles()
@@ -63,9 +66,11 @@ func (e Executor) Update(msg tea.Msg) (Executor, tea.Cmd) {
 	switch msg := msg.(type) {
 	case ExecutionProgressMsg:
 		e.status = msg.Status
-		e.progress.SetPercent(msg.Progress)
+		// SetPercent returns a command for animation - we must capture and return it!
+		progressCmd := e.progress.SetPercent(msg.Progress)
 		// Check if execution is complete, otherwise continue progress updates
 		return e, tea.Batch(
+			progressCmd,
 			WaitForExecutionCmd(),
 			ProgressTickCmd(msg.Progress),
 		)
@@ -76,7 +81,8 @@ func (e Executor) Update(msg tea.Msg) (Executor, tea.Cmd) {
 		e.result = formatResult(msg.Result)
 		if msg.Success {
 			e.status = "Execution completed successfully!"
-			e.progress.SetPercent(1.0)
+			progressCmd := e.progress.SetPercent(1.0)
+			return e, progressCmd
 		} else {
 			e.status = "Execution failed"
 			if msg.Error != nil {
@@ -94,15 +100,23 @@ func (e Executor) Update(msg tea.Msg) (Executor, tea.Cmd) {
 		e.status = "Execution error"
 		e.errorMsg = msg.Error.Error()
 		return e, nil
+	case progress.FrameMsg:
+		// Progress bar animation frames need to be passed to the progress component
+		progressModel, cmd := e.progress.Update(msg)
+		e.progress = progressModel
+		return e, cmd
 	}
 
 	if !e.running {
 		return e, nil
 	}
 
-	var cmd tea.Cmd
-	e.spinner, cmd = e.spinner.Update(msg)
-	return e, cmd
+	// Update spinner during execution
+	var spinnerCmd tea.Cmd
+	e.spinner, spinnerCmd = e.spinner.Update(msg)
+	cmds = append(cmds, spinnerCmd)
+
+	return e, tea.Batch(cmds...)
 }
 
 // View renders the executor
