@@ -90,7 +90,5 @@ func (s Settings) renderThemeSelector(title string) string {
 		styles.Subtle.Render("Choose a theme:"),
 		"",
 		themeList,
-		"",
-		s.helpView.RenderFooter("", s.pickerKeys),
 	)
 }

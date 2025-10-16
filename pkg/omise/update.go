@@ -77,7 +77,7 @@ func (m Model) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 
 	case "esc":
 		// ESC returns to Browser from any screen (unless in modal mode)
-		if m.screen != ScreenBrowser && m.screen != ScreenExecutor && m.screen != ScreenEditor {
+		if m.screen != ScreenBrowser && m.screen != ScreenEditor {
 			m.screen = ScreenBrowser
 			return m, nil
 		}

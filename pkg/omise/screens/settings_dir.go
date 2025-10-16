@@ -54,8 +54,6 @@ func (s Settings) renderDirectoryPickerView(title string) string {
 		currentPath,
 		"",
 		pickerView,
-		"",
-		s.helpView.RenderFooter("", s.pickerKeys),
 	)
 }
 

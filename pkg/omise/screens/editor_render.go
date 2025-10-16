@@ -14,8 +14,6 @@ func (e Editor) View() string {
 		e.renderTitle(),
 		"",
 		e.renderContent(),
-		"",
-		e.renderFooter(),
 	)
 }
 
@@ -74,8 +72,4 @@ func (e Editor) renderReview() string {
 		return e.renderVisualBentoBox()
 	}
 	return e.renderListView()
-}
-
-func (e Editor) renderFooter() string {
-	return e.helpView.RenderFooter(e.message, e.keys)
 }

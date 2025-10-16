@@ -6,8 +6,8 @@ import "bento/pkg/omise/styles"
 func Footer(width int) string {
 	separator := styles.Subtle.Render(" • ")
 	shortcuts := []string{
-		styles.HelpKey.Render("tab") + " " + styles.HelpDesc.Render("next"),
-		styles.HelpKey.Render("shift+tab") + " " + styles.HelpDesc.Render("prev"),
+		styles.HelpKey.Render("esc") + " " + styles.HelpDesc.Render("back"),
+		styles.HelpKey.Render("s") + " " + styles.HelpDesc.Render("settings"),
 		styles.HelpKey.Render("?") + " " + styles.HelpDesc.Render("help"),
 		styles.HelpKey.Render("q") + " " + styles.HelpDesc.Render("quit"),
 	}

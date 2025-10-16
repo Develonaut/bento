@@ -80,7 +80,5 @@ func (p Pantry) View() string {
 		title,
 		"",
 		p.table.View(),
-		"",
-		p.helpView.RenderFooter("", p.keys),
 	)
 }

@@ -2,8 +2,6 @@ package screens
 
 import (
 	"bento/pkg/omise/styles"
-
-	"github.com/charmbracelet/lipgloss"
 )
 
 // View renders the settings
@@ -23,10 +21,5 @@ func (s Settings) View() string {
 
 // renderSettingsListView renders the normal settings list
 func (s Settings) renderSettingsListView(title string) string {
-	return lipgloss.JoinVertical(
-		lipgloss.Left,
-		s.list.View(),
-		"",
-		s.helpView.RenderFooterWithBack("", s.keys),
-	)
+	return s.list.View()
 }

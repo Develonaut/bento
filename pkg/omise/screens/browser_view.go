@@ -33,8 +33,6 @@ func (b Browser) View() string {
 		lipgloss.Left,
 		b.list.View(),
 		actionsHint,
-		"",
-		b.helpView.RenderFooter("", b.keys),
 	)
 }
 

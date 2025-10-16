@@ -34,15 +34,12 @@ func (h Help) View() string {
 	title := styles.Title.Render("Help - Keyboard Shortcuts")
 	content := h.renderSections()
 	about := h.renderAbout()
-	footer := styles.Subtle.Render("esc: back • q: quit")
 
 	return lipgloss.JoinVertical(
 		lipgloss.Left,
 		title,
 		content,
 		about,
-		"",
-		footer,
 	)
 }
 
