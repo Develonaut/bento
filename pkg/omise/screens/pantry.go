@@ -11,7 +11,9 @@ import (
 
 // Pantry shows available neta types
 type Pantry struct {
-	table components.StyledTable
+	table    components.StyledTable
+	helpView components.HelpView
+	keys     components.PantryKeyMap
 }
 
 // NewPantry creates a pantry screen
@@ -22,6 +24,8 @@ func NewPantry() Pantry {
 			pantryRows(),
 			10,
 		),
+		helpView: components.NewHelpView(),
+		keys:     components.NewPantryKeyMap(),
 	}
 }
 
@@ -77,6 +81,6 @@ func (p Pantry) View() string {
 		"",
 		p.table.View(),
 		"",
-		styles.Subtle.Render("↑/↓: Navigate • Enter/Space: View details (coming soon)"),
+		p.helpView.RenderFooter("", p.keys),
 	)
 }

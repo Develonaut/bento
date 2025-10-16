@@ -21,6 +21,7 @@ func NewStyledList(items []list.Item, title string) StyledList {
 	l.SetShowStatusBar(true)
 	l.SetFilteringEnabled(true)
 	l.SetStatusBarItemName("bento", "bentos")
+	l.SetShowHelp(false) // Disable built-in help (use custom HelpView instead)
 
 	return StyledList{Model: l}
 }

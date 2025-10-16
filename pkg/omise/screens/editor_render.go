@@ -68,16 +68,5 @@ func (e Editor) renderReview() string {
 }
 
 func (e Editor) renderFooter() string {
-	shortcuts := e.getShortcuts()
-	if e.message != "" {
-		shortcuts = e.message + " • " + shortcuts
-	}
-	return styles.Subtle.Render(shortcuts)
-}
-
-func (e Editor) getShortcuts() string {
-	if e.state == StateReview {
-		return "↑/↓: Navigate • e: Edit • m: Move • d: Delete • r: Run • v: Toggle View • a: Add • s: Save • esc: Cancel"
-	}
-	return "esc: Cancel • ctrl+s: Save"
+	return e.helpView.RenderFooter(e.message, e.keys)
 }

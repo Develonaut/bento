@@ -20,6 +20,9 @@ type Settings struct {
 	config          config.Config
 	dirPicker       components.DirPicker
 	selectingDir    bool
+	helpView        components.HelpView
+	keys            components.SettingsKeyMap
+	pickerKeys      components.PickerKeyMap
 }
 
 type settingItem struct {
@@ -48,6 +51,9 @@ func NewSettings() Settings {
 		availableThemes: styles.AllVariants(),
 		config:          cfg,
 		dirPicker:       dp,
+		helpView:        components.NewHelpView(),
+		keys:            components.NewSettingsKeyMap(),
+		pickerKeys:      components.NewPickerKeyMap(),
 	}
 	s.items = s.buildSettings()
 	return s
@@ -199,70 +205,4 @@ func (s Settings) resetCurrentSetting() (Settings, tea.Cmd) {
 	}
 
 	return s, nil
-}
-
-// View renders the settings
-func (s Settings) View() string {
-	title := styles.Title.Render("Settings")
-
-	// Show directory picker if in directory selection mode
-	if s.selectingDir {
-		return s.renderDirectoryPickerView(title)
-	}
-
-	// Show theme selector if in selection mode
-	if s.selectingTheme {
-		return s.renderThemeSelector(title)
-	}
-
-	// Show normal settings list
-	return s.renderSettingsListView(title)
-}
-
-// renderSettingsListView renders the normal settings list
-func (s Settings) renderSettingsListView(title string) string {
-	settingsView := s.renderSettings()
-	hint := styles.Subtle.Render("↑/↓: Navigate • Enter/Space: Select • r: Reset to Default • Esc: Back")
-	return lipgloss.JoinVertical(
-		lipgloss.Left,
-		title,
-		"",
-		settingsView,
-		"",
-		hint,
-	)
-}
-
-// renderSettings renders the settings list
-func (s Settings) renderSettings() string {
-	var view string
-	for i, item := range s.items {
-		view += s.renderSetting(i, item)
-	}
-	return view
-}
-
-// renderSetting renders a single setting item
-func (s Settings) renderSetting(index int, item settingItem) string {
-	cursor := "  "
-	nameStyle := styles.Normal
-	if index == s.cursor {
-		cursor = "> "
-		nameStyle = styles.Selected
-	}
-
-	valueStyle := styles.Subtle
-	// Use custom valueStyle if it has been set
-	if item.valueStyle.GetBold() || item.valueStyle.GetForeground() != lipgloss.Color("") {
-		valueStyle = item.valueStyle
-	}
-
-	editIndicator := ""
-	if item.editable {
-		editIndicator = " [↵]"
-	}
-
-	return cursor + nameStyle.Render(item.name) + "\n" +
-		"  " + valueStyle.Render("  "+item.value+editIndicator) + "\n" +
-		"  " + styles.Subtle.Render("  "+item.desc) + "\n\n"
 }

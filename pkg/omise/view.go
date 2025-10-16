@@ -15,13 +15,11 @@ func (m Model) View() string {
 
 	header := components.Header(m.screen, m.width)
 	content := m.renderContent()
-	footer := components.Footer(m.width)
 
 	return lipgloss.JoinVertical(
 		lipgloss.Left,
 		header,
 		content,
-		footer,
 	)
 }
 

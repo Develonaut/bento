@@ -5,6 +5,7 @@ import (
 
 	"bento/pkg/jubako"
 	"bento/pkg/neta"
+	"bento/pkg/omise/components"
 	"bento/pkg/pantry"
 )
 
@@ -55,9 +56,11 @@ type Editor struct {
 	viewMode          ViewMode
 
 	// UI state
-	message string
-	width   int
-	height  int
+	message  string
+	width    int
+	height   int
+	helpView components.HelpView
+	keys     components.EditorKeyMap
 }
 
 // NewEditorCreate creates editor in create mode
@@ -70,6 +73,8 @@ func NewEditorCreate(store *jubako.Store, registry *pantry.Pantry) Editor {
 		validator:         neta.NewValidator(),
 		selectedNodeIndex: 0,
 		viewMode:          ViewModeList,
+		helpView:          components.NewHelpView(),
+		keys:              components.NewEditorKeyMap(),
 		def: neta.Definition{
 			Version: neta.CurrentVersion,
 			Nodes:   []neta.Definition{},
@@ -92,6 +97,8 @@ func NewEditorEdit(store *jubako.Store, registry *pantry.Pantry, name, path stri
 		validator:         neta.NewValidator(),
 		selectedNodeIndex: 0,
 		viewMode:          ViewModeList,
+		helpView:          components.NewHelpView(),
+		keys:              components.NewEditorKeyMap(),
 		bentoName:         name,
 		bentoPath:         path,
 		def:               def,

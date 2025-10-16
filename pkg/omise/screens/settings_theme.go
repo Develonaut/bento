@@ -83,7 +83,6 @@ func (s Settings) renderThemeSelector(title string) string {
 		themeList += cursor + itemStyle.Render(string(variant)) + "\n"
 	}
 
-	hint := styles.Subtle.Render("↑/↓: Navigate • Enter: Select • Esc: Cancel")
 	return lipgloss.JoinVertical(
 		lipgloss.Left,
 		title,
@@ -92,6 +91,6 @@ func (s Settings) renderThemeSelector(title string) string {
 		"",
 		themeList,
 		"",
-		hint,
+		s.helpView.RenderFooter("", s.pickerKeys),
 	)
 }

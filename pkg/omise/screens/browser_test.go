@@ -203,7 +203,7 @@ func TestBrowser_HelpToggle(t *testing.T) {
 		t.Fatalf("NewBrowser() error = %v", err)
 	}
 
-	if browser.showingHelp {
+	if browser.helpView.IsFullHelpShowing() {
 		t.Error("Help should not be showing initially")
 	}
 
@@ -211,14 +211,14 @@ func TestBrowser_HelpToggle(t *testing.T) {
 	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'?'}}
 	browser, _ = browser.Update(msg)
 
-	if !browser.showingHelp {
+	if !browser.helpView.IsFullHelpShowing() {
 		t.Error("Help should be showing after pressing '?'")
 	}
 
 	// Press '?' again to hide help
 	browser, _ = browser.Update(msg)
 
-	if browser.showingHelp {
+	if browser.helpView.IsFullHelpShowing() {
 		t.Error("Help should be hidden after pressing '?' again")
 	}
 }
