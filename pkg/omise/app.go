@@ -35,6 +35,9 @@ func Launch() error {
 		tea.WithMouseCellMotion(),
 	)
 
+	// Set program reference for messaging
+	m.SetProgram(p)
+
 	_, err = p.Run()
 	return err
 }

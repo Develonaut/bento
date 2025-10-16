@@ -1,11 +1,18 @@
 package screens
 
 import (
+	"time"
+
 	"bento/pkg/neta"
 )
 
 // ExecutionStartMsg signals bento execution has started
 type ExecutionStartMsg struct{}
+
+// ExecutionInitMsg carries the definition for node initialization
+type ExecutionInitMsg struct {
+	Definition neta.Definition
+}
 
 // ExecutionProgressMsg updates execution progress
 type ExecutionProgressMsg struct {
@@ -28,3 +35,17 @@ type ExecutionErrorMsg struct {
 
 // CopyResultMsg provides feedback for copy operation
 type CopyResultMsg string
+
+// NodeStartedMsg signals a node has started execution
+type NodeStartedMsg struct {
+	Path     string
+	Name     string
+	NodeType string
+}
+
+// NodeCompletedMsg signals a node has finished execution
+type NodeCompletedMsg struct {
+	Path     string
+	Duration time.Duration
+	Error    error
+}

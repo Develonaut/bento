@@ -123,14 +123,14 @@ func (m Model) updateScreen(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m Model) handleBentoSelected(msg screens.BentoSelectedMsg) (tea.Model, tea.Cmd) {
 	m.screen = ScreenExecutor
 	m.executor = m.executor.StartBento(msg.Name, msg.Path, m.workDir)
-	return m, m.executor.ExecuteCmd()
+	return m, m.executor.ExecuteCmd(m.program)
 }
 
 // handleWorkflowSelected switches to executor and starts bento
 func (m Model) handleWorkflowSelected(msg screens.WorkflowSelectedMsg) (tea.Model, tea.Cmd) {
 	m.screen = ScreenExecutor
 	m.executor = m.executor.StartBento(msg.Name, msg.Path, m.workDir)
-	return m, m.executor.ExecuteCmd()
+	return m, m.executor.ExecuteCmd(m.program)
 }
 
 // handleEditBento switches to editor for existing bento
@@ -194,14 +194,14 @@ func (m Model) handleRunBentoFromEditor(msg screens.RunBentoFromEditorMsg) (tea.
 			// If store creation fails, still attempt to run with in-memory definition
 			m.screen = ScreenExecutor
 			m.executor = m.executor.StartBento(m.editor.GetBentoName(), "", m.workDir)
-			return m, m.executor.ExecuteCmd()
+			return m, m.executor.ExecuteCmd(m.program)
 		}
 
 		if err := store.Save(m.editor.GetBentoName(), m.editor.GetDefinition()); err != nil {
 			// Save failed, but still attempt to run with in-memory definition
 			m.screen = ScreenExecutor
 			m.executor = m.executor.StartBento(m.editor.GetBentoName(), "", m.workDir)
-			return m, m.executor.ExecuteCmd()
+			return m, m.executor.ExecuteCmd(m.program)
 		}
 	}
 
@@ -212,7 +212,7 @@ func (m Model) handleRunBentoFromEditor(msg screens.RunBentoFromEditorMsg) (tea.
 		bentoName = "unsaved-bento"
 	}
 	m.executor = m.executor.StartBento(bentoName, "", m.workDir)
-	return m, m.executor.ExecuteCmd()
+	return m, m.executor.ExecuteCmd(m.program)
 }
 
 // handleThemeChanged propagates theme change to all screens

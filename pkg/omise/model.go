@@ -49,6 +49,7 @@ type Model struct {
 	// Application state
 	quitting bool
 	workDir  string
+	program  *tea.Program // For executor messaging
 }
 
 // NewModel creates the initial application model
@@ -122,4 +123,9 @@ func (m Model) PrevScreen() Screen {
 		return screenCount - 1
 	}
 	return m.screen - 1
+}
+
+// SetProgram stores program reference for messaging
+func (m *Model) SetProgram(p *tea.Program) {
+	m.program = p
 }
