@@ -30,9 +30,7 @@ func listStyles() list.Styles {
 	s := list.DefaultStyles()
 	s.Title = lipgloss.NewStyle().
 		Foreground(styles.Primary).
-		Bold(true).
-		MarginLeft(2).
-		MarginBottom(1)
+		Bold(true)
 	s.Spinner = lipgloss.NewStyle().Foreground(styles.Primary)
 	s.FilterPrompt = lipgloss.NewStyle().Foreground(styles.Primary)
 	s.FilterCursor = lipgloss.NewStyle().Foreground(styles.Primary)

@@ -1,8 +1,6 @@
 package screens
 
 import (
-	"context"
-
 	tea "github.com/charmbracelet/bubbletea"
 
 	"bento/pkg/jubako"
@@ -43,7 +41,6 @@ type Editor struct {
 	store     *jubako.Store
 	registry  *pantry.Pantry
 	validator *neta.Validator
-	ctx       context.Context
 
 	// Bento being edited
 	bentoName string
@@ -71,7 +68,6 @@ func NewEditorCreate(store *jubako.Store, registry *pantry.Pantry) Editor {
 		store:             store,
 		registry:          registry,
 		validator:         neta.NewValidator(),
-		ctx:               context.Background(),
 		selectedNodeIndex: 0,
 		viewMode:          ViewModeList,
 		def: neta.Definition{
@@ -94,7 +90,6 @@ func NewEditorEdit(store *jubako.Store, registry *pantry.Pantry, name, path stri
 		store:             store,
 		registry:          registry,
 		validator:         neta.NewValidator(),
-		ctx:               context.Background(),
 		selectedNodeIndex: 0,
 		viewMode:          ViewModeList,
 		bentoName:         name,
@@ -105,6 +100,13 @@ func NewEditorEdit(store *jubako.Store, registry *pantry.Pantry, name, path stri
 
 // Init initializes the editor
 func (e Editor) Init() tea.Cmd {
+	// Launch appropriate form based on initial state
+	switch e.state {
+	case StateNaming:
+		return e.launchNameForm()
+	case StateSelectingType:
+		return e.launchTypeForm()
+	}
 	return nil
 }
 
@@ -124,6 +126,15 @@ func (e Editor) Update(msg tea.Msg) (Editor, tea.Cmd) {
 	}
 
 	return e, nil
+}
+
+// InModalMode returns true if editor is showing a form
+// This prevents tab navigation to other screens during form input
+func (e Editor) InModalMode() bool {
+	// Modal mode is active during form input states
+	return e.state == StateNaming ||
+		e.state == StateSelectingType ||
+		e.state == StateConfiguringNode
 }
 
 // GetBentoName returns the bento name

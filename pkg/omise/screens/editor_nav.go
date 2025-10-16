@@ -8,7 +8,6 @@ import (
 	"bento/pkg/neta"
 )
 
-// editNode launches wizard to edit node
 func (e Editor) editNode(index int) tea.Cmd {
 	node := e.getNode(index)
 	if node == nil {
@@ -19,7 +18,6 @@ func (e Editor) editNode(index int) tea.Cmd {
 	return e.launchWizard(node.Type)
 }
 
-// moveNode swaps node with next
 func (e Editor) moveNode(index int) (Editor, tea.Cmd) {
 	if index >= len(e.def.Nodes)-1 {
 		e.message = "Cannot move last node down"
@@ -33,7 +31,6 @@ func (e Editor) moveNode(index int) (Editor, tea.Cmd) {
 	return e, nil
 }
 
-// deleteNode removes node
 func (e Editor) deleteNode(index int) (Editor, tea.Cmd) {
 	if index >= len(e.def.Nodes) {
 		return e, nil
@@ -51,7 +48,6 @@ func (e Editor) deleteNode(index int) (Editor, tea.Cmd) {
 	return e, nil
 }
 
-// runBento executes the bento
 func (e Editor) runBento() tea.Cmd {
 	return func() tea.Msg {
 		return RunBentoFromEditorMsg{
@@ -60,7 +56,6 @@ func (e Editor) runBento() tea.Cmd {
 	}
 }
 
-// getNode returns node at index
 func (e Editor) getNode(index int) *neta.Definition {
 	nodes := e.getNodes()
 	if index < 0 || index >= len(nodes) {
@@ -69,17 +64,16 @@ func (e Editor) getNode(index int) *neta.Definition {
 	return &nodes[index]
 }
 
-// getNodes returns all nodes
+// getNodes returns all navigable nodes in the bento.
+// For single-node bentos (root has non-group type), returns the root as single element.
+// For multi-node bentos (group types), returns the nodes array.
 func (e Editor) getNodes() []neta.Definition {
-	// If single-node bento (root has type that's not a group)
 	if e.def.Type != "" && e.def.Type != "group.sequence" && e.def.Type != "group.parallel" {
 		return []neta.Definition{e.def}
 	}
-	// Multi-node bento
 	return e.def.Nodes
 }
 
-// navigateUp moves selection up
 func (e Editor) navigateUp() Editor {
 	if e.selectedNodeIndex > 0 {
 		e.selectedNodeIndex--
@@ -87,7 +81,6 @@ func (e Editor) navigateUp() Editor {
 	return e
 }
 
-// navigateDown moves selection down
 func (e Editor) navigateDown() Editor {
 	nodes := e.getNodes()
 	if e.selectedNodeIndex < len(nodes)-1 {
@@ -96,7 +89,6 @@ func (e Editor) navigateDown() Editor {
 	return e
 }
 
-// toggleViewMode toggles between list and visual
 func (e Editor) toggleViewMode() Editor {
 	if e.viewMode == ViewModeList {
 		e.viewMode = ViewModeVisual

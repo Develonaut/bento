@@ -365,7 +365,7 @@ type bentoItem struct {
 // Title returns the item title
 func (i bentoItem) Title() string {
 	if i.isNewItem {
-		return "+ Create New Bento"
+		return "Create New Bento"
 	}
 	return fmt.Sprintf("%s (v%s)", i.name, i.version)
 }

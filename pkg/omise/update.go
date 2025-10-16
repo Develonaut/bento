@@ -56,6 +56,12 @@ func (m Model) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		return m.updateScreen(msg)
 	}
 
+	// Check if Editor screen is in modal mode (form input)
+	// If so, let the screen handle tab/shift+tab instead of global handler
+	if m.screen == ScreenEditor && m.editor.InModalMode() {
+		return m.updateScreen(msg)
+	}
+
 	switch msg.String() {
 	case "q", "ctrl+c":
 		m.quitting = true
@@ -170,10 +176,18 @@ func (m Model) handleRunBentoFromEditor(msg screens.RunBentoFromEditorMsg) (tea.
 	if m.editor.GetBentoName() != "" {
 		store, err := jubako.NewStore(m.workDir)
 		if err != nil {
-			return m, nil
+			// If store creation fails, still attempt to run with in-memory definition
+			m.screen = ScreenExecutor
+			m.executor = m.executor.StartBento(m.editor.GetBentoName(), "")
+			return m, m.executor.ExecuteCmd()
 		}
-		// Save silently
-		_ = store.Save(m.editor.GetBentoName(), m.editor.GetDefinition())
+
+		if err := store.Save(m.editor.GetBentoName(), m.editor.GetDefinition()); err != nil {
+			// Save failed, but still attempt to run with in-memory definition
+			m.screen = ScreenExecutor
+			m.executor = m.executor.StartBento(m.editor.GetBentoName(), "")
+			return m, m.executor.ExecuteCmd()
+		}
 	}
 
 	// Switch to executor and run

@@ -181,3 +181,70 @@ func validateRequired(s string) error {
 	}
 	return nil
 }
+
+// promptBentoName prompts user to enter bento name
+func promptBentoName() (string, error) {
+	var name string
+
+	form := huh.NewForm(
+		huh.NewGroup(
+			huh.NewInput().
+				Title("Bento Name").
+				Placeholder("my-awesome-bento").
+				Description("Enter a name for your bento").
+				Value(&name).
+				Validate(validateBentoName),
+		),
+	)
+
+	if err := form.Run(); err != nil {
+		return "", err
+	}
+
+	return name, nil
+}
+
+// promptNodeType prompts user to select a node type
+func promptNodeType(nodeTypes []string) (string, error) {
+	var selectedType string
+
+	options := make([]huh.Option[string], len(nodeTypes))
+	for i, nodeType := range nodeTypes {
+		options[i] = huh.NewOption(nodeType, nodeType)
+	}
+
+	form := huh.NewForm(
+		huh.NewGroup(
+			huh.NewSelect[string]().
+				Title("Node Type").
+				Description("Select the type of node to add").
+				Options(options...).
+				Value(&selectedType),
+		),
+	)
+
+	if err := form.Run(); err != nil {
+		return "", err
+	}
+
+	return selectedType, nil
+}
+
+// validateBentoName validates bento name format
+func validateBentoName(s string) error {
+	s = strings.TrimSpace(s)
+	if s == "" {
+		return fmt.Errorf("bento name is required")
+	}
+	if len(s) < 3 {
+		return fmt.Errorf("bento name must be at least 3 characters")
+	}
+	// Check for invalid characters (only allow alphanumeric, dash, underscore)
+	for _, ch := range s {
+		if !((ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') ||
+			(ch >= '0' && ch <= '9') || ch == '-' || ch == '_') {
+			return fmt.Errorf("bento name can only contain letters, numbers, dash, and underscore")
+		}
+	}
+	return nil
+}

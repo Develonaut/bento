@@ -33,7 +33,8 @@ type EditorCancelledMsg struct{}
 // ReturnToBrowserMsg signals return to browser screen
 type ReturnToBrowserMsg struct{}
 
-// EditNodeMsg signals node should be edited
+// EditNodeMsg signals node should be edited (Phase 8 - not yet implemented)
+// TODO: Wire up in Phase 8 when implementing node editing in visual mode
 type EditNodeMsg struct {
 	Index int
 	Type  string
@@ -41,5 +42,5 @@ type EditNodeMsg struct {
 
 // RunBentoFromEditorMsg signals run bento from editor
 type RunBentoFromEditorMsg struct {
-	Def interface{}
+	Def interface{} // TODO: Change to neta.Definition after removing legacy compatibility
 }
