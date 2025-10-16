@@ -65,6 +65,10 @@ func (e Executor) Update(msg tea.Msg) (Executor, tea.Cmd) {
 	// Handle execution messages
 	switch msg := msg.(type) {
 	case ExecutionProgressMsg:
+		// Ignore delayed progress messages if we're no longer running
+		if !e.running {
+			return e, nil
+		}
 		e.status = msg.Status
 		e.progressPercent = msg.Progress
 		// Check if execution is complete, otherwise continue progress updates
@@ -73,7 +77,10 @@ func (e Executor) Update(msg tea.Msg) (Executor, tea.Cmd) {
 			ProgressTickCmd(msg.Progress),
 		)
 	case executionStillRunningMsg:
-		// Continue polling for completion
+		// Continue polling for completion (only if still running)
+		if !e.running {
+			return e, nil
+		}
 		return e, WaitForExecutionCmd()
 	case ExecutionCompleteMsg:
 		e.running = false
