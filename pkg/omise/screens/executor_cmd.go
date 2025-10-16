@@ -65,13 +65,13 @@ func ExecuteBentoCmd(bentoName string, workDir string) tea.Cmd {
 		registry := pantry.New()
 		chef := itamae.New(registry)
 
-		// Register all standard neta types
+		// Register all standard neta types with fully qualified names
 		_ = registry.Register("http", http.New())
-		_ = registry.Register("jq", transform.NewJQ())
-		_ = registry.Register("sequence", group.NewSequence(chef))
-		_ = registry.Register("parallel", group.NewParallel(chef))
-		_ = registry.Register("if", conditional.NewIf(chef))
-		_ = registry.Register("for", loop.NewFor(chef))
+		_ = registry.Register("transform.jq", transform.NewJQ())
+		_ = registry.Register("group.sequence", group.NewSequence(chef))
+		_ = registry.Register("group.parallel", group.NewParallel(chef))
+		_ = registry.Register("conditional.if", conditional.NewIf(chef))
+		_ = registry.Register("loop.for", loop.NewFor(chef))
 
 		// Execute with context
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)

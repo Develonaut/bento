@@ -74,15 +74,15 @@ func initializePantry() *pantry.Pantry {
 	p := pantry.New()
 	chef := itamae.New(p)
 
-	// Register all standard neta types
+	// Register all standard neta types with fully qualified names
 	// Note: We create a chef for group nodes that need an executor,
 	// but it's safe here since pantry command only lists types, never executes them.
 	_ = p.Register("http", http.New())
-	_ = p.Register("jq", transform.NewJQ())
-	_ = p.Register("sequence", group.NewSequence(chef))
-	_ = p.Register("parallel", group.NewParallel(chef))
-	_ = p.Register("if", conditional.NewIf(chef))
-	_ = p.Register("for", loop.NewFor(chef))
+	_ = p.Register("transform.jq", transform.NewJQ())
+	_ = p.Register("group.sequence", group.NewSequence(chef))
+	_ = p.Register("group.parallel", group.NewParallel(chef))
+	_ = p.Register("conditional.if", conditional.NewIf(chef))
+	_ = p.Register("loop.for", loop.NewFor(chef))
 
 	return p
 }
