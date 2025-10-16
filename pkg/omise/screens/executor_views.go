@@ -90,12 +90,14 @@ func (e Executor) buildRunningHeader(title string) string {
 func (e Executor) buildRunningCenter() string {
 	lines := []string{}
 
-	// Add all lifecycle history
-	lines = append(lines, e.lifecycleHistory...)
+	// Show lifecycle status
+	if len(e.lifecycleHistory) > 0 {
+		// Show only the most recent lifecycle message
+		lines = append(lines, e.lifecycleHistory[len(e.lifecycleHistory)-1], "")
+	}
 
 	// Show per-node progress using sequence component
 	if len(e.nodeStates) > 0 {
-		lines = append(lines, "")
 		lines = append(lines, e.sequence.View())
 	} else {
 		// Fallback to old status display if no nodes yet
@@ -154,7 +156,7 @@ func appendErrorLines(lines []string, success bool, errorMsg string) []string {
 func appendOutputLines(lines []string, success bool, result string) []string {
 	if success && result != "" {
 		return append(lines,
-			styles.Subtle.Render("Output: "+truncateToOneLine(result, 80)),
+			styles.Subtle.Render(truncateToOneLine(result, 80)),
 			"",
 		)
 	}
@@ -164,14 +166,31 @@ func appendOutputLines(lines []string, success bool, result string) []string {
 // buildCompletionCenter builds the center section for completion view
 func (e Executor) buildCompletionCenter() string {
 	lines := []string{}
-	lines = append(lines, e.lifecycleHistory...)
 
-	if len(e.nodeStates) > 0 {
-		lines = append(lines, "", e.sequence.View())
+	// Show lifecycle status
+	if len(e.lifecycleHistory) > 0 {
+		// Show only the most recent lifecycle message
+		lines = append(lines, e.lifecycleHistory[len(e.lifecycleHistory)-1], "")
 	}
 
-	lines = append(lines, "")
+	// Show node sequence if available
+	if len(e.nodeStates) > 0 {
+		lines = append(lines, e.sequence.View(), "")
+	}
+
+	// Add fun completion message
+	if e.success {
+		completionMsg := "✨ Delicious!"
+		lines = append(lines, styles.SuccessStyle.Render(completionMsg), "")
+	} else {
+		failureMsg := "👹 Oh no!"
+		lines = append(lines, styles.ErrorStyle.Render(failureMsg), "")
+	}
+
+	// Show errors if execution failed
 	lines = appendErrorLines(lines, e.success, e.errorMsg)
+
+	// Show output if execution succeeded
 	lines = appendOutputLines(lines, e.success, e.result)
 
 	return lipgloss.JoinVertical(lipgloss.Left, lines...)
@@ -214,18 +233,41 @@ func extractJSON(result interface{}) (string, bool) {
 	return marshalNetaResult(netaResult)
 }
 
-// marshalNetaResult converts neta.Result to JSON string
+// marshalNetaResult converts neta.Result to a simple string representation
 func marshalNetaResult(result neta.Result) (string, bool) {
 	if result.Output == nil {
 		return "No output", false
 	}
 
-	jsonBytes, err := json.MarshalIndent(result.Output, "", "  ")
-	if err != nil {
-		return fmt.Sprintf("%v", result.Output), false
+	// Try to extract simple values instead of showing full JSON
+	switch v := result.Output.(type) {
+	case string:
+		return v, true
+	case int, int64, float64, bool:
+		return fmt.Sprintf("%v", v), true
+	case map[string]interface{}:
+		// For objects, try to extract a simple "value" or "message" field
+		if val, ok := v["value"]; ok {
+			return fmt.Sprintf("%v", val), true
+		}
+		if msg, ok := v["message"]; ok {
+			return fmt.Sprintf("%v", msg), true
+		}
+		// Fall back to compact JSON for small objects
+		jsonBytes, err := json.Marshal(v)
+		if err == nil && len(jsonBytes) < 100 {
+			return string(jsonBytes), true
+		}
+		// For larger objects, show summary
+		return fmt.Sprintf("{%d fields}", len(v)), true
+	default:
+		// For other types, try compact JSON
+		jsonBytes, err := json.Marshal(result.Output)
+		if err != nil {
+			return fmt.Sprintf("%v", result.Output), false
+		}
+		return string(jsonBytes), true
 	}
-
-	return string(jsonBytes), true
 }
 
 // truncateToOneLine truncates a string to fit on one line

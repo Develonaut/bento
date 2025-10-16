@@ -263,3 +263,99 @@ func TestBrowser_CreateNewBentoItem(t *testing.T) {
 		t.Error("Expected nil command from handleDelete on create item")
 	}
 }
+
+func TestBrowser_LoadsBentosWithDifferentNodeTypes(t *testing.T) {
+	workDir := t.TempDir()
+	store, _ := jubako.NewStore(workDir)
+
+	// Create bentos with different node types
+	testCases := []struct {
+		name     string
+		nodeType string
+		params   map[string]interface{}
+	}{
+		{
+			name:     "test-http",
+			nodeType: "http",
+			params: map[string]interface{}{
+				"url":    "https://httpbin.org/get",
+				"method": "GET",
+			},
+		},
+		{
+			name:     "test-jq",
+			nodeType: "transform.jq",
+			params: map[string]interface{}{
+				"query": ".data",
+			},
+		},
+		{
+			name:     "test-file-write",
+			nodeType: "file.write",
+			params: map[string]interface{}{
+				"path":    "/tmp/test.txt",
+				"content": "test content",
+			},
+		},
+		{
+			name:     "test-sequence",
+			nodeType: "group.sequence",
+			params:   map[string]interface{}{},
+		},
+	}
+
+	for _, tc := range testCases {
+		def := neta.Definition{
+			Version:    "1.0",
+			Type:       tc.nodeType,
+			Name:       tc.name,
+			Parameters: tc.params,
+		}
+		if err := store.Save(tc.name, def); err != nil {
+			t.Fatalf("Failed to save bento %s: %v", tc.name, err)
+		}
+	}
+
+	// Load bentos
+	items, err := loadBentos(store)
+	if err != nil {
+		t.Fatalf("loadBentos() error = %v", err)
+	}
+
+	// Should have 5 items: 1 create item + 4 bentos
+	expectedCount := len(testCases) + 1
+	if len(items) != expectedCount {
+		t.Errorf("Expected %d items (1 create + %d bentos), got %d", expectedCount, len(testCases), len(items))
+	}
+
+	// Verify all bentos were loaded
+	loadedNames := make(map[string]bool)
+	for _, item := range items {
+		if bi, ok := item.(bentoItem); ok && !bi.isNewItem {
+			loadedNames[bi.name] = true
+		}
+	}
+
+	for _, tc := range testCases {
+		if !loadedNames[tc.name] {
+			t.Errorf("Expected bento %s to be loaded", tc.name)
+		}
+	}
+
+	// Verify file.write bento was properly loaded
+	var fileWriteBento *bentoItem
+	for _, item := range items {
+		if bi, ok := item.(bentoItem); ok && bi.name == "test-file-write" {
+			fileWriteBento = &bi
+			break
+		}
+	}
+
+	if fileWriteBento == nil {
+		t.Fatal("file.write bento should be present in loaded items")
+	}
+
+	if fileWriteBento.nodeType != "file.write" {
+		t.Errorf("Expected nodeType file.write, got %s", fileWriteBento.nodeType)
+	}
+}

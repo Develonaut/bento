@@ -9,6 +9,7 @@ import (
 
 	"bento/pkg/itamae"
 	"bento/pkg/neta/conditional"
+	"bento/pkg/neta/file"
 	"bento/pkg/neta/group"
 	"bento/pkg/neta/http"
 	"bento/pkg/neta/loop"
@@ -79,6 +80,7 @@ func initializePantry() *pantry.Pantry {
 	// but it's safe here since pantry command only lists types, never executes them.
 	_ = p.Register("http", http.New())
 	_ = p.Register("transform.jq", transform.NewJQ())
+	_ = p.Register("file.write", file.NewWriter())
 	_ = p.Register("group.sequence", group.NewSequence(chef))
 	_ = p.Register("group.parallel", group.NewParallel(chef))
 	_ = p.Register("conditional.if", conditional.NewIf(chef))

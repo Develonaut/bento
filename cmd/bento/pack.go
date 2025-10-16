@@ -65,6 +65,10 @@ func executeBento(def neta.Definition, timeout time.Duration) (interface{}, erro
 	p := initializePantry()
 	chef := itamae.New(p)
 
+	// Set up execution graph store for graph-based execution with data flow
+	store := neta.NewExecutionGraphStore()
+	chef.SetStore(store)
+
 	result, err := chef.Execute(ctx, def)
 	if err != nil {
 		return nil, err

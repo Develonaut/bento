@@ -33,6 +33,7 @@ func NewValidator() *Validator {
 	v.Register("group.parallel", schemas.NewParallelSchema())
 	v.Register("loop.for", schemas.NewForLoopSchema())
 	v.Register("conditional.if", schemas.NewIfSchema())
+	v.Register("file.write", schemas.NewFileWriterSchema())
 
 	return v
 }

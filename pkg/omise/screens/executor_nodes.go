@@ -37,8 +37,16 @@ func flattenDefinition(def neta.Definition, basePath string) []NodeState {
 
 // flattenSingleNode creates state for a single node bento
 func flattenSingleNode(def neta.Definition, basePath string) []NodeState {
+	// Use node ID if present, otherwise use basePath (or "0" as fallback)
+	path := basePath
+	if def.ID != "" {
+		path = def.ID
+	} else if path == "" {
+		path = "0" // Fallback for single nodes without ID
+	}
+
 	return []NodeState{{
-		path:     basePath,
+		path:     path,
 		name:     def.Name,
 		nodeType: def.Type,
 		status:   NodePending,
@@ -51,7 +59,8 @@ func flattenGroupNodes(def neta.Definition, basePath string) []NodeState {
 	states := []NodeState{}
 
 	for idx, child := range def.Nodes {
-		path := buildPathForNode(basePath, idx)
+		// Use node ID if present (graph-based execution), otherwise use hierarchical path
+		path := getNodePath(child, basePath, idx)
 		states = append(states, createNodeState(child, path))
 
 		if child.IsGroup() {
@@ -61,6 +70,15 @@ func flattenGroupNodes(def neta.Definition, basePath string) []NodeState {
 	}
 
 	return states
+}
+
+// getNodePath returns the appropriate path for a node
+// Uses node ID for graph-based execution, falls back to hierarchical index
+func getNodePath(child neta.Definition, basePath string, idx int) string {
+	if child.ID != "" {
+		return child.ID // Use node ID for graph-based execution
+	}
+	return buildPathForNode(basePath, idx) // Use index-based path for hierarchical execution
 }
 
 // createNodeState builds a NodeState from definition and path
@@ -82,17 +100,26 @@ func (e Executor) handleInitMsg(msg ExecutionInitMsg) (Executor, tea.Cmd) {
 	// Update sequence display with initial steps
 	e.sequence = e.sequence.SetSteps(e.convertNodesToSteps())
 
-	return e, nil
+	// Signal that initialization is complete - execution can proceed
+	return e, signalInitReadyCmd()
 }
 
 // handleNodeStarted updates node to running state
 func (e Executor) handleNodeStarted(msg NodeStartedMsg) (Executor, tea.Cmd) {
+	found := false
 	for i := range e.nodeStates {
 		if e.nodeStates[i].path == msg.Path {
 			e.nodeStates[i].status = NodeRunning
 			e.nodeStates[i].startTime = time.Now()
+			found = true
 			break
 		}
+	}
+
+	// Warn if node not found in state (message before init)
+	if !found {
+		warning := "⚠️  Node " + msg.Path + " not found in state - message received before init?"
+		e.lifecycleHistory = append(e.lifecycleHistory, warning)
 	}
 
 	// Update sequence display

@@ -9,7 +9,8 @@ import (
 
 // FormSelect wraps a Huh select form
 type FormSelect struct {
-	form *huh.Form
+	form  *huh.Form
+	value *string // Store pointer to track the selected value
 }
 
 // NewFormSelect creates a new form select component
@@ -29,7 +30,10 @@ func NewFormSelect(title, description string, options []SelectOption, value *str
 		),
 	).WithTheme(styles.FormTheme())
 
-	return FormSelect{form: form}
+	return FormSelect{
+		form:  form,
+		value: value,
+	}
 }
 
 // SelectOption represents a select option
@@ -63,4 +67,12 @@ func (f FormSelect) IsCompleted() bool {
 // GetForm returns the underlying form (for direct access if needed)
 func (f FormSelect) GetForm() *huh.Form {
 	return f.form
+}
+
+// GetValue returns the currently selected value
+func (f FormSelect) GetValue() string {
+	if f.value != nil {
+		return *f.value
+	}
+	return ""
 }

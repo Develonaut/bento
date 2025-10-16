@@ -33,7 +33,9 @@ func parseSlowMoValue(value string) int {
 
 // applyThemeSelection applies the selected theme from the form
 func (s Settings) applyThemeSelection() Settings {
-	variant := styles.Variant(s.selectedTheme)
+	// Get the value from the form
+	selectedValue := s.themeForm.GetValue()
+	variant := styles.Variant(selectedValue)
 	s.themeManager.SetVariant(variant)
 	s.selectingTheme = false
 
@@ -45,7 +47,9 @@ func (s Settings) applyThemeSelection() Settings {
 
 // applySlowMoSelection applies the selected slow-mo value from the form
 func (s Settings) applySlowMoSelection() Settings {
-	delayMs := parseSlowMoValue(s.selectedSlowMo)
+	// Get the value from the form
+	selectedValue := s.slowMoForm.GetValue()
+	delayMs := parseSlowMoValue(selectedValue)
 	s.config.SlowMoDelayMs = delayMs
 
 	if err := config.Save(s.config); err != nil {

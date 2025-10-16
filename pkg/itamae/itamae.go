@@ -29,9 +29,10 @@ type ProgressMessenger interface {
 
 // Itamae orchestrates the execution of neta definitions.
 type Itamae struct {
-	pantry       Registry
-	messenger    ProgressMessenger // Optional - can be nil
-	slowMoDelayMs int              // Delay in milliseconds for slow-mo mode (0 = off)
+	pantry        Registry
+	messenger     ProgressMessenger // Optional - can be nil
+	slowMoDelayMs int               // Delay in milliseconds for slow-mo mode (0 = off)
+	store         *neta.ExecutionGraphStore // Optional - for graph-based execution tracking
 }
 
 // Registry provides node type lookup.
@@ -62,8 +63,19 @@ func (i *Itamae) SetSlowMoDelay(delayMs int) {
 	i.slowMoDelayMs = delayMs
 }
 
+// SetStore sets the execution graph store for tracking node states
+func (i *Itamae) SetStore(store *neta.ExecutionGraphStore) {
+	i.store = store
+}
+
 // Execute runs a neta definition and returns the result.
 func (i *Itamae) Execute(ctx context.Context, def neta.Definition) (neta.Result, error) {
+	// Use graph-based execution if store is available and node has edges
+	if i.store != nil && def.IsGroup() && len(def.Edges) > 0 {
+		return i.executeGraph(ctx, def)
+	}
+
+	// Fall back to hierarchical execution
 	if def.IsGroup() {
 		return i.executeGroup(ctx, def, "")
 	}

@@ -41,6 +41,11 @@ func (c *Client) Execute(ctx context.Context, params map[string]interface{}) (ne
 		return neta.Result{}, err
 	}
 
+	// Check for HTTP error status codes
+	if resp.StatusCode >= 400 {
+		return neta.Result{}, fmt.Errorf("HTTP %d: %s - %s", resp.StatusCode, resp.Status, body)
+	}
+
 	return neta.Result{Output: body}, nil
 }
 

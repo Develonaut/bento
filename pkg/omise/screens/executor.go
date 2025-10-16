@@ -99,7 +99,7 @@ func (e Executor) StartBento(name, path, workDir string) Executor {
 	e.progressPercent = 0.0
 	e.startTime = time.Now()
 	e.endTime = time.Time{} // Zero value
-	e.lifecycleHistory = []string{emojiBento + " Preparing bento box..."}
+	e.lifecycleHistory = []string{emojiBento + " Preparing Bento..."}
 	return e
 }
 
@@ -115,6 +115,13 @@ func (e Executor) ExecuteCmd(program *tea.Program) tea.Cmd {
 func (e Executor) copyToClipboard() tea.Cmd {
 	return func() tea.Msg {
 		return CopyResultCmd(e.result, e.bentoName, e.errorMsg, e.success)
+	}
+}
+
+// copyEntireView copies the entire rendered view to clipboard
+func (e Executor) copyEntireView() tea.Cmd {
+	return func() tea.Msg {
+		return CopyEntireViewCmd(e.View())
 	}
 }
 
@@ -134,6 +141,8 @@ func (e Executor) ContextualKeys() []components.KeyHelp {
 		if (e.success && e.result != "") || (!e.success && e.errorMsg != "") {
 			keys = append(keys, components.KeyHelp{Key: "c", Desc: "copy output"})
 		}
+		// Always show shift+c for debugging
+		keys = append(keys, components.KeyHelp{Key: "shift+c", Desc: "copy view"})
 		return keys
 	}
 	// No contextual keys during execution or when no content

@@ -1,9 +1,12 @@
 package omise
 
 import (
+	"path/filepath"
+
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 
+	"bento/pkg/omise/config"
 	"bento/pkg/omise/screens"
 )
 
@@ -103,8 +106,9 @@ func NewModelWithWorkDir(workDir string) (Model, error) {
 
 // getDefaultWorkDir returns the default bento work directory
 func getDefaultWorkDir() string {
-	// Default to current directory if home unavailable
-	return "."
+	cfg := config.Load()
+	// Append /bentos subdirectory to the save directory
+	return filepath.Join(cfg.SaveDirectory, "bentos")
 }
 
 // Init initializes the model

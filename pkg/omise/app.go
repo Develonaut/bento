@@ -30,7 +30,7 @@ func Launch() error {
 	}
 
 	p := tea.NewProgram(
-		m,
+		&m, // Pass pointer so SetProgram modifies the actual model
 		tea.WithAltScreen(),
 		tea.WithMouseCellMotion(),
 	)

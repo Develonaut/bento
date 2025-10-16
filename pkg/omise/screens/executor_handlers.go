@@ -36,6 +36,8 @@ func (e Executor) handleCompleteKeys(msg tea.Msg) (Executor, tea.Cmd, bool) {
 	switch keyMsg.String() {
 	case "c":
 		return e, e.copyToClipboard(), true
+	case "C": // Shift+C copies entire view
+		return e, e.copyEntireView(), true
 	case "r":
 		return e, nil, true
 	}
@@ -115,13 +117,14 @@ func (e Executor) handleCompleteMsg(msg ExecutionCompleteMsg) (Executor, tea.Cmd
 	e.success = msg.Success
 	e.result = formatResult(msg.Result)
 	e.progressPercent = 1.0
-	e.status = "Execution completed successfully!"
 
-	// Add completion message to history
-	e.lifecycleHistory = append(e.lifecycleHistory, emojiBento+" Bento packed!")
-
-	if !msg.Success {
+	// Add completion message to history based on success/failure
+	if msg.Success {
+		e.status = "Execution completed successfully!"
+		e.lifecycleHistory = append(e.lifecycleHistory, emojiBento+" Bento Packed!")
+	} else {
 		e.status = "Execution failed"
+		e.lifecycleHistory = append(e.lifecycleHistory, emojiBento+" Bento Spoiled!")
 		if msg.Error != nil {
 			e.errorMsg = msg.Error.Error()
 		}
@@ -137,6 +140,7 @@ func (e Executor) handleErrorMsg(msg ExecutionErrorMsg) (Executor, tea.Cmd) {
 	e.status = "Execution error"
 	e.errorMsg = msg.Error.Error()
 	e.progressPercent = 0.0
+	e.lifecycleHistory = append(e.lifecycleHistory, emojiBento+" Bento Spoiled!")
 	return e, nil
 }
 

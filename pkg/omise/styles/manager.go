@@ -35,6 +35,11 @@ func (m *Manager) GetVariant() Variant {
 	return m.variant
 }
 
+// CurrentVariant returns the global current variant
+func CurrentVariant() Variant {
+	return currentVariant
+}
+
 // NextVariant cycles to the next theme variant
 func (m *Manager) NextVariant() Variant {
 	variants := AllVariants()

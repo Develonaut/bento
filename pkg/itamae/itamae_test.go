@@ -44,6 +44,17 @@ func (m *mockExecutable) Execute(ctx context.Context, params map[string]interfac
 	return neta.Result{Output: m.output}, nil
 }
 
+// mockInputPassthrough is a test executable that passes through its input parameter
+type mockInputPassthrough struct{}
+
+func (m *mockInputPassthrough) Execute(ctx context.Context, params map[string]interface{}) (neta.Result, error) {
+	input, ok := params["input"]
+	if !ok {
+		return neta.Result{Output: "no input"}, nil
+	}
+	return neta.Result{Output: input}, nil
+}
+
 func TestItamae_ExecuteSingle(t *testing.T) {
 	tests := []struct {
 		name    string
@@ -131,5 +142,54 @@ func TestItamae_ExecuteGroup(t *testing.T) {
 
 	if len(results) != 2 {
 		t.Errorf("Execute() result count = %d, want 2", len(results))
+	}
+}
+
+func TestItamae_ExecuteGraphWithDataFlow(t *testing.T) {
+	registry := newMockRegistry()
+	// Node 1 outputs "hello"
+	registry.register("source", &mockExecutable{output: "hello"})
+	// Node 2 passes through its input
+	registry.register("passthrough", &mockInputPassthrough{})
+
+	store := neta.NewExecutionGraphStore()
+	itamae := New(registry)
+	itamae.SetStore(store)
+
+	ctx := context.Background()
+
+	graphDef := neta.Definition{
+		Type: "group.sequence",
+		Name: "Data Flow Test",
+		Nodes: []neta.Definition{
+			{
+				ID:   "node-1",
+				Type: "source",
+				Name: "Source Node",
+			},
+			{
+				ID:   "node-2",
+				Type: "passthrough",
+				Name: "Passthrough Node",
+			},
+		},
+		Edges: []neta.NodeEdge{
+			{
+				ID:     "edge-1",
+				Source: "node-1",
+				Target: "node-2",
+			},
+		},
+	}
+
+	result, err := itamae.Execute(ctx, graphDef)
+	if err != nil {
+		t.Errorf("Execute() error = %v", err)
+		return
+	}
+
+	// The result should be "hello" from node-1, passed through node-2
+	if result.Output != "hello" {
+		t.Errorf("Execute() Output = %v, want 'hello'", result.Output)
 	}
 }

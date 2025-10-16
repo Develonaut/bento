@@ -68,6 +68,37 @@ func TestClient_Execute(t *testing.T) {
 			serverCode: http.StatusOK,
 			wantErr:    false,
 		},
+		{
+			name: "404 Not Found returns error",
+			params: map[string]interface{}{
+				"method": "GET",
+				"url":    "TEST_SERVER_URL",
+			},
+			serverResp: `{"error":"not found"}`,
+			serverCode: http.StatusNotFound,
+			wantErr:    true,
+		},
+		{
+			name: "503 Service Unavailable returns error",
+			params: map[string]interface{}{
+				"method": "GET",
+				"url":    "TEST_SERVER_URL",
+			},
+			serverResp: `<html><head><title>503 Service Temporarily Unavailable</title></head></html>`,
+			serverCode: http.StatusServiceUnavailable,
+			wantErr:    true,
+		},
+		{
+			name: "500 Internal Server Error returns error",
+			params: map[string]interface{}{
+				"method": "POST",
+				"url":    "TEST_SERVER_URL",
+				"body":   `{"test":"data"}`,
+			},
+			serverResp: `{"error":"internal server error"}`,
+			serverCode: http.StatusInternalServerError,
+			wantErr:    true,
+		},
 	}
 
 	for _, tt := range tests {

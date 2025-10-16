@@ -49,3 +49,8 @@ type NodeCompletedMsg struct {
 	Duration time.Duration
 	Error    error
 }
+
+// GraphStateUpdateMsg carries ExecutionGraphStore state updates to the UI
+type GraphStateUpdateMsg struct {
+	State neta.ExecutionGraphState
+}
