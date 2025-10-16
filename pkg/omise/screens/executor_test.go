@@ -223,7 +223,7 @@ func TestExecutor_CopyKeyBinding(t *testing.T) {
 		Type:  tea.KeyRunes,
 		Runes: []rune{'c'},
 	}
-	e, cmd := e.Update(keyMsg)
+	_, cmd := e.Update(keyMsg)
 
 	if cmd == nil {
 		t.Error("Expected copy command from 'c' key")
@@ -386,7 +386,7 @@ func TestExecutor_CopyKeyBindingWithError(t *testing.T) {
 		Type:  tea.KeyRunes,
 		Runes: []rune{'c'},
 	}
-	e, cmd := e.Update(keyMsg)
+	_, cmd := e.Update(keyMsg)
 
 	if cmd == nil {
 		t.Error("Expected copy command from 'c' key even with error")

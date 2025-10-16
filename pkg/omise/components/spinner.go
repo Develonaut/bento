@@ -1,6 +1,8 @@
 package components
 
 import (
+	"time"
+
 	"bento/pkg/omise/styles"
 
 	"github.com/charmbracelet/bubbles/spinner"
@@ -13,10 +15,14 @@ type Spinner struct {
 	spinner.Model
 }
 
-// NewSpinner creates a themed spinner
+// NewSpinner creates a themed spinner with custom sushi emoji frames
 func NewSpinner() Spinner {
 	s := spinner.New()
-	s.Spinner = spinner.Dot
+	// Custom sushi spinner frames
+	s.Spinner = spinner.Spinner{
+		Frames: []string{"🍣", "🍙", "🥢", "🍥"},
+		FPS:    time.Second, // 1 second per frame
+	}
 	s.Style = lipgloss.NewStyle().Foreground(styles.Primary)
 	return Spinner{Model: s}
 }
