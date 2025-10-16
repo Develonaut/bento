@@ -13,6 +13,7 @@ func (e Executor) handleThemeAndInput(msg tea.Msg) (Executor, tea.Cmd, bool) {
 	// Handle theme changes
 	if _, ok := msg.(styles.ThemeChangedMsg); ok {
 		e.spinner = e.spinner.RebuildStyles()
+		e.progress = e.progress.RebuildStyles()
 		return e, nil, true
 	}
 
