@@ -7,6 +7,8 @@ import (
 	"bento/pkg/neta"
 	"bento/pkg/omise/components"
 	"bento/pkg/pantry"
+
+	"github.com/charmbracelet/huh"
 )
 
 // EditorMode defines the editor mode
@@ -51,6 +53,10 @@ type Editor struct {
 	// Current node being configured
 	currentNodeType string
 
+	// Huh form integration
+	currentForm *huh.Form
+	formValues  map[string]interface{}
+
 	// Visual navigation
 	selectedNodeIndex int
 	viewMode          ViewMode
@@ -65,12 +71,13 @@ type Editor struct {
 
 // NewEditorCreate creates editor in create mode
 func NewEditorCreate(store *jubako.Store, registry *pantry.Pantry) Editor {
-	return Editor{
+	editor := Editor{
 		mode:              EditorModeCreate,
 		state:             StateNaming,
 		store:             store,
 		registry:          registry,
 		validator:         neta.NewValidator(),
+		formValues:        make(map[string]interface{}),
 		selectedNodeIndex: 0,
 		viewMode:          ViewModeList,
 		helpView:          components.NewHelpView(),
@@ -80,6 +87,9 @@ func NewEditorCreate(store *jubako.Store, registry *pantry.Pantry) Editor {
 			Nodes:   []neta.Definition{},
 		},
 	}
+	// Create initial form for bento naming
+	editor.currentForm = editor.createNameForm()
+	return editor
 }
 
 // NewEditorEdit creates editor in edit mode
@@ -95,6 +105,7 @@ func NewEditorEdit(store *jubako.Store, registry *pantry.Pantry, name, path stri
 		store:             store,
 		registry:          registry,
 		validator:         neta.NewValidator(),
+		formValues:        make(map[string]interface{}),
 		selectedNodeIndex: 0,
 		viewMode:          ViewModeList,
 		helpView:          components.NewHelpView(),
@@ -107,22 +118,28 @@ func NewEditorEdit(store *jubako.Store, registry *pantry.Pantry, name, path stri
 
 // Init initializes the editor
 func (e Editor) Init() tea.Cmd {
-	// Launch appropriate form based on initial state
-	switch e.state {
-	case StateNaming:
-		return e.launchNameForm()
-	case StateSelectingType:
-		return e.launchTypeForm()
+	// Form is already created in constructor if needed
+	if e.currentForm != nil {
+		return e.currentForm.Init()
 	}
 	return nil
 }
 
 // Update handles editor messages
 func (e Editor) Update(msg tea.Msg) (Editor, tea.Cmd) {
-	switch msg := msg.(type) {
-	case tea.WindowSizeMsg:
+	// Handle window resize
+	if msg, ok := msg.(tea.WindowSizeMsg); ok {
 		return e.handleResize(msg)
+	}
+
+	// Handle editor-specific messages before form processing
+	// This allows tests and other code to send messages directly
+	switch msg := msg.(type) {
 	case tea.KeyMsg:
+		// If in modal mode, delegate to form first
+		if e.currentForm != nil && e.InModalMode() {
+			return e.updateForm(msg)
+		}
 		return e.handleKey(msg)
 	case BentoNameEnteredMsg:
 		return e.handleNameEntered(msg)
@@ -130,6 +147,11 @@ func (e Editor) Update(msg tea.Msg) (Editor, tea.Cmd) {
 		return e.handleTypeSelected(msg)
 	case NodeConfiguredMsg:
 		return e.handleNodeConfigured(msg)
+	}
+
+	// If we have an active form and message wasn't handled above, delegate to it
+	if e.currentForm != nil && e.InModalMode() {
+		return e.updateForm(msg)
 	}
 
 	return e, nil

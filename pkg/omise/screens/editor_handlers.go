@@ -56,7 +56,7 @@ func (e Editor) handleReviewKey(msg tea.KeyMsg) (Editor, tea.Cmd) {
 	case "down", "j":
 		return e.navigateDown(), nil
 	case "e":
-		return e, e.editNode(e.selectedNodeIndex)
+		return e.editNode(e.selectedNodeIndex)
 	case "m":
 		return e.moveNode(e.selectedNodeIndex)
 	case "d":
@@ -66,8 +66,7 @@ func (e Editor) handleReviewKey(msg tea.KeyMsg) (Editor, tea.Cmd) {
 	case "v":
 		return e.toggleViewMode(), nil
 	case "a":
-		e.state = StateSelectingType
-		return e, e.launchTypeForm()
+		return e.startTypeSelection()
 	case "s", "enter":
 		return e, e.saveBento()
 	}
@@ -78,13 +77,33 @@ func (e Editor) handleNameEntered(msg BentoNameEnteredMsg) (Editor, tea.Cmd) {
 	e.bentoName = msg.Name
 	e.def.Name = msg.Name
 	e.state = StateSelectingType
-	return e, e.launchTypeForm()
+
+	// Create type selection form if we have node types
+	nodeTypes := e.validator.ListTypes() // Use validator, not registry
+	if len(nodeTypes) > 0 {
+		var nodeType string
+		e.currentForm = createNodeTypeForm(nodeTypes, &nodeType)
+		e.formValues = map[string]interface{}{"nodeType": &nodeType}
+		return e, e.currentForm.Init()
+	}
+
+	return e, nil
 }
 
 func (e Editor) handleTypeSelected(msg NodeTypeSelectedMsg) (Editor, tea.Cmd) {
 	e.currentNodeType = msg.Type
 	e.state = StateConfiguringNode
-	return e, e.launchWizard(msg.Type)
+
+	// Create wizard form if schema exists
+	schema, ok := e.validator.GetSchema(msg.Type)
+	if ok {
+		e.formValues = make(map[string]interface{})
+		wizard := NewNodeWizard(msg.Type, schema, e.formValues)
+		e.currentForm = wizard.Form()
+		return e, e.currentForm.Init()
+	}
+
+	return e, nil
 }
 
 func (e Editor) handleNodeConfigured(msg NodeConfiguredMsg) (Editor, tea.Cmd) {

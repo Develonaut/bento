@@ -18,8 +18,7 @@ type NodeWizard struct {
 }
 
 // NewNodeWizard creates wizard for node type
-func NewNodeWizard(nodeType string, schema schemas.Schema) *NodeWizard {
-	values := make(map[string]interface{})
+func NewNodeWizard(nodeType string, schema schemas.Schema, values map[string]interface{}) *NodeWizard {
 	form := buildFormFromSchema(nodeType, schema, values)
 
 	return &NodeWizard{
@@ -30,12 +29,14 @@ func NewNodeWizard(nodeType string, schema schemas.Schema) *NodeWizard {
 	}
 }
 
-// Run executes the wizard and returns configured parameters
-func (w *NodeWizard) Run() (map[string]interface{}, error) {
-	if err := w.form.Run(); err != nil {
-		return nil, err
-	}
-	return w.values, nil
+// Form returns the Huh form for Bubble Tea integration
+func (w *NodeWizard) Form() *huh.Form {
+	return w.form
+}
+
+// Values returns the configured parameters
+func (w *NodeWizard) Values() map[string]interface{} {
+	return w.values
 }
 
 // buildFormFromSchema creates a Huh form from schema fields
@@ -182,52 +183,36 @@ func validateRequired(s string) error {
 	return nil
 }
 
-// promptBentoName prompts user to enter bento name
-func promptBentoName() (string, error) {
-	var name string
-
-	form := huh.NewForm(
+// createBentoNameForm creates a form for entering bento name
+func createBentoNameForm(nameTarget *string) *huh.Form {
+	return huh.NewForm(
 		huh.NewGroup(
 			huh.NewInput().
 				Title("Bento Name").
 				Placeholder("my-awesome-bento").
 				Description("Enter a name for your bento").
-				Value(&name).
+				Value(nameTarget).
 				Validate(validateBentoName),
 		),
 	)
-
-	if err := form.Run(); err != nil {
-		return "", err
-	}
-
-	return name, nil
 }
 
-// promptNodeType prompts user to select a node type
-func promptNodeType(nodeTypes []string) (string, error) {
-	var selectedType string
-
+// createNodeTypeForm creates a form for selecting node type
+func createNodeTypeForm(nodeTypes []string, typeTarget *string) *huh.Form {
 	options := make([]huh.Option[string], len(nodeTypes))
 	for i, nodeType := range nodeTypes {
 		options[i] = huh.NewOption(nodeType, nodeType)
 	}
 
-	form := huh.NewForm(
+	return huh.NewForm(
 		huh.NewGroup(
 			huh.NewSelect[string]().
 				Title("Node Type").
 				Description("Select the type of node to add").
 				Options(options...).
-				Value(&selectedType),
+				Value(typeTarget),
 		),
 	)
-
-	if err := form.Run(); err != nil {
-		return "", err
-	}
-
-	return selectedType, nil
 }
 
 // validateBentoName validates bento name format

@@ -42,11 +42,17 @@ func (e Editor) renderContent() string {
 }
 
 func (e Editor) renderNaming() string {
+	if e.currentForm != nil {
+		return e.currentForm.View()
+	}
 	return styles.Subtle.Render("Enter bento name:\n\n[Name entry form here]")
 }
 
 func (e Editor) renderTypeSelection() string {
-	types := e.registry.List()
+	if e.currentForm != nil {
+		return e.currentForm.View()
+	}
+	types := e.validator.ListTypes() // Use validator, not registry
 	content := "Select node type:\n\n"
 	for _, t := range types {
 		content += fmt.Sprintf("  • %s\n", t)
@@ -55,6 +61,9 @@ func (e Editor) renderTypeSelection() string {
 }
 
 func (e Editor) renderConfiguration() string {
+	if e.currentForm != nil {
+		return e.currentForm.View()
+	}
 	return styles.Subtle.Render(
 		fmt.Sprintf("Configure %s node:\n\n[Wizard form here]", e.currentNodeType),
 	)

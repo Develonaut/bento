@@ -139,7 +139,8 @@ func (m Model) handleEditBento(msg screens.EditBentoMsg) (tea.Model, tea.Cmd) {
 
 	m.editor = editor
 	m.screen = ScreenEditor
-	return m, nil
+	// Initialize the editor (which initializes any forms if needed)
+	return m, m.editor.Init()
 }
 
 // handleCreateBento switches to editor for new bento
@@ -152,7 +153,8 @@ func (m Model) handleCreateBento(msg screens.CreateBentoMsg) (tea.Model, tea.Cmd
 	registry := pantry.New()
 	m.editor = screens.NewEditorCreate(store, registry)
 	m.screen = ScreenEditor
-	return m, nil
+	// Initialize the editor (which initializes the form)
+	return m, m.editor.Init()
 }
 
 // handleBentoOperation handles completion of copy/delete operations

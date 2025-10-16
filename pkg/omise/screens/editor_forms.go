@@ -4,61 +4,36 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 )
 
-// Form launching functions for editor wizards and save operations
+// Form setup functions for editor wizards and save operations
 
-// launchWizard starts the node configuration wizard for the given node type.
-// Uses schemas from validator to build type-specific Huh forms.
-func (e Editor) launchWizard(nodeType string) tea.Cmd {
-	return func() tea.Msg {
-		schema, ok := e.validator.GetSchema(nodeType)
-		if !ok {
-			return defaultNodeConfig(nodeType)
-		}
-
-		wizard := NewNodeWizard(nodeType, schema)
-		params, err := wizard.Run()
-		if err != nil {
-			return EditorCancelledMsg{}
-		}
-
-		nodeName := extractNodeName(params, nodeType)
-		actualParams := convertParamPointers(params)
-
-		return NodeConfiguredMsg{
-			Type:       nodeType,
-			Name:       nodeName,
-			Parameters: actualParams,
-		}
+// startTypeSelection creates and initializes the node type selection form
+func (e Editor) startTypeSelection() (Editor, tea.Cmd) {
+	var nodeType string
+	nodeTypes := e.validator.ListTypes() // Use validator, not registry
+	if len(nodeTypes) == 0 {
+		e.state = StateReview
+		return e, nil
 	}
+	e.currentForm = createNodeTypeForm(nodeTypes, &nodeType)
+	e.formValues = map[string]interface{}{"nodeType": &nodeType}
+	e.state = StateSelectingType
+	return e, e.currentForm.Init()
 }
 
-// launchNameForm prompts the user to enter a bento name using Huh.
-// Returns BentoNameEnteredMsg on success, EditorCancelledMsg on cancel.
-func (e Editor) launchNameForm() tea.Cmd {
-	return func() tea.Msg {
-		name, err := promptBentoName()
-		if err != nil {
-			return EditorCancelledMsg{}
-		}
-		return BentoNameEnteredMsg{Name: name}
+// startWizard creates and initializes the node configuration wizard for the given type
+func (e Editor) startWizard(nodeType string) (Editor, tea.Cmd) {
+	schema, ok := e.validator.GetSchema(nodeType)
+	if !ok {
+		e.state = StateReview
+		e.message = "No schema found for node type"
+		return e, nil
 	}
-}
-
-// launchTypeForm prompts the user to select a node type from pantry.
-// Returns NodeTypeSelectedMsg on success, EditorCancelledMsg on cancel.
-func (e Editor) launchTypeForm() tea.Cmd {
-	return func() tea.Msg {
-		nodeTypes := e.registry.List()
-		if len(nodeTypes) == 0 {
-			return EditorCancelledMsg{}
-		}
-
-		nodeType, err := promptNodeType(nodeTypes)
-		if err != nil {
-			return EditorCancelledMsg{}
-		}
-		return NodeTypeSelectedMsg{Type: nodeType}
-	}
+	e.formValues = make(map[string]interface{})
+	wizard := NewNodeWizard(nodeType, schema, e.formValues)
+	e.currentForm = wizard.Form()
+	e.currentNodeType = nodeType
+	e.state = StateConfiguringNode
+	return e, e.currentForm.Init()
 }
 
 // saveBento saves the current bento definition to Jubako storage.

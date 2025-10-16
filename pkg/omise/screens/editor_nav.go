@@ -8,14 +8,14 @@ import (
 	"bento/pkg/neta"
 )
 
-func (e Editor) editNode(index int) tea.Cmd {
+func (e Editor) editNode(index int) (Editor, tea.Cmd) {
 	node := e.getNode(index)
 	if node == nil {
-		return nil
+		return e, nil
 	}
 
-	// Launch wizard with existing node type
-	return e.launchWizard(node.Type)
+	// Start wizard with existing node type
+	return e.startWizard(node.Type)
 }
 
 func (e Editor) moveNode(index int) (Editor, tea.Cmd) {

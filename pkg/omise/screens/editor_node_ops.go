@@ -42,15 +42,6 @@ func appendNode(def neta.Definition, node neta.Definition) neta.Definition {
 	return def
 }
 
-// defaultNodeConfig returns a default configuration when no schema is available.
-func defaultNodeConfig(nodeType string) NodeConfiguredMsg {
-	return NodeConfiguredMsg{
-		Type:       nodeType,
-		Name:       fmt.Sprintf("New %s Node", nodeType),
-		Parameters: map[string]interface{}{},
-	}
-}
-
 // extractNodeName extracts and removes the "name" field from parameters.
 // Returns a default name if not found.
 func extractNodeName(params map[string]interface{}, nodeType string) string {
