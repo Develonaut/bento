@@ -1,6 +1,8 @@
 package screens
 
 import (
+	"fmt"
+
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -15,7 +17,9 @@ type Settings struct {
 	list            components.StyledList
 	themeManager    *styles.Manager
 	selectingTheme  bool
-	themeCursor     int
+	selectingSlowMo bool
+	themeForm       components.FormSelect
+	slowMoForm      components.FormSelect
 	availableThemes []styles.Variant
 	config          config.Config
 	dirPicker       components.DirPicker
@@ -23,6 +27,9 @@ type Settings struct {
 	helpView        components.HelpView
 	keys            components.SettingsKeyMap
 	pickerKeys      components.PickerKeyMap
+	selectedTheme   string
+	selectedSlowMo  string
+	statusMessage   string
 }
 
 type settingItem struct {
@@ -50,37 +57,44 @@ func (s settingItem) Description() string {
 	return valueStyle.Render(s.value) + " • " + s.desc
 }
 
-// NewSettings creates a settings screen
-func NewSettings() Settings {
-	tm := styles.NewManager()
-	cfg := config.Load()
-	defaultCfg := config.Default()
-
-	// Create DirPicker: start at current directory, but reset goes to app default
-	dp := components.NewDirPicker(cfg.SaveDirectory, defaultCfg.SaveDirectory)
-
-	s := Settings{
+// initializeSettings creates the initial Settings state
+func initializeSettings(tm *styles.Manager, cfg config.Config, dp components.DirPicker) Settings {
+	return Settings{
 		themeManager:    tm,
 		selectingTheme:  false,
+		selectingSlowMo: false,
 		selectingDir:    false,
-		themeCursor:     0,
 		availableThemes: styles.AllVariants(),
 		config:          cfg,
 		dirPicker:       dp,
 		helpView:        components.NewHelpView(),
 		keys:            components.NewSettingsKeyMap(),
 		pickerKeys:      components.NewPickerKeyMap(),
+		selectedTheme:   string(tm.GetVariant()),
+		selectedSlowMo:  formatSlowMoValue(cfg.SlowMoDelayMs),
+		statusMessage:   "",
 	}
+}
 
+// NewSettings creates a settings screen
+func NewSettings() Settings {
+	tm := styles.NewManager()
+	cfg := config.Load()
+	defaultCfg := config.Default()
+	dp := components.NewDirPicker(cfg.SaveDirectory, defaultCfg.SaveDirectory)
+
+	s := initializeSettings(tm, cfg, dp)
 	items := s.buildSettings()
 	s.list = components.NewStyledList(items, "")
-	s.list.SetSize(80, 20) // Set default size, will be updated on window resize
+	s.list.SetSize(80, 20)
 
 	return s
 }
 
 // buildSettings creates setting items with theme manager
 func (s *Settings) buildSettings() []list.Item {
+	slowMoValue := formatSlowMoValue(s.config.SlowMoDelayMs)
+
 	return []list.Item{
 		settingItem{
 			name:     "Theme",
@@ -92,12 +106,26 @@ func (s *Settings) buildSettings() []list.Item {
 				Bold(true),
 		},
 		settingItem{
+			name:     "Slow-Mo Execution",
+			value:    slowMoValue,
+			desc:     "Slow down execution to watch node progress (press Enter/Space to cycle)",
+			editable: true,
+		},
+		settingItem{
 			name:     "Save Directory",
 			value:    s.config.GetSaveDirectory(),
 			desc:     "Directory for all app data (press Enter/Space to change)",
 			editable: true,
 		},
 	}
+}
+
+// formatSlowMoValue formats the slow-mo delay value for display
+func formatSlowMoValue(delayMs int) string {
+	if delayMs == 0 {
+		return "Off"
+	}
+	return fmt.Sprintf("%dms", delayMs)
 }
 
 // Init initializes the settings
@@ -107,34 +135,27 @@ func (s Settings) Init() tea.Cmd {
 
 // InModalMode returns true if settings is in modal picker mode
 func (s Settings) InModalMode() bool {
-	return s.selectingDir || s.selectingTheme
+	return s.selectingDir || s.selectingTheme || s.selectingSlowMo
 }
 
 // Update handles settings messages
 func (s Settings) Update(msg tea.Msg) (Settings, tea.Cmd) {
-	// Handle directory selection
 	if msg, ok := msg.(components.DirSelectedMsg); ok {
 		return s.handleDirectorySelected(msg)
 	}
 
-	// Handle directory picker mode
-	if s.selectingDir {
-		return s.handleDirectoryPickerMode(msg)
+	if newS, cmd, handled := s.routeModalModeUpdate(msg); handled {
+		return newS, cmd
 	}
 
-	// Handle theme changes and rebuild styles
 	if _, ok := msg.(styles.ThemeChangedMsg); ok {
 		return s.handleThemeChanged()
 	}
 
-	// Handle window resize
 	if msg, ok := msg.(tea.WindowSizeMsg); ok {
-		h, v := lipgloss.NewStyle().Margin(2, 2).GetFrameSize()
-		s.list.SetSize(msg.Width-h, msg.Height-v-4)
-		return s, nil
+		return s.handleWindowResize(msg)
 	}
 
-	// Handle keyboard input
 	if msg, ok := msg.(tea.KeyMsg); ok {
 		return s.handleKeyInput(msg)
 	}
@@ -153,11 +174,6 @@ func (s Settings) handleThemeChanged() (Settings, tea.Cmd) {
 
 // handleKeyInput processes keyboard input
 func (s Settings) handleKeyInput(msg tea.KeyMsg) (Settings, tea.Cmd) {
-	// Handle theme selection mode
-	if s.selectingTheme {
-		return s.handleThemeSelection(msg)
-	}
-
 	// Handle setting-specific actions
 	switch msg.String() {
 	case "enter", " ":
@@ -172,68 +188,10 @@ func (s Settings) handleKeyInput(msg tea.KeyMsg) (Settings, tea.Cmd) {
 	return s, cmd
 }
 
-// activateSetting activates the current setting (e.g., opens theme selector)
-func (s Settings) activateSetting() (Settings, tea.Cmd) {
-	selected := s.list.SelectedItem()
-	if selected == nil {
-		return s, nil
-	}
-
-	item, ok := selected.(settingItem)
-	if !ok || !item.editable {
-		return s, nil
-	}
-
-	// Check if this is the theme setting
-	if item.name == "Theme" {
-		s = s.activateThemeSetting()
-		return s, nil
-	}
-
-	// Check if this is the save directory setting
-	if item.name == "Save Directory" {
-		s.selectingDir = true
-		return s, nil
-	}
-
-	return s, nil
-}
-
-// resetCurrentSetting resets the current setting to its default value
-func (s Settings) resetCurrentSetting() (Settings, tea.Cmd) {
-	selected := s.list.SelectedItem()
-	if selected == nil {
-		return s, nil
-	}
-
-	item, ok := selected.(settingItem)
-	if !ok || !item.editable {
-		return s, nil
-	}
-
-	// Check if this is the theme setting
-	if item.name == "Theme" {
-		// Reset to default theme (Maguro)
-		s.themeManager.SetVariant(styles.VariantMaguro)
-		items := s.buildSettings()
-		s.list.SetItems(items)
-		return s, func() tea.Msg {
-			return styles.ThemeChangedMsg{}
-		}
-	}
-
-	// Check if this is the save directory setting
-	if item.name == "Save Directory" {
-		return s.resetDirectorySetting()
-	}
-
-	return s, nil
-}
-
 // ContextualKeys returns the most important contextual keys for the footer
 func (s Settings) ContextualKeys() []components.KeyHelp {
-	// When in theme picker or directory picker mode, don't show main settings keys
-	if s.selectingTheme || s.selectingDir {
+	// When in theme picker, directory picker, or slow-mo picker mode, don't show main settings keys
+	if s.selectingTheme || s.selectingDir || s.selectingSlowMo {
 		return []components.KeyHelp{}
 	}
 

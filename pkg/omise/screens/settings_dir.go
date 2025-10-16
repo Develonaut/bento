@@ -1,6 +1,8 @@
 package screens
 
 import (
+	"fmt"
+
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 
@@ -12,9 +14,13 @@ import (
 // handleDirectorySelected processes directory selection message
 func (s Settings) handleDirectorySelected(msg components.DirSelectedMsg) (Settings, tea.Cmd) {
 	s.config.SaveDirectory = msg.Path
-	_ = config.Save(s.config) // Save config (ignore errors for now)
+	if err := config.Save(s.config); err != nil {
+		s.statusMessage = fmt.Sprintf("Warning: Failed to save config: %v", err)
+	} else {
+		s.statusMessage = ""
+	}
 	items := s.buildSettings()
-	s.list.SetItems(items) // Rebuild items to show new directory
+	s.list.SetItems(items)
 	s.selectingDir = false
 	return s, nil
 }
@@ -61,10 +67,13 @@ func (s Settings) renderDirectoryPickerView(title string) string {
 func (s Settings) resetDirectorySetting() (Settings, tea.Cmd) {
 	defaultCfg := config.Default()
 	s.config.SaveDirectory = defaultCfg.SaveDirectory
-	_ = config.Save(s.config)
+	if err := config.Save(s.config); err != nil {
+		s.statusMessage = fmt.Sprintf("Warning: Failed to save config: %v", err)
+	} else {
+		s.statusMessage = ""
+	}
 	items := s.buildSettings()
 	s.list.SetItems(items)
-	// Recreate DirPicker with app default
 	s.dirPicker = components.NewDirPicker(defaultCfg.SaveDirectory, defaultCfg.SaveDirectory)
 	return s, nil
 }

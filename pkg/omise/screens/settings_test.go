@@ -169,8 +169,8 @@ func TestSettingsNavigation(t *testing.T) {
 		{
 			name:          "down at bottom stays",
 			key:           tea.KeyMsg{Type: tea.KeyDown},
-			initialIndex:  1,
-			expectedIndex: 1,
+			initialIndex:  2,
+			expectedIndex: 2,
 		},
 		{
 			name:          "up at top stays",
@@ -198,9 +198,9 @@ func TestSettingsBuildSettings(t *testing.T) {
 	s := NewSettings()
 	items := s.buildSettings()
 
-	// Should have exactly 2 settings (Theme and Save Directory)
-	if len(items) != 2 {
-		t.Errorf("Expected 2 settings, got %d", len(items))
+	// Should have exactly 3 settings (Theme, Slow-Mo, and Save Directory)
+	if len(items) != 3 {
+		t.Errorf("Expected 3 settings, got %d", len(items))
 	}
 
 	// Verify Theme setting
@@ -215,13 +215,25 @@ func TestSettingsBuildSettings(t *testing.T) {
 		t.Error("Theme setting should be editable")
 	}
 
-	// Verify Save Directory setting
-	dirItem, ok := items[1].(settingItem)
+	// Verify Slow-Mo Execution setting
+	slowMoItem, ok := items[1].(settingItem)
 	if !ok {
 		t.Fatal("Second item is not a settingItem")
 	}
+	if slowMoItem.name != "Slow-Mo Execution" {
+		t.Errorf("Second setting should be Slow-Mo Execution, got %s", slowMoItem.name)
+	}
+	if !slowMoItem.editable {
+		t.Error("Slow-Mo Execution setting should be editable")
+	}
+
+	// Verify Save Directory setting
+	dirItem, ok := items[2].(settingItem)
+	if !ok {
+		t.Fatal("Third item is not a settingItem")
+	}
 	if dirItem.name != "Save Directory" {
-		t.Errorf("Second setting should be Save Directory, got %s", dirItem.name)
+		t.Errorf("Third setting should be Save Directory, got %s", dirItem.name)
 	}
 	if !dirItem.editable {
 		t.Error("Save Directory setting should be editable")

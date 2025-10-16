@@ -14,6 +14,7 @@ func (e Executor) handleThemeAndInput(msg tea.Msg) (Executor, tea.Cmd, bool) {
 	if _, ok := msg.(styles.ThemeChangedMsg); ok {
 		e.spinner = e.spinner.RebuildStyles()
 		e.progress = e.progress.RebuildStyles()
+		e.sequence = e.sequence.RebuildStyles()
 		return e, nil, true
 	}
 
@@ -146,5 +147,9 @@ func (e Executor) updateSpinner(msg tea.Msg) (Executor, tea.Cmd) {
 	}
 	var spinnerCmd tea.Cmd
 	e.spinner, spinnerCmd = e.spinner.Update(msg)
+
+	// Update sequence with new spinner state
+	e.sequence = e.sequence.Update(e.spinner)
+
 	return e, spinnerCmd
 }

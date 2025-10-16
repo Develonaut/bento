@@ -16,6 +16,7 @@ import (
 	"bento/pkg/neta/http"
 	"bento/pkg/neta/loop"
 	"bento/pkg/neta/transform"
+	"bento/pkg/omise/config"
 	"bento/pkg/pantry"
 )
 
@@ -141,6 +142,12 @@ func runBentoExecution(def neta.Definition, program *tea.Program) (neta.Result, 
 	registry := pantry.New()
 	messenger := &executorMessenger{program: program}
 	chef := itamae.NewWithMessenger(registry, messenger)
+
+	// Load config and apply slow-mo delay if configured
+	cfg := config.Load()
+	if cfg.SlowMoDelayMs > 0 {
+		chef.SetSlowMoDelay(cfg.SlowMoDelayMs)
+	}
 
 	registerStandardNetas(registry, chef)
 

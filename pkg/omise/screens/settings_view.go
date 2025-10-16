@@ -1,6 +1,8 @@
 package screens
 
 import (
+	"github.com/charmbracelet/lipgloss"
+
 	"bento/pkg/omise/styles"
 )
 
@@ -13,7 +15,11 @@ func (s Settings) View() string {
 	}
 
 	if s.selectingTheme {
-		return s.renderThemeSelector(title)
+		return s.themeForm.View()
+	}
+
+	if s.selectingSlowMo {
+		return s.slowMoForm.View()
 	}
 
 	return s.renderSettingsListView(title)
@@ -21,5 +27,18 @@ func (s Settings) View() string {
 
 // renderSettingsListView renders the normal settings list
 func (s Settings) renderSettingsListView(title string) string {
-	return s.list.View()
+	if s.statusMessage == "" {
+		return s.list.View()
+	}
+
+	errorStyle := lipgloss.NewStyle().
+		Foreground(lipgloss.Color("196")).
+		Bold(true)
+
+	return lipgloss.JoinVertical(
+		lipgloss.Left,
+		s.list.View(),
+		"",
+		errorStyle.Render(s.statusMessage),
+	)
 }

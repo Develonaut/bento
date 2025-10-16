@@ -41,6 +41,7 @@ type NodeState struct {
 type Executor struct {
 	spinner          components.Spinner
 	progress         components.Progress
+	sequence         components.Sequence
 	progressPercent  float64
 	status           string
 	running          bool
@@ -63,6 +64,7 @@ func NewExecutor() Executor {
 	return Executor{
 		spinner:  components.NewSpinner(),
 		progress: components.NewProgress(40),
+		sequence: components.NewSequence(),
 		status:   "Ready to execute bentos",
 		running:  false,
 	}

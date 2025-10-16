@@ -29,8 +29,9 @@ type ProgressMessenger interface {
 
 // Itamae orchestrates the execution of neta definitions.
 type Itamae struct {
-	pantry    Registry
-	messenger ProgressMessenger // Optional - can be nil
+	pantry       Registry
+	messenger    ProgressMessenger // Optional - can be nil
+	slowMoDelayMs int              // Delay in milliseconds for slow-mo mode (0 = off)
 }
 
 // Registry provides node type lookup.
@@ -41,17 +42,24 @@ type Registry interface {
 // New creates a new Itamae with the provided registry.
 func New(registry Registry) *Itamae {
 	return &Itamae{
-		pantry:    registry,
-		messenger: nil,
+		pantry:       registry,
+		messenger:    nil,
+		slowMoDelayMs: 0,
 	}
 }
 
 // NewWithMessenger creates an Itamae with progress messaging.
 func NewWithMessenger(registry Registry, messenger ProgressMessenger) *Itamae {
 	return &Itamae{
-		pantry:    registry,
-		messenger: messenger,
+		pantry:       registry,
+		messenger:    messenger,
+		slowMoDelayMs: 0,
 	}
+}
+
+// SetSlowMoDelay sets the slow-mo delay in milliseconds (0 = off)
+func (i *Itamae) SetSlowMoDelay(delayMs int) {
+	i.slowMoDelayMs = delayMs
 }
 
 // Execute runs a neta definition and returns the result.
@@ -79,6 +87,11 @@ func (i *Itamae) executeSingle(ctx context.Context, def neta.Definition, path st
 func (i *Itamae) notifyNodeStarted(path, name, nodeType string) {
 	if i.messenger != nil {
 		i.messenger.SendNodeStarted(path, name, nodeType)
+	}
+
+	// Apply slow-mo delay if configured
+	if i.slowMoDelayMs > 0 {
+		time.Sleep(time.Duration(i.slowMoDelayMs) * time.Millisecond)
 	}
 }
 

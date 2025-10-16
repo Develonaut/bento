@@ -93,12 +93,10 @@ func (e Executor) buildRunningCenter() string {
 	// Add all lifecycle history
 	lines = append(lines, e.lifecycleHistory...)
 
-	// Show per-node progress if nodes are being tracked
+	// Show per-node progress using sequence component
 	if len(e.nodeStates) > 0 {
 		lines = append(lines, "")
-		for _, node := range e.nodeStates {
-			lines = append(lines, e.formatNodeLine(node))
-		}
+		lines = append(lines, e.sequence.View())
 	} else {
 		// Fallback to old status display if no nodes yet
 		lines = append(lines, e.spinner.View()+" "+e.status)
@@ -140,30 +138,41 @@ func (e Executor) buildCompletionHeader(title string) string {
 	return lipgloss.JoinVertical(lipgloss.Left, lines...)
 }
 
+// appendErrorLines adds error message lines if execution failed
+func appendErrorLines(lines []string, success bool, errorMsg string) []string {
+	if !success && errorMsg != "" {
+		return append(lines,
+			styles.ErrorStyle.Render("Error:"),
+			styles.ErrorStyle.Render(truncateToOneLine(errorMsg, 80)),
+			"",
+		)
+	}
+	return lines
+}
+
+// appendOutputLines adds output lines if execution succeeded
+func appendOutputLines(lines []string, success bool, result string) []string {
+	if success && result != "" {
+		return append(lines,
+			styles.Subtle.Render("Output: "+truncateToOneLine(result, 80)),
+			"",
+		)
+	}
+	return lines
+}
+
 // buildCompletionCenter builds the center section for completion view
 func (e Executor) buildCompletionCenter() string {
 	lines := []string{}
-
-	// Add all lifecycle history
 	lines = append(lines, e.lifecycleHistory...)
+
+	if len(e.nodeStates) > 0 {
+		lines = append(lines, "", e.sequence.View())
+	}
+
 	lines = append(lines, "")
-
-	// Add error message if failed
-	if !e.success && e.errorMsg != "" {
-		lines = append(lines,
-			styles.ErrorStyle.Render("Error:"),
-			styles.ErrorStyle.Render(truncateToOneLine(e.errorMsg, 80)),
-			"",
-		)
-	}
-
-	// Add output if successful
-	if e.success && e.result != "" {
-		lines = append(lines,
-			styles.Subtle.Render("Output: "+truncateToOneLine(e.result, 80)),
-			"",
-		)
-	}
+	lines = appendErrorLines(lines, e.success, e.errorMsg)
+	lines = appendOutputLines(lines, e.success, e.result)
 
 	return lipgloss.JoinVertical(lipgloss.Left, lines...)
 }

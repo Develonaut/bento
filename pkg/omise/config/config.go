@@ -3,22 +3,25 @@ package config
 import (
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 )
 
 // Config holds user configuration settings
 type Config struct {
 	SaveDirectory string
+	SlowMoDelayMs int // 0 = off, or delay in milliseconds (250, 500, 1000, 2000, 4000, 8000)
 }
 
 // Default returns the default configuration
 func Default() Config {
 	home, err := os.UserHomeDir()
 	if err != nil {
-		return Config{SaveDirectory: ".bento"}
+		return Config{SaveDirectory: ".bento", SlowMoDelayMs: 0}
 	}
 	return Config{
 		SaveDirectory: filepath.Join(home, ".bento"),
+		SlowMoDelayMs: 0,
 	}
 }
 
@@ -72,6 +75,11 @@ func Load() Config {
 		switch key {
 		case "save_directory":
 			cfg.SaveDirectory = expandHome(value)
+		case "slow_mo_delay_ms":
+			// Parse integer, default to 0 on error
+			if delayMs, err := parseInt(value); err == nil {
+				cfg.SlowMoDelayMs = delayMs
+			}
 		}
 	}
 
@@ -97,6 +105,7 @@ func Save(cfg Config) error {
 
 	content := "# Bento Configuration\n"
 	content += "save_directory=" + cfg.SaveDirectory + "\n"
+	content += "slow_mo_delay_ms=" + formatInt(cfg.SlowMoDelayMs) + "\n"
 
 	return os.WriteFile(path, []byte(content), 0644)
 }
@@ -136,4 +145,14 @@ func contractHome(path string) string {
 // GetSaveDirectory returns the save directory with ~ contraction
 func (c Config) GetSaveDirectory() string {
 	return contractHome(c.SaveDirectory)
+}
+
+// parseInt parses an integer from a string
+func parseInt(s string) (int, error) {
+	return strconv.Atoi(s)
+}
+
+// formatInt formats an integer as a string
+func formatInt(i int) string {
+	return strconv.Itoa(i)
 }

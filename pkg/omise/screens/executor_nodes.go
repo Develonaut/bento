@@ -8,7 +8,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 
 	"bento/pkg/neta"
-	"bento/pkg/omise/styles"
+	"bento/pkg/omise/components"
 )
 
 // buildPathForNode constructs node path for tracking
@@ -78,6 +78,10 @@ func createNodeState(def neta.Definition, path string) NodeState {
 func (e Executor) handleInitMsg(msg ExecutionInitMsg) (Executor, tea.Cmd) {
 	// Flatten definition to get all nodes
 	e.nodeStates = flattenDefinition(msg.Definition, "")
+
+	// Update sequence display with initial steps
+	e.sequence = e.sequence.SetSteps(e.convertNodesToSteps())
+
 	return e, nil
 }
 
@@ -90,6 +94,10 @@ func (e Executor) handleNodeStarted(msg NodeStartedMsg) (Executor, tea.Cmd) {
 			break
 		}
 	}
+
+	// Update sequence display
+	e.sequence = e.sequence.SetSteps(e.convertNodesToSteps())
+
 	return e, nil
 }
 
@@ -110,6 +118,9 @@ func (e Executor) handleNodeCompleted(msg NodeCompletedMsg) (Executor, tea.Cmd) 
 	// Update progress based on completion
 	e.progressPercent = e.calculateProgressFromNodes()
 
+	// Update sequence display
+	e.sequence = e.sequence.SetSteps(e.convertNodesToSteps())
+
 	return e, nil
 }
 
@@ -129,50 +140,33 @@ func (e Executor) calculateProgressFromNodes() float64 {
 	return float64(completed) / float64(len(e.nodeStates))
 }
 
-// formatNodeLine renders single node with status icon and timing
-func (e Executor) formatNodeLine(node NodeState) string {
-	indent := strings.Repeat("  ", node.depth)
-	icon := e.getNodeIcon(node.status)
-	line := e.buildNodeLine(indent, icon, node)
-	return e.styleNodeLine(line, node.status)
-}
-
-// buildNodeLine constructs the node line with icon and duration
-func (e Executor) buildNodeLine(indent, icon string, node NodeState) string {
-	line := fmt.Sprintf("%s%s %s", indent, icon, node.name)
-
-	if node.status == NodeCompleted || node.status == NodeFailed {
-		durationStr := node.duration.Round(time.Millisecond).String()
-		line = fmt.Sprintf("%s (%s)", line, durationStr)
+// convertNodesToSteps converts NodeStates to Sequence Steps
+func (e Executor) convertNodesToSteps() []components.Step {
+	steps := make([]components.Step, len(e.nodeStates))
+	for i, node := range e.nodeStates {
+		steps[i] = components.Step{
+			Name:     node.name,
+			Type:     node.nodeType,
+			Status:   convertNodeStatusToStepStatus(node.status),
+			Duration: node.duration,
+			Depth:    node.depth,
+		}
 	}
-
-	return line
+	return steps
 }
 
-// styleNodeLine applies styling based on node status
-func (e Executor) styleNodeLine(line string, status NodeStatus) string {
+// convertNodeStatusToStepStatus converts NodeStatus to StepStatus
+func convertNodeStatusToStepStatus(status NodeStatus) components.StepStatus {
 	switch status {
-	case NodeCompleted:
-		return styles.SuccessStyle.Render(line)
-	case NodeFailed:
-		return styles.ErrorStyle.Render(line)
+	case NodePending:
+		return components.StepPending
 	case NodeRunning:
-		return line
-	default:
-		return styles.Subtle.Render(line)
-	}
-}
-
-// getNodeIcon returns emoji/character for node status
-func (e Executor) getNodeIcon(status NodeStatus) string {
-	switch status {
-	case NodeRunning:
-		return e.spinner.View() // Animated spinner
+		return components.StepRunning
 	case NodeCompleted:
-		return emojiSuccess // ✓
+		return components.StepCompleted
 	case NodeFailed:
-		return emojiFailure // ✗
+		return components.StepFailed
 	default:
-		return "•" // Pending
+		return components.StepPending
 	}
 }
