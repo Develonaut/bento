@@ -47,18 +47,33 @@ func CopyResultCmd(result, bentoName, errorMsg string, success bool) tea.Msg {
 	return CopyResultMsg("✓ Copied to clipboard!")
 }
 
+// executionState tracks ongoing execution
+var executionState struct {
+	running bool
+	done    chan ExecutionCompleteMsg
+}
+
 // ExecuteBentoCmd creates a command that executes a bento by name
 func ExecuteBentoCmd(bentoName string, workDir string) tea.Cmd {
-	return func() tea.Msg {
+	// Reset and mark execution as running
+	executionState.running = true
+	executionState.done = make(chan ExecutionCompleteMsg, 1)
+
+	// Start execution in goroutine
+	go func() {
 		// Load the bento definition
 		store, err := jubako.NewStore(workDir)
 		if err != nil {
-			return ExecutionErrorMsg{Error: err}
+			executionState.done <- ExecutionCompleteMsg{Success: false, Error: err}
+			executionState.running = false
+			return
 		}
 
 		def, err := store.Load(bentoName)
 		if err != nil {
-			return ExecutionErrorMsg{Error: err}
+			executionState.done <- ExecutionCompleteMsg{Success: false, Error: err}
+			executionState.running = false
+			return
 		}
 
 		// Create pantry and register all standard node types
@@ -77,20 +92,56 @@ func ExecuteBentoCmd(bentoName string, workDir string) tea.Cmd {
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 		defer cancel()
 
-		// Send start message
-		time.Sleep(100 * time.Millisecond) // Brief delay for UI
-
 		result, err := chef.Execute(ctx, def)
+		executionState.running = false
 		if err != nil {
-			return ExecutionCompleteMsg{
-				Success: false,
-				Error:   err,
-			}
+			executionState.done <- ExecutionCompleteMsg{Success: false, Error: err}
+			return
 		}
 
-		return ExecutionCompleteMsg{
-			Success: true,
-			Result:  result,
+		executionState.done <- ExecutionCompleteMsg{Success: true, Result: result}
+	}()
+
+	// Return initial progress message
+	return func() tea.Msg {
+		return ExecutionProgressMsg{
+			Status:   "Loading bento definition...",
+			Progress: 0.1,
+		}
+	}
+}
+
+// WaitForExecutionCmd checks if execution is complete (non-blocking)
+func WaitForExecutionCmd() tea.Cmd {
+	return func() tea.Msg {
+		// Non-blocking check if there's a completion message ready
+		select {
+		case msg := <-executionState.done:
+			return msg
+		case <-time.After(50 * time.Millisecond):
+			// Not done yet, return a message indicating we're still running
+			return executionStillRunningMsg{}
+		}
+	}
+}
+
+// executionStillRunningMsg indicates execution is still in progress
+type executionStillRunningMsg struct{}
+
+// ProgressTickCmd generates periodic progress updates during execution
+func ProgressTickCmd(currentProgress float64) tea.Cmd {
+	return func() tea.Msg {
+		time.Sleep(150 * time.Millisecond)
+
+		// Increment progress slowly, cap at 90% to leave room for completion
+		newProgress := currentProgress + 0.05
+		if newProgress > 0.9 {
+			newProgress = 0.9
+		}
+
+		return ExecutionProgressMsg{
+			Status:   "Executing bento...",
+			Progress: newProgress,
 		}
 	}
 }

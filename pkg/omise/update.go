@@ -44,6 +44,11 @@ func (m Model) handleResize(msg tea.WindowSizeMsg) (tea.Model, tea.Cmd) {
 	m.width = msg.Width
 	m.height = msg.Height
 
+	// Update viewport size (subtract header 3 lines, footer 1 line, spacing 2 lines = 6 total)
+	headerFooterHeight := 6
+	m.viewport.Width = msg.Width
+	m.viewport.Height = msg.Height - headerFooterHeight
+
 	// Pass resize to all screens so they can update their dimensions
 	return m.updateScreen(msg)
 }
@@ -91,6 +96,10 @@ func (m Model) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 // updateScreen delegates to the current screen
 func (m Model) updateScreen(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
+	var vpCmd tea.Cmd
+
+	// Update viewport for mouse wheel and viewport-specific keys
+	m.viewport, vpCmd = m.viewport.Update(msg)
 
 	switch m.screen {
 	case ScreenBrowser:
@@ -107,7 +116,7 @@ func (m Model) updateScreen(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.editor, cmd = m.editor.Update(msg)
 	}
 
-	return m, cmd
+	return m, tea.Batch(cmd, vpCmd)
 }
 
 // handleBentoSelected switches to executor and starts bento (legacy)

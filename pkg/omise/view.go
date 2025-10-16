@@ -14,14 +14,19 @@ func (m Model) View() string {
 	}
 
 	header := components.Header(m.screen, m.width)
+
+	// Set viewport content and render it
 	content := m.renderContent()
+	m.viewport.SetContent(content)
+	viewportView := m.viewport.View()
+
 	contextualKeys := m.getContextualKeys()
 	footer := components.Footer(m.width, contextualKeys)
 
 	return lipgloss.JoinVertical(
 		lipgloss.Left,
 		header,
-		content,
+		viewportView,
 		"",
 		footer,
 	)

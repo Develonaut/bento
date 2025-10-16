@@ -1,11 +1,13 @@
 package screens
 
 import (
+	"encoding/json"
 	"fmt"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 
+	"bento/pkg/neta"
 	"bento/pkg/omise/components"
 	"bento/pkg/omise/styles"
 )
@@ -62,7 +64,11 @@ func (e Executor) Update(msg tea.Msg) (Executor, tea.Cmd) {
 	case ExecutionProgressMsg:
 		e.status = msg.Status
 		e.progress.SetPercent(msg.Progress)
-		return e, nil
+		// Check if execution is complete, otherwise continue progress updates
+		return e, tea.Batch(
+			WaitForExecutionCmd(),
+			ProgressTickCmd(msg.Progress),
+		)
 	case ExecutionCompleteMsg:
 		e.running = false
 		e.complete = true
@@ -211,7 +217,27 @@ func formatResult(result interface{}) string {
 	if result == nil {
 		return "No output"
 	}
-	return fmt.Sprintf("%v", result)
+
+	// Type assert to neta.Result
+	netaResult, ok := result.(neta.Result)
+	if !ok {
+		// Fallback if not a neta.Result
+		return fmt.Sprintf("%v", result)
+	}
+
+	// Handle nil output
+	if netaResult.Output == nil {
+		return "No output"
+	}
+
+	// Try to marshal as pretty JSON
+	jsonBytes, err := json.MarshalIndent(netaResult.Output, "", "  ")
+	if err != nil {
+		// If JSON marshaling fails, fall back to simple format
+		return fmt.Sprintf("%v", netaResult.Output)
+	}
+
+	return string(jsonBytes)
 }
 
 // IsRunning returns whether the executor is currently running

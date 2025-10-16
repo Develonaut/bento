@@ -1,6 +1,7 @@
 package omise
 
 import (
+	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 
 	"bento/pkg/omise/screens"
@@ -32,9 +33,10 @@ func (s Screen) String() string {
 
 // Model is the root Bubble Tea model for Omise
 type Model struct {
-	screen Screen
-	width  int
-	height int
+	screen   Screen
+	width    int
+	height   int
+	viewport viewport.Model
 
 	// Screen models
 	browser  screens.Browser
@@ -59,8 +61,12 @@ func NewModel() Model {
 		browser = screens.Browser{}
 	}
 
+	// Create viewport with default size (will be updated on first resize)
+	vp := viewport.New(80, 20)
+
 	return Model{
 		screen:   ScreenBrowser,
+		viewport: vp,
 		browser:  browser,
 		executor: screens.NewExecutor(),
 		pantry:   screens.NewPantry(),
@@ -78,8 +84,12 @@ func NewModelWithWorkDir(workDir string) (Model, error) {
 		return Model{}, err
 	}
 
+	// Create viewport with default size (will be updated on first resize)
+	vp := viewport.New(80, 20)
+
 	return Model{
 		screen:   ScreenBrowser,
+		viewport: vp,
 		browser:  browser,
 		executor: screens.NewExecutor(),
 		pantry:   screens.NewPantry(),
