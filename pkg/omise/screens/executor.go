@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/charmbracelet/bubbles/progress"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 
@@ -15,18 +14,19 @@ import (
 
 // Executor shows bento execution progress
 type Executor struct {
-	spinner      components.Spinner
-	progress     components.Progress
-	status       string
-	running      bool
-	complete     bool
-	success      bool
-	bentoName    string
-	bentoPath    string
-	workDir      string
-	errorMsg     string
-	result       string
-	copyFeedback string
+	spinner         components.Spinner
+	progress        components.Progress
+	progressPercent float64
+	status          string
+	running         bool
+	complete        bool
+	success         bool
+	bentoName       string
+	bentoPath       string
+	workDir         string
+	errorMsg        string
+	result          string
+	copyFeedback    string
 }
 
 // NewExecutor creates an executor screen
@@ -66,11 +66,9 @@ func (e Executor) Update(msg tea.Msg) (Executor, tea.Cmd) {
 	switch msg := msg.(type) {
 	case ExecutionProgressMsg:
 		e.status = msg.Status
-		// SetPercent returns a command for animation - we must capture and return it!
-		progressCmd := e.progress.SetPercent(msg.Progress)
+		e.progressPercent = msg.Progress
 		// Check if execution is complete, otherwise continue progress updates
 		return e, tea.Batch(
-			progressCmd,
 			WaitForExecutionCmd(),
 			ProgressTickCmd(msg.Progress),
 		)
@@ -82,6 +80,7 @@ func (e Executor) Update(msg tea.Msg) (Executor, tea.Cmd) {
 		e.complete = true
 		e.success = msg.Success
 		e.result = formatResult(msg.Result)
+		e.progressPercent = 1.0
 		e.status = "Execution completed successfully!"
 		if !msg.Success {
 			e.status = "Execution failed"
@@ -89,9 +88,7 @@ func (e Executor) Update(msg tea.Msg) (Executor, tea.Cmd) {
 				e.errorMsg = msg.Error.Error()
 			}
 		}
-		// Always set progress to 100% on completion
-		progressCmd := e.progress.SetPercent(1.0)
-		return e, progressCmd
+		return e, nil
 	case CopyResultMsg:
 		e.copyFeedback = string(msg)
 		return e, nil
@@ -101,12 +98,8 @@ func (e Executor) Update(msg tea.Msg) (Executor, tea.Cmd) {
 		e.success = false
 		e.status = "Execution error"
 		e.errorMsg = msg.Error.Error()
+		e.progressPercent = 0.0
 		return e, nil
-	case progress.FrameMsg:
-		// Progress bar animation frames need to be passed to the progress component
-		progressModel, cmd := e.progress.Update(msg)
-		e.progress = progressModel
-		return e, cmd
 	}
 
 	if !e.running {
@@ -156,7 +149,7 @@ func (e Executor) runningView(title string) string {
 		"",
 		e.spinner.View()+" "+e.status,
 		"",
-		e.progress.View(),
+		e.progress.ViewAs(e.progressPercent),
 		"",
 		styles.Subtle.Render("Execution in progress..."),
 	)
@@ -172,7 +165,7 @@ func (e Executor) StartBento(name, path, workDir string) Executor {
 	e.success = false
 	e.errorMsg = ""
 	e.status = "Starting bento..."
-	e.progress.SetPercent(0.0)
+	e.progressPercent = 0.0
 	return e
 }
 
@@ -202,7 +195,7 @@ func (e Executor) completeView(title string) string {
 		statusStyle.Render(statusText),
 		styles.Subtle.Render(e.status),
 		"",
-		e.progress.View(),
+		e.progress.ViewAs(e.progressPercent),
 	}
 
 	if e.errorMsg != "" {
