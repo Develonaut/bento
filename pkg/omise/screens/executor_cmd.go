@@ -42,8 +42,8 @@ func CopyResultCmd(result, bentoName, errorMsg string, success bool) tea.Msg {
 	return CopyResultMsg("✓ Copied to clipboard!")
 }
 
-// ExecuteBentoCmd creates a command that executes a bento file
-func ExecuteBentoCmd(bentoPath string, workDir string) tea.Cmd {
+// ExecuteBentoCmd creates a command that executes a bento by name
+func ExecuteBentoCmd(bentoName string, workDir string) tea.Cmd {
 	return func() tea.Msg {
 		// Load the bento definition
 		store, err := jubako.NewStore(workDir)
@@ -51,7 +51,7 @@ func ExecuteBentoCmd(bentoPath string, workDir string) tea.Cmd {
 			return ExecutionErrorMsg{Error: err}
 		}
 
-		def, err := store.Load(bentoPath)
+		def, err := store.Load(bentoName)
 		if err != nil {
 			return ExecutionErrorMsg{Error: err}
 		}

@@ -158,7 +158,7 @@ func (e Executor) StartBento(name, path, workDir string) Executor {
 func (e Executor) ExecuteCmd() tea.Cmd {
 	return tea.Batch(
 		e.spinner.Tick,
-		ExecuteBentoCmd(e.bentoPath, e.workDir),
+		ExecuteBentoCmd(e.bentoName, e.workDir),
 	)
 }
 
