@@ -43,3 +43,10 @@ type BentoOperationCompleteMsg struct {
 	Success   bool
 	Error     error
 }
+
+// StartExecutionMsg signals to start execution after UI transition delay
+type StartExecutionMsg struct {
+	Name    string
+	Path    string
+	WorkDir string
+}

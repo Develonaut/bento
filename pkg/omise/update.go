@@ -1,6 +1,8 @@
 package omise
 
 import (
+	"time"
+
 	tea "github.com/charmbracelet/bubbletea"
 
 	"bento/pkg/jubako"
@@ -32,6 +34,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m.handleEditorCancelled(msg)
 	case screens.RunBentoFromEditorMsg:
 		return m.handleRunBentoFromEditor(msg)
+	case screens.StartExecutionMsg:
+		return m.handleStartExecution(msg)
 	case styles.ThemeChangedMsg:
 		return m.handleThemeChanged(msg)
 	default:
@@ -126,10 +130,24 @@ func (m Model) handleBentoSelected(msg screens.BentoSelectedMsg) (tea.Model, tea
 	return m, m.executor.ExecuteCmd(m.program)
 }
 
-// handleWorkflowSelected switches to executor and starts bento
+// handleWorkflowSelected switches to executor and queues delayed execution
 func (m Model) handleWorkflowSelected(msg screens.WorkflowSelectedMsg) (tea.Model, tea.Cmd) {
 	m.screen = ScreenExecutor
 	m.executor = m.executor.StartBento(msg.Name, msg.Path, m.workDir)
+
+	// Return command that sends StartExecutionMsg after 500ms delay
+	return m, func() tea.Msg {
+		time.Sleep(500 * time.Millisecond)
+		return screens.StartExecutionMsg{
+			Name:    msg.Name,
+			Path:    msg.Path,
+			WorkDir: m.workDir,
+		}
+	}
+}
+
+// handleStartExecution begins actual execution after UI transition delay
+func (m Model) handleStartExecution(msg screens.StartExecutionMsg) (tea.Model, tea.Cmd) {
 	return m, m.executor.ExecuteCmd(m.program)
 }
 
