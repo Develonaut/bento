@@ -31,7 +31,8 @@ func NewFooter() FooterModel {
 // SetWidth sets the footer width
 func (f FooterModel) SetWidth(width int) FooterModel {
 	f.width = width
-	f.help.Width = width
+	// Account for left and right padding (2 each = 4 total)
+	f.help.Width = width - 4
 	return f
 }
 
@@ -46,5 +47,5 @@ func (f FooterModel) View(contextualKeys []key.Binding, useBackKey bool) string 
 	}
 	allKeys := append(contextualKeys, globalKeys...)
 	helpText := f.help.ShortHelpView(allKeys)
-	return styles.Footer.Width(f.width).Render(helpText)
+	return styles.Footer.Render(helpText)
 }

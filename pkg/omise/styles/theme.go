@@ -15,6 +15,12 @@ var (
 	Warning   lipgloss.Color // Warning states
 	Text      lipgloss.Color // Primary text
 	Muted     lipgloss.Color // Muted/subtle text
+
+	// Tab colors
+	ActiveTabForeground   lipgloss.Color
+	ActiveTabBorder       lipgloss.Color
+	InactiveTabForeground lipgloss.Color
+	InactiveTabBorder     lipgloss.Color
 )
 
 // currentVariant tracks the active theme variant
@@ -31,6 +37,13 @@ func init() {
 	Warning = palette.Warning
 	Text = palette.Text
 	Muted = palette.Muted
+
+	// Set tab colors based on theme
+	ActiveTabForeground = Primary
+	ActiveTabBorder = Primary
+	InactiveTabForeground = Muted
+	InactiveTabBorder = Muted
+
 	rebuildStyles()
 }
 

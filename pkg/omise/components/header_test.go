@@ -12,8 +12,21 @@ func (m mockScreen) String() string {
 }
 
 func TestHeader(t *testing.T) {
+	tabView := NewTabView()
+	result := Header(tabView, 80)
+
+	if !strings.Contains(result, "🍱 Bento") {
+		t.Error("Header should contain Bento logo")
+	}
+
+	if !strings.Contains(result, "Bentos") {
+		t.Error("Header should contain Bentos tab")
+	}
+}
+
+func TestHeaderLegacy(t *testing.T) {
 	screen := mockScreen(0)
-	result := Header(screen, 80)
+	result := HeaderLegacy(screen, 80)
 
 	if !strings.Contains(result, "🍱 Bento") {
 		t.Error("Header should contain Bento logo")

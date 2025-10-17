@@ -48,8 +48,12 @@ func (m Model) handleResize(msg tea.WindowSizeMsg) (tea.Model, tea.Cmd) {
 	m.width = msg.Width
 	m.height = msg.Height
 
-	// Update viewport size (subtract header 3 lines, footer 1 line, spacing 2 lines = 6 total)
-	headerFooterHeight := 6
+	// Update viewport size
+	// Header: title (1 line) + tabs (2 lines with borders) = 3 lines
+	// Footer: 3 lines (with padding)
+	// Spacing: 2 lines
+	// Total: 8 lines
+	headerFooterHeight := 8
 	m.viewport.Width = msg.Width
 	m.viewport.Height = msg.Height - headerFooterHeight
 
@@ -77,17 +81,43 @@ func (m Model) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		return m, tea.Quit
 
 	case "?", "h":
-		m.screen = ScreenHelp
+		if tabID, ok := m.tabView.TabFromKey("4"); ok {
+			m = m.SwitchToTab(tabID)
+		}
 		return m, nil
 
 	case "s":
-		m.screen = ScreenSettings
+		if tabID, ok := m.tabView.TabFromKey("3"); ok {
+			m = m.SwitchToTab(tabID)
+		}
 		return m, nil
+
+	case "tab":
+		// Cycle to next tab
+		m.tabView = m.tabView.NextTab()
+		m.screen = m.TabToScreen(m.tabView.GetActiveTab())
+		return m, nil
+
+	case "shift+tab":
+		// Cycle to previous tab
+		m.tabView = m.tabView.PrevTab()
+		m.screen = m.TabToScreen(m.tabView.GetActiveTab())
+		return m, nil
+
+	case "1", "2", "3", "4":
+		// Direct tab access
+		if tabID, ok := m.tabView.TabFromKey(msg.String()); ok {
+			m = m.SwitchToTab(tabID)
+			return m, nil
+		}
+		return m.updateScreen(msg)
 
 	case "esc":
 		// ESC returns to Browser from any screen (unless in modal mode)
 		if m.screen != ScreenBrowser && m.screen != ScreenEditor {
-			m.screen = ScreenBrowser
+			if tabID, ok := m.tabView.TabFromKey("1"); ok {
+				m = m.SwitchToTab(tabID)
+			}
 			return m, nil
 		}
 		return m.updateScreen(msg)

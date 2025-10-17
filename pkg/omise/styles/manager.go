@@ -64,6 +64,12 @@ func applyTheme(p Palette) {
 	Text = p.Text
 	Muted = p.Muted
 
+	// Update tab colors
+	ActiveTabForeground = Primary
+	ActiveTabBorder = Primary
+	InactiveTabForeground = Muted
+	InactiveTabBorder = Muted
+
 	// Rebuild styles with new colors
 	rebuildStyles()
 }

@@ -200,9 +200,8 @@ func (b Browser) KeyBindings() []key.Binding {
 		}
 	}
 
-	// For selected items, show action keys
+	// For selected items, show action keys (removed Execute/enter)
 	return []key.Binding{
-		b.keys.Execute,
 		b.keys.Run,
 		b.keys.Edit,
 		b.keys.Copy,

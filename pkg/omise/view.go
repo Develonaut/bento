@@ -14,7 +14,10 @@ func (m Model) View() string {
 		return styles.Goodbye.Render("Thanks for using Bento! 🍱\n")
 	}
 
-	header := components.Header(m.screen, m.width)
+	// Sync tab view with current screen
+	m.tabView = m.tabView.SetActiveTab(m.ScreenToTab())
+
+	header := components.Header(m.tabView, m.width)
 	viewportView := m.renderViewport()
 	footer := m.renderFooter()
 
@@ -30,7 +33,13 @@ func (m Model) View() string {
 // renderViewport renders the viewport with content
 func (m Model) renderViewport() string {
 	content := m.renderContent()
-	m.viewport.SetContent(content)
+	// Add padding to content
+	paddedContent := lipgloss.NewStyle().
+		PaddingLeft(2).
+		PaddingRight(2).
+		PaddingBottom(2).
+		Render(content)
+	m.viewport.SetContent(paddedContent)
 	return m.viewport.View()
 }
 
@@ -39,7 +48,13 @@ func (m Model) renderFooter() string {
 	footerModel := components.NewFooter().SetWidth(m.width)
 	contextualKeys := m.getKeyBindings()
 	useBackKey := m.screen == ScreenEditor || m.screen == ScreenSettings || m.screen == ScreenHelp
-	return footerModel.View(contextualKeys, useBackKey)
+	footer := footerModel.View(contextualKeys, useBackKey)
+
+	// Add padding to footer
+	return lipgloss.NewStyle().
+		PaddingLeft(2).
+		PaddingBottom(1).
+		Render(footer)
 }
 
 // getKeyBindings returns contextual key bindings from the active screen

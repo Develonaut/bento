@@ -12,8 +12,20 @@ type ScreenStringer interface {
 	String() string
 }
 
-// Header renders the app header bar
-func Header(screen ScreenStringer, width int) string {
+// Header renders the app header bar with tabs
+func Header(tabView TabView, width int) string {
+	title := styles.Header.Width(width).Render("🍱 Bento v0.1.0")
+	tabBar := tabView.SetWidth(width).View()
+
+	return lipgloss.JoinVertical(
+		lipgloss.Left,
+		title,
+		tabBar,
+	)
+}
+
+// HeaderLegacy renders the old-style header (for compatibility)
+func HeaderLegacy(screen ScreenStringer, width int) string {
 	title := "🍱 Bento"
 	screenName := screen.String()
 

@@ -6,6 +6,7 @@ import (
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 
+	"bento/pkg/omise/components"
 	"bento/pkg/omise/config"
 	"bento/pkg/omise/screens"
 )
@@ -40,6 +41,7 @@ type Model struct {
 	width    int
 	height   int
 	viewport viewport.Model
+	tabView  components.TabView
 
 	// Screen models
 	browser  screens.Browser
@@ -71,6 +73,7 @@ func NewModel() Model {
 	return Model{
 		screen:   ScreenBrowser,
 		viewport: vp,
+		tabView:  components.NewTabView(),
 		browser:  browser,
 		executor: screens.NewExecutor(),
 		pantry:   screens.NewPantry(),
@@ -94,6 +97,7 @@ func NewModelWithWorkDir(workDir string) (Model, error) {
 	return Model{
 		screen:   ScreenBrowser,
 		viewport: vp,
+		tabView:  components.NewTabView(),
 		browser:  browser,
 		executor: screens.NewExecutor(),
 		pantry:   screens.NewPantry(),
@@ -132,4 +136,43 @@ func (m Model) PrevScreen() Screen {
 // SetProgram stores program reference for messaging
 func (m *Model) SetProgram(p *tea.Program) {
 	m.program = p
+}
+
+// ScreenToTab maps a screen to its corresponding tab
+func (m Model) ScreenToTab() components.TabID {
+	switch m.screen {
+	case ScreenBrowser:
+		return components.TabBentos
+	case ScreenPantry:
+		return components.TabRecipes
+	case ScreenSettings:
+		return components.TabMise
+	case ScreenHelp:
+		return components.TabSensei
+	default:
+		return components.TabBentos
+	}
+}
+
+// TabToScreen maps a tab to its corresponding screen
+func (m Model) TabToScreen(tab components.TabID) Screen {
+	switch tab {
+	case components.TabBentos:
+		return ScreenBrowser
+	case components.TabRecipes:
+		return ScreenPantry
+	case components.TabMise:
+		return ScreenSettings
+	case components.TabSensei:
+		return ScreenHelp
+	default:
+		return ScreenBrowser
+	}
+}
+
+// SwitchToTab switches to the screen for the given tab
+func (m Model) SwitchToTab(tab components.TabID) Model {
+	m.screen = m.TabToScreen(tab)
+	m.tabView = m.tabView.SetActiveTab(tab)
+	return m
 }
