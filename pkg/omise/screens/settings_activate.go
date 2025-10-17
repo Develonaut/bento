@@ -1,7 +1,11 @@
 package screens
 
 import (
+	"os"
+
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
+	"github.com/muesli/termenv"
 
 	"bento/pkg/omise/components"
 	"bento/pkg/omise/styles"
@@ -62,12 +66,23 @@ func (s Settings) activateSlowMoForm() (Settings, tea.Cmd) {
 	return s, s.slowMoForm.Init()
 }
 
-// buildThemeOptions creates select options for theme variants
+// buildThemeOptions creates select options for theme variants with color styling
 func buildThemeOptions(themes []styles.Variant) []components.SelectOption {
 	options := make([]components.SelectOption, len(themes))
+	// Create a renderer that forces color output (even in non-TTY environments like tests)
+	renderer := lipgloss.NewRenderer(os.Stdout, termenv.WithProfile(termenv.TrueColor))
+
 	for i, variant := range themes {
+		// Get the palette for this variant to extract its primary color
+		palette := styles.GetPalette(variant)
+		// Create a styled label with the theme's primary color
+		styledLabel := renderer.NewStyle().
+			Foreground(palette.Primary).
+			Bold(true).
+			Render(string(variant))
+
 		options[i] = components.SelectOption{
-			Label: string(variant),
+			Label: styledLabel,
 			Value: string(variant),
 		}
 	}

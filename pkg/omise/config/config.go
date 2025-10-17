@@ -17,11 +17,11 @@ type Config struct {
 func Default() Config {
 	home, err := os.UserHomeDir()
 	if err != nil {
-		return Config{SaveDirectory: ".bento", SlowMoDelayMs: 0}
+		return Config{SaveDirectory: ".bento", SlowMoDelayMs: 250}
 	}
 	return Config{
 		SaveDirectory: filepath.Join(home, ".bento"),
-		SlowMoDelayMs: 0,
+		SlowMoDelayMs: 250,
 	}
 }
 

@@ -9,7 +9,6 @@ import (
 	"bento/pkg/omise/emoji"
 )
 
-
 // NodeStatus represents node execution state
 type NodeStatus int
 
@@ -89,11 +88,14 @@ func (e Executor) StartBento(name, path, workDir string) Executor {
 	e.complete = false
 	e.success = false
 	e.errorMsg = ""
+	e.result = ""
+	e.copyFeedback = ""
 	e.status = "Adding neta..."
 	e.progressPercent = 0.0
 	e.startTime = time.Now()
 	e.endTime = time.Time{} // Zero value
 	e.lifecycleHistory = []string{emoji.Bento + " Preparing Bento..."}
+	e.nodeStates = []NodeState{} // Reset node states from previous run
 	return e
 }
 
