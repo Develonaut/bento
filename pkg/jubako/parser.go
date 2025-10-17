@@ -150,6 +150,15 @@ func validateStructure(def neta.Definition) error {
 		return fmt.Errorf("type is required")
 	}
 
+	// Validate optional fields
+	if len(def.Description) > 200 {
+		return fmt.Errorf("description too long (max 200 characters, got %d)", len(def.Description))
+	}
+
+	if len(def.Icon) > 10 {
+		return fmt.Errorf("icon too long (max 10 characters for emoji, got %d)", len(def.Icon))
+	}
+
 	// Recursively validate child nodes
 	for i, child := range def.Nodes {
 		if err := validateStructure(child); err != nil {

@@ -48,7 +48,9 @@ func TestGetSushi(t *testing.T) {
 	}
 
 	// Test deterministic behavior
-	if GetSushi("same-key") != GetSushi("same-key") {
+	first := GetSushi("same-key")
+	second := GetSushi("same-key")
+	if first != second {
 		t.Error("GetSushi should be deterministic")
 	}
 }

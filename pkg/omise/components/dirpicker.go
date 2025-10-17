@@ -56,9 +56,20 @@ func applyDirPickerStyles(fp filepicker.Model) filepicker.Model {
 // Update handles directory picker messages
 func (dp DirPicker) Update(msg tea.Msg) (DirPicker, tea.Cmd) {
 	var cmd tea.Cmd
+
+	// Handle enter key to select current directory
+	if keyMsg, ok := msg.(tea.KeyMsg); ok {
+		if keyMsg.String() == "enter" {
+			// Select the current directory
+			return dp, func() tea.Msg {
+				return DirSelectedMsg{Path: dp.Model.CurrentDirectory}
+			}
+		}
+	}
+
 	dp.Model, cmd = dp.Model.Update(msg)
 
-	// Check if a directory was selected
+	// Check if a directory was selected from the list
 	if didSelect, path := dp.Model.DidSelectFile(msg); didSelect {
 		return dp, func() tea.Msg {
 			return DirSelectedMsg{Path: path}

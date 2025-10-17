@@ -306,6 +306,46 @@ func TestValidateDefinition(t *testing.T) {
 			},
 			wantErr: true,
 		},
+		{
+			name: "description too long",
+			def: neta.Definition{
+				Version:     "1.0",
+				Type:        "http",
+				Name:        "Test",
+				Description: string(make([]byte, 201)), // 201 characters
+				Parameters: map[string]interface{}{
+					"url": "https://example.com",
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "icon too long",
+			def: neta.Definition{
+				Version: "1.0",
+				Type:    "http",
+				Name:    "Test",
+				Icon:    "🌐🌐🌐🌐🌐🌐", // More than 10 characters
+				Parameters: map[string]interface{}{
+					"url": "https://example.com",
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "valid with icon and description",
+			def: neta.Definition{
+				Version:     "1.0",
+				Type:        "http",
+				Name:        "Test",
+				Icon:        "🌐",
+				Description: "A valid description",
+				Parameters: map[string]interface{}{
+					"url": "https://example.com",
+				},
+			},
+			wantErr: false,
+		},
 	}
 
 	for _, tt := range tests {
