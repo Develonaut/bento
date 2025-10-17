@@ -52,6 +52,9 @@ type Definition struct {
 	// If not specified, a deterministic emoji will be generated from the name
 	Icon string `yaml:"icon,omitempty" json:"icon,omitempty"`
 
+	// Description is a human-readable description of the bento (optional)
+	Description string `yaml:"description,omitempty" json:"description,omitempty"`
+
 	// Parameters contains type-specific configuration.
 	//
 	// Parameters uses map[string]interface{} to support heterogeneous node

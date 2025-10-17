@@ -176,8 +176,8 @@ func TestBrowser_LoadBentos(t *testing.T) {
 		if bi.version != "1.0" {
 			t.Errorf("Expected version 1.0 at index %d, got %s", i, bi.version)
 		}
-		if bi.nodeType != "http" {
-			t.Errorf("Expected type http at index %d, got %s", i, bi.nodeType)
+		if bi.description != "http" {
+			t.Errorf("Expected type http at index %d, got %s", i, bi.description)
 		}
 	}
 }
@@ -321,7 +321,108 @@ func TestBrowser_LoadsBentosWithDifferentNodeTypes(t *testing.T) {
 		t.Fatal("file.write bento should be present in loaded items")
 	}
 
-	if fileWriteBento.nodeType != "file.write" {
-		t.Errorf("Expected nodeType file.write, got %s", fileWriteBento.nodeType)
+	if fileWriteBento.description != "file.write" {
+		t.Errorf("Expected nodeType file.write, got %s", fileWriteBento.description)
+	}
+}
+
+func TestBrowser_LoadBentoItemWithDescription(t *testing.T) {
+	workDir := t.TempDir()
+	store, _ := jubako.NewStore(workDir)
+
+	// Create bento with custom description
+	def := neta.Definition{
+		Version:     "1.0",
+		Type:        "http",
+		Name:        "test-with-desc",
+		Icon:        "🌐",
+		Description: "Custom description for this bento",
+		Parameters: map[string]interface{}{
+			"url": "https://httpbin.org/get",
+		},
+	}
+	if err := store.Save("test-with-desc", def); err != nil {
+		t.Fatalf("Failed to save bento: %v", err)
+	}
+
+	// Load bentos
+	items, err := loadBentos(store)
+	if err != nil {
+		t.Fatalf("loadBentos() error = %v", err)
+	}
+
+	// Find our bento
+	var testBento *bentoItem
+	for _, item := range items {
+		if bi, ok := item.(bentoItem); ok && bi.name == "test-with-desc" {
+			testBento = &bi
+			break
+		}
+	}
+
+	if testBento == nil {
+		t.Fatal("Expected bento with custom description not found")
+	}
+
+	// Verify icon is loaded
+	if testBento.icon != "🌐" {
+		t.Errorf("Expected icon 🌐, got %s", testBento.icon)
+	}
+
+	// Verify description is used
+	if testBento.description != "Custom description for this bento" {
+		t.Errorf("Expected custom description, got %s", testBento.description)
+	}
+
+	// Verify Description() method returns the custom description
+	if testBento.Description() != "Custom description for this bento" {
+		t.Errorf("Description() = %s, want 'Custom description for this bento'", testBento.Description())
+	}
+}
+
+func TestBrowser_LoadBentoItemWithoutDescription(t *testing.T) {
+	workDir := t.TempDir()
+	store, _ := jubako.NewStore(workDir)
+
+	// Create bento without description (should fallback to type)
+	def := neta.Definition{
+		Version: "1.0",
+		Type:    "http",
+		Name:    "test-no-desc",
+		Parameters: map[string]interface{}{
+			"url": "https://httpbin.org/get",
+		},
+	}
+	if err := store.Save("test-no-desc", def); err != nil {
+		t.Fatalf("Failed to save bento: %v", err)
+	}
+
+	// Load bentos
+	items, err := loadBentos(store)
+	if err != nil {
+		t.Fatalf("loadBentos() error = %v", err)
+	}
+
+	// Find our bento
+	var testBento *bentoItem
+	for _, item := range items {
+		if bi, ok := item.(bentoItem); ok && bi.name == "test-no-desc" {
+			testBento = &bi
+			break
+		}
+	}
+
+	if testBento == nil {
+		t.Fatal("Expected bento without description not found")
+	}
+
+	// Verify description falls back to type
+	if testBento.description != "http" {
+		t.Errorf("Expected description to fallback to type 'http', got %s", testBento.description)
+	}
+
+	// Verify Description() method returns the type as fallback
+	if testBento.Description() != "http" {
+		t.Errorf("Description() = %s, want 'http'", testBento.Description())
 	}
 }

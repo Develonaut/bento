@@ -176,6 +176,56 @@ func TestParser_Format(t *testing.T) {
 	})
 }
 
+func TestParser_ParseIconAndDescription(t *testing.T) {
+	parser := NewParser()
+
+	t.Run("with icon and description", func(t *testing.T) {
+		yaml := `version: "1.0"
+type: http
+name: Test API
+icon: 🌐
+description: Makes an API call to fetch data
+parameters:
+  url: https://example.com
+  method: GET`
+
+		def, err := parser.ParseBytes([]byte(yaml))
+		if err != nil {
+			t.Fatalf("ParseBytes() error = %v", err)
+		}
+
+		if def.Icon != "🌐" {
+			t.Errorf("ParseBytes() got icon = %q, want %q", def.Icon, "🌐")
+		}
+
+		if def.Description != "Makes an API call to fetch data" {
+			t.Errorf("ParseBytes() got description = %q, want %q", def.Description, "Makes an API call to fetch data")
+		}
+	})
+
+	t.Run("without icon and description", func(t *testing.T) {
+		yaml := `version: "1.0"
+type: http
+name: Test API
+parameters:
+  url: https://example.com
+  method: GET`
+
+		def, err := parser.ParseBytes([]byte(yaml))
+		if err != nil {
+			t.Fatalf("ParseBytes() error = %v", err)
+		}
+
+		if def.Icon != "" {
+			t.Errorf("ParseBytes() got icon = %q, want empty string", def.Icon)
+		}
+
+		if def.Description != "" {
+			t.Errorf("ParseBytes() got description = %q, want empty string", def.Description)
+		}
+	})
+}
+
 func TestValidateDefinition(t *testing.T) {
 	tests := []struct {
 		name    string

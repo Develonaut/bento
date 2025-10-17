@@ -15,12 +15,12 @@ import (
 
 // bentoItem represents a bento in the list
 type bentoItem struct {
-	name     string
-	path     string
-	version  string
-	nodeType string
-	icon     string
-	modified time.Time
+	name        string
+	path        string
+	version     string
+	description string
+	icon        string
+	modified    time.Time
 }
 
 // Title returns the item title
@@ -37,7 +37,7 @@ func (i bentoItem) Title() string {
 
 // Description returns the item description
 func (i bentoItem) Description() string {
-	return i.nodeType
+	return i.description
 }
 
 // FilterValue returns the value to filter by
@@ -70,13 +70,19 @@ func loadBentoItem(store *jubako.Store, info jubako.BentoInfo) (bentoItem, bool)
 		return bentoItem{}, false
 	}
 
+	// Use description if available, fallback to type
+	description := def.Description
+	if description == "" {
+		description = def.Type
+	}
+
 	return bentoItem{
-		name:     extractBentoName(info.Name),
-		path:     info.Path,
-		version:  def.Version,
-		nodeType: def.Type,
-		icon:     def.Icon,
-		modified: info.Modified,
+		name:        extractBentoName(info.Name),
+		path:        info.Path,
+		version:     def.Version,
+		description: description,
+		icon:        def.Icon,
+		modified:    info.Modified,
 	}, true
 }
 
