@@ -1,6 +1,7 @@
 package omise
 
 import (
+	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/lipgloss"
 
 	"bento/pkg/omise/components"
@@ -14,14 +15,8 @@ func (m Model) View() string {
 	}
 
 	header := components.Header(m.screen, m.width)
-
-	// Set viewport content and render it
-	content := m.renderContent()
-	m.viewport.SetContent(content)
-	viewportView := m.viewport.View()
-
-	contextualKeys := m.getContextualKeys()
-	footer := components.Footer(m.width, contextualKeys)
+	viewportView := m.renderViewport()
+	footer := m.renderFooter()
 
 	return lipgloss.JoinVertical(
 		lipgloss.Left,
@@ -32,23 +27,38 @@ func (m Model) View() string {
 	)
 }
 
-// getContextualKeys returns contextual keys from the active screen
-func (m Model) getContextualKeys() []components.KeyHelp {
+// renderViewport renders the viewport with content
+func (m Model) renderViewport() string {
+	content := m.renderContent()
+	m.viewport.SetContent(content)
+	return m.viewport.View()
+}
+
+// renderFooter renders the footer with contextual keys
+func (m Model) renderFooter() string {
+	footerModel := components.NewFooter().SetWidth(m.width)
+	contextualKeys := m.getKeyBindings()
+	useBackKey := m.screen == ScreenEditor || m.screen == ScreenSettings || m.screen == ScreenHelp
+	return footerModel.View(contextualKeys, useBackKey)
+}
+
+// getKeyBindings returns contextual key bindings from the active screen
+func (m Model) getKeyBindings() []key.Binding {
 	switch m.screen {
 	case ScreenBrowser:
-		return m.browser.ContextualKeys()
+		return m.browser.KeyBindings()
 	case ScreenExecutor:
-		return m.executor.ContextualKeys()
+		return m.executor.KeyBindings()
 	case ScreenPantry:
-		return m.pantry.ContextualKeys()
+		return m.pantry.KeyBindings()
 	case ScreenSettings:
-		return m.settings.ContextualKeys()
+		return m.settings.KeyBindings()
 	case ScreenHelp:
-		return m.help.ContextualKeys()
+		return m.help.KeyBindings()
 	case ScreenEditor:
-		return m.editor.ContextualKeys()
+		return m.editor.KeyBindings()
 	default:
-		return []components.KeyHelp{}
+		return []key.Binding{}
 	}
 }
 

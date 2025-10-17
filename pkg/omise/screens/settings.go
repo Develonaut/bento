@@ -3,6 +3,7 @@ package screens
 import (
 	"fmt"
 
+	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -188,16 +189,16 @@ func (s Settings) handleKeyInput(msg tea.KeyMsg) (Settings, tea.Cmd) {
 	return s, cmd
 }
 
-// ContextualKeys returns the most important contextual keys for the footer
-func (s Settings) ContextualKeys() []components.KeyHelp {
+// KeyBindings returns the contextual key bindings for the footer
+func (s Settings) KeyBindings() []key.Binding {
 	// When in theme picker, directory picker, or slow-mo picker mode, don't show main settings keys
 	if s.selectingTheme || s.selectingDir || s.selectingSlowMo {
-		return []components.KeyHelp{}
+		return []key.Binding{}
 	}
 
 	// Main settings keys
-	return []components.KeyHelp{
-		{Key: "enter", Desc: "edit"},
-		{Key: "r", Desc: "reset"},
+	return []key.Binding{
+		s.keys.Select,
+		s.keys.Reset,
 	}
 }

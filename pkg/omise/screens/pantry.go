@@ -1,6 +1,7 @@
 package screens
 
 import (
+	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/table"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -83,8 +84,8 @@ func (p Pantry) View() string {
 	)
 }
 
-// ContextualKeys returns the most important contextual keys for the footer
-func (p Pantry) ContextualKeys() []components.KeyHelp {
+// KeyBindings returns the contextual key bindings for the footer
+func (p Pantry) KeyBindings() []key.Binding {
 	// Pantry is read-only, no contextual actions
-	return []components.KeyHelp{}
+	return []key.Binding{}
 }

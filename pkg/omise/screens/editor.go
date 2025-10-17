@@ -8,6 +8,7 @@ import (
 	"bento/pkg/omise/components"
 	"bento/pkg/pantry"
 
+	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/huh"
 )
 
@@ -176,30 +177,29 @@ func (e Editor) GetDefinition() neta.Definition {
 	return e.def
 }
 
-// ContextualKeys returns the most important contextual keys for the footer
-func (e Editor) ContextualKeys() []components.KeyHelp {
+// KeyBindings returns the contextual key bindings for the footer
+func (e Editor) KeyBindings() []key.Binding {
 	// When in modal mode (form), don't show editor keys
 	if e.InModalMode() {
-		return []components.KeyHelp{}
+		return []key.Binding{}
 	}
 
 	// In review state, show main editor keys
 	if e.state == StateReview {
-		// Check if we have nodes to show edit/delete keys
 		if len(e.def.Nodes) > 0 {
-			return []components.KeyHelp{
-				{Key: "a", Desc: "add"},
-				{Key: "e", Desc: "edit"},
-				{Key: "d", Desc: "delete"},
-				{Key: "ctrl+s", Desc: "save"},
+			return []key.Binding{
+				e.keys.Add,
+				e.keys.Edit,
+				e.keys.Delete,
+				e.keys.Save,
 			}
 		}
-		// No nodes yet, just show add
-		return []components.KeyHelp{
-			{Key: "a", Desc: "add node"},
-			{Key: "ctrl+s", Desc: "save"},
+		// No nodes yet, just show add and save
+		return []key.Binding{
+			e.keys.Add,
+			e.keys.Save,
 		}
 	}
 
-	return []components.KeyHelp{}
+	return []key.Binding{}
 }

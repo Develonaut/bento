@@ -1,53 +1,50 @@
 package components
 
-import "bento/pkg/omise/styles"
+import (
+	"github.com/charmbracelet/bubbles/help"
+	"github.com/charmbracelet/bubbles/key"
 
-// KeyHelp represents a keyboard shortcut with its description
-type KeyHelp struct {
-	Key  string
-	Desc string
+	"bento/pkg/omise/styles"
+)
+
+// FooterModel wraps help.Model for footer rendering
+type FooterModel struct {
+	help   help.Model
+	width  int
+	global GlobalKeyMap
 }
 
-// Footer renders the footer with global and contextual keyboard shortcuts
-func Footer(width int, contextualKeys []KeyHelp) string {
-	separator := styles.Subtle.Render(" • ")
+// NewFooter creates a new footer with help model
+func NewFooter() FooterModel {
+	h := help.New()
+	h.Styles.ShortKey = styles.HelpKey
+	h.Styles.ShortDesc = styles.HelpDesc
+	h.Styles.ShortSeparator = styles.Subtle
+	h.Styles.Ellipsis = styles.Subtle
 
-	// Build contextual keys section
-	contextualShortcuts := []string{}
-	for _, key := range contextualKeys {
-		contextualShortcuts = append(contextualShortcuts,
-			styles.HelpKey.Render(key.Key)+" "+styles.HelpDesc.Render(key.Desc))
+	return FooterModel{
+		help:   h,
+		global: NewGlobalKeyMap(),
 	}
+}
 
-	// Build global keys section
-	globalKeys := []string{
-		styles.HelpKey.Render("esc") + " " + styles.HelpDesc.Render("back"),
-		styles.HelpKey.Render("s") + " " + styles.HelpDesc.Render("settings"),
-		styles.HelpKey.Render("?") + " " + styles.HelpDesc.Render("help"),
-		styles.HelpKey.Render("q") + " " + styles.HelpDesc.Render("quit"),
-	}
+// SetWidth sets the footer width
+func (f FooterModel) SetWidth(width int) FooterModel {
+	f.width = width
+	f.help.Width = width
+	return f
+}
 
-	// Join sections with proper separator
-	var footerText string
-	if len(contextualShortcuts) > 0 {
-		contextualText := joinWithSeparator(contextualShortcuts, separator)
-		globalText := joinWithSeparator(globalKeys, separator)
-		footerText = contextualText + " " + styles.Subtle.Render("|") + " " + globalText
+// View renders footer with contextual keys and global keys.
+// If useBackKey is true, shows back key instead of settings key.
+func (f FooterModel) View(contextualKeys []key.Binding, useBackKey bool) string {
+	var globalKeys []key.Binding
+	if useBackKey {
+		globalKeys = f.global.ShortHelpWithBack()
 	} else {
-		footerText = joinWithSeparator(globalKeys, separator)
+		globalKeys = f.global.ShortHelp()
 	}
-
-	return styles.Footer.Width(width).Render(footerText)
-}
-
-// joinWithSeparator joins strings with a separator between them
-func joinWithSeparator(items []string, sep string) string {
-	if len(items) == 0 {
-		return ""
-	}
-	result := items[0]
-	for _, item := range items[1:] {
-		result += sep + item
-	}
-	return result
+	allKeys := append(contextualKeys, globalKeys...)
+	helpText := f.help.ShortHelpView(allKeys)
+	return styles.Footer.Width(f.width).Render(helpText)
 }

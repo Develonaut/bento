@@ -415,7 +415,7 @@ func TestSettingsThemeOptionsHaveColors(t *testing.T) {
 	s := NewSettings()
 
 	// Activate the theme form
-	s, _ = s.activateThemeForm()
+	_, _ = s.activateThemeForm()
 
 	// Get the theme options that were built
 	themes := styles.AllVariants()

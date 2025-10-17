@@ -7,6 +7,8 @@ import (
 
 	"bento/pkg/omise/components"
 	"bento/pkg/omise/emoji"
+
+	"github.com/charmbracelet/bubbles/key"
 )
 
 // NodeStatus represents node execution state
@@ -126,21 +128,30 @@ func (e Executor) IsRunning() bool {
 	return e.running
 }
 
-// ContextualKeys returns the most important contextual keys for the footer
-func (e Executor) ContextualKeys() []components.KeyHelp {
+// KeyBindings returns the contextual key bindings for the footer
+func (e Executor) KeyBindings() []key.Binding {
 	// When execution is complete, show copy and rerun keys
 	if e.complete {
-		keys := []components.KeyHelp{
-			{Key: "r", Desc: "rerun"},
+		keys := []key.Binding{
+			key.NewBinding(
+				key.WithKeys("r"),
+				key.WithHelp("r", "rerun"),
+			),
 		}
 		// Add copy key if we have content to copy
 		if (e.success && e.result != "") || (!e.success && e.errorMsg != "") {
-			keys = append(keys, components.KeyHelp{Key: "c", Desc: "copy output"})
+			keys = append(keys, key.NewBinding(
+				key.WithKeys("c"),
+				key.WithHelp("c", "copy output"),
+			))
 		}
 		// Always show shift+c for debugging
-		keys = append(keys, components.KeyHelp{Key: "shift+c", Desc: "copy view"})
+		keys = append(keys, key.NewBinding(
+			key.WithKeys("C"),
+			key.WithHelp("shift+c", "copy view"),
+		))
 		return keys
 	}
 	// No contextual keys during execution or when no content
-	return []components.KeyHelp{}
+	return []key.Binding{}
 }

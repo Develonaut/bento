@@ -4,8 +4,9 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 
-	"bento/pkg/omise/components"
 	"bento/pkg/omise/styles"
+
+	"github.com/charmbracelet/bubbles/key"
 )
 
 // Help shows keyboard shortcuts and usage information
@@ -115,8 +116,8 @@ func helpSections() []helpSection {
 	}
 }
 
-// ContextualKeys returns the most important contextual keys for the footer
-func (h Help) ContextualKeys() []components.KeyHelp {
+// KeyBindings returns the contextual key bindings for the footer
+func (h Help) KeyBindings() []key.Binding {
 	// Help screen is read-only, no contextual actions
-	return []components.KeyHelp{}
+	return []key.Binding{}
 }

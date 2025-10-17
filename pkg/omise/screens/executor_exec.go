@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/atotto/clipboard"
 	tea "github.com/charmbracelet/bubbletea"
 
 	"bento/pkg/itamae"
@@ -20,77 +19,6 @@ import (
 	"bento/pkg/omise/config"
 	"bento/pkg/pantry"
 )
-
-// executorMessenger sends progress messages to TUI
-type executorMessenger struct {
-	program *tea.Program
-}
-
-// SendNodeStarted sends node start message
-func (m *executorMessenger) SendNodeStarted(path, name, nodeType string) {
-	if m.program != nil {
-		m.program.Send(NodeStartedMsg{
-			Path:     path,
-			Name:     name,
-			NodeType: nodeType,
-		})
-	}
-}
-
-// SendNodeCompleted sends node completion message
-func (m *executorMessenger) SendNodeCompleted(path string, duration time.Duration, err error) {
-	if m.program != nil {
-		m.program.Send(NodeCompletedMsg{
-			Path:     path,
-			Duration: duration,
-			Error:    err,
-		})
-	}
-}
-
-// CopyResultCmd copies result to clipboard and returns feedback message
-func CopyResultCmd(result, bentoName, errorMsg string, success bool) tea.Msg {
-	content := buildClipboardContent(result, bentoName, errorMsg, success)
-	if content == "" {
-		return CopyResultMsg("No output or error to copy")
-	}
-
-	if err := clipboard.WriteAll(content); err != nil {
-		return CopyResultMsg(fmt.Sprintf("Failed to copy: %s", err.Error()))
-	}
-
-	return CopyResultMsg("✓ Copied to clipboard!")
-}
-
-// CopyEntireViewCmd copies the entire view content to clipboard
-func CopyEntireViewCmd(viewContent string) tea.Msg {
-	if viewContent == "" {
-		return CopyResultMsg("No view content to copy")
-	}
-
-	if err := clipboard.WriteAll(viewContent); err != nil {
-		return CopyResultMsg(fmt.Sprintf("Failed to copy view: %s", err.Error()))
-	}
-
-	return CopyResultMsg("✓ Entire view copied to clipboard!")
-}
-
-// buildClipboardContent formats content for clipboard
-func buildClipboardContent(result, bentoName, errorMsg string, success bool) string {
-	if success && result != "" {
-		return fmt.Sprintf("Bento: %s\n\nStatus: Success\n\nOutput:\n%s", bentoName, result)
-	}
-	if !success && errorMsg != "" {
-		return fmt.Sprintf("Bento: %s\n\nStatus: Failed\n\nError:\n%s", bentoName, errorMsg)
-	}
-	if result != "" {
-		return fmt.Sprintf("Bento: %s\n\nOutput:\n%s", bentoName, result)
-	}
-	if errorMsg != "" {
-		return fmt.Sprintf("Bento: %s\n\nError:\n%s", bentoName, errorMsg)
-	}
-	return ""
-}
 
 // executionState tracks ongoing execution
 var executionState struct {
@@ -118,34 +46,13 @@ func executeBentoInBackground(bentoName, workDir string, program *tea.Program) {
 		return
 	}
 
-	// Send init message and wait for confirmation it was processed
 	sendInitMessage(program, def)
-
-	// Wait for the UI to signal it's ready (init message processed)
-	// This ensures node states are initialized before execution begins
-	// Use timeout to prevent deadlock if something goes wrong
-	select {
-	case <-executionState.ready:
-		// Ready to proceed with execution
-	case <-time.After(5 * time.Second):
-		// Timeout waiting for init - proceed anyway to avoid deadlock
-		// This should rarely happen, but prevents complete hang
-		if program != nil {
-			program.Send(ExecutionErrorMsg{
-				Error: fmt.Errorf("initialization timeout - proceeding with execution"),
-			})
-		}
-	}
+	waitForInitialization(program)
 
 	result, err := runBentoExecution(def, program)
 	executionState.running = false
 
-	if err != nil {
-		executionState.done <- ExecutionCompleteMsg{Success: false, Error: err}
-		return
-	}
-
-	executionState.done <- ExecutionCompleteMsg{Success: true, Result: result}
+	sendExecutionResult(result, err)
 }
 
 // loadBentoDefinition loads bento from store
@@ -168,6 +75,30 @@ func sendInitMessage(program *tea.Program, def neta.Definition) {
 	if program != nil {
 		program.Send(ExecutionInitMsg{Definition: def})
 	}
+}
+
+// waitForInitialization waits for UI to be ready for execution
+func waitForInitialization(program *tea.Program) {
+	select {
+	case <-executionState.ready:
+		// Ready to proceed with execution
+	case <-time.After(5 * time.Second):
+		// Timeout - proceed anyway to avoid deadlock
+		if program != nil {
+			program.Send(ExecutionErrorMsg{
+				Error: fmt.Errorf("initialization timeout - proceeding with execution"),
+			})
+		}
+	}
+}
+
+// sendExecutionResult sends the completion message
+func sendExecutionResult(result neta.Result, err error) {
+	if err != nil {
+		executionState.done <- ExecutionCompleteMsg{Success: false, Error: err}
+		return
+	}
+	executionState.done <- ExecutionCompleteMsg{Success: true, Result: result}
 }
 
 // runBentoExecution creates chef and executes bento

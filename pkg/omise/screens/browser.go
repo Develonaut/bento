@@ -6,6 +6,7 @@ import (
 	"bento/pkg/omise/components"
 	"bento/pkg/omise/styles"
 
+	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -187,24 +188,24 @@ func (b Browser) refreshList() (Browser, tea.Cmd) {
 	return b, nil
 }
 
-// ContextualKeys returns the most important contextual keys for the footer
-func (b Browser) ContextualKeys() []components.KeyHelp {
-	// Check if we have an item selected
+// KeyBindings returns the contextual key bindings for the footer
+func (b Browser) KeyBindings() []key.Binding {
 	selected := b.getSelected()
 
-	// If no item selected, show only new
+	// If no item selected, show only new and search
 	if selected == nil {
-		return []components.KeyHelp{
-			{Key: "n", Desc: "new bento"},
+		return []key.Binding{
+			b.keys.New,
+			b.keys.Search,
 		}
 	}
 
-	// For selected items, show all action keys
-	return []components.KeyHelp{
-		{Key: "n", Desc: "new"},
-		{Key: "r", Desc: "run"},
-		{Key: "e", Desc: "edit"},
-		{Key: "c", Desc: "copy"},
-		{Key: "d", Desc: "delete"},
+	// For selected items, show action keys
+	return []key.Binding{
+		b.keys.Execute,
+		b.keys.Run,
+		b.keys.Edit,
+		b.keys.Copy,
+		b.keys.Delete,
 	}
 }
