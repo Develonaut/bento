@@ -161,30 +161,17 @@ func TestBrowser_LoadBentos(t *testing.T) {
 		t.Fatalf("loadBentos() error = %v", err)
 	}
 
-	// Should have 4 items: 1 create item + 3 actual bentos
-	if len(items) != 4 {
-		t.Errorf("Expected 4 items (1 create + 3 bentos), got %d", len(items))
+	// Should have 3 bentos
+	if len(items) != 3 {
+		t.Errorf("Expected 3 bentos, got %d", len(items))
 	}
 
-	// First item should be the create item
-	if len(items) > 0 {
-		firstItem, ok := items[0].(bentoItem)
-		if !ok {
-			t.Error("Expected first item to be bentoItem")
-		} else if !firstItem.isNewItem {
-			t.Error("Expected first item to be the create new bento item")
-		}
-	}
-
-	// Verify remaining items are actual bentos with expected fields
-	for i := 1; i < len(items); i++ {
+	// Verify all items are actual bentos with expected fields
+	for i := 0; i < len(items); i++ {
 		bi, ok := items[i].(bentoItem)
 		if !ok {
 			t.Errorf("Expected bentoItem at index %d, got %T", i, items[i])
 			continue
-		}
-		if bi.isNewItem {
-			t.Errorf("Expected regular bento at index %d, got create item", i)
 		}
 		if bi.version != "1.0" {
 			t.Errorf("Expected version 1.0 at index %d, got %s", i, bi.version)
@@ -223,7 +210,7 @@ func TestBrowser_HelpToggle(t *testing.T) {
 	}
 }
 
-func TestBrowser_CreateNewBentoItem(t *testing.T) {
+func TestBrowser_NewBentoKeyboardShortcut(t *testing.T) {
 	workDir := t.TempDir()
 
 	browser, err := NewBrowser(workDir)
@@ -231,36 +218,15 @@ func TestBrowser_CreateNewBentoItem(t *testing.T) {
 		t.Fatalf("NewBrowser() error = %v", err)
 	}
 
-	// The create item should be present
-	selected := browser.getSelected()
-	if selected == nil {
-		t.Fatal("Expected a selected item")
-	}
-
-	if !selected.isNewItem {
-		t.Error("First item should be the create new bento item")
-	}
-
-	// Pressing enter on create item should trigger CreateBentoMsg
-	_, cmd := browser.handleRun(selected)
+	// Test 'n' key creates new bento
+	_, cmd := browser.handleNew()
 	if cmd == nil {
-		t.Fatal("Expected command from handleRun on create item")
+		t.Fatal("Expected command from handleNew")
 	}
 
 	result := cmd()
 	if _, ok := result.(CreateBentoMsg); !ok {
 		t.Errorf("Expected CreateBentoMsg, got %T", result)
-	}
-
-	// Copy and delete should do nothing on create item
-	_, copyCmd := browser.handleCopy(selected)
-	if copyCmd != nil {
-		t.Error("Expected nil command from handleCopy on create item")
-	}
-
-	_, deleteCmd := browser.handleDelete(selected)
-	if deleteCmd != nil {
-		t.Error("Expected nil command from handleDelete on create item")
 	}
 }
 
@@ -322,16 +288,16 @@ func TestBrowser_LoadsBentosWithDifferentNodeTypes(t *testing.T) {
 		t.Fatalf("loadBentos() error = %v", err)
 	}
 
-	// Should have 5 items: 1 create item + 4 bentos
-	expectedCount := len(testCases) + 1
+	// Should have 4 bentos
+	expectedCount := len(testCases)
 	if len(items) != expectedCount {
-		t.Errorf("Expected %d items (1 create + %d bentos), got %d", expectedCount, len(testCases), len(items))
+		t.Errorf("Expected %d bentos, got %d", expectedCount, len(items))
 	}
 
 	// Verify all bentos were loaded
 	loadedNames := make(map[string]bool)
 	for _, item := range items {
-		if bi, ok := item.(bentoItem); ok && !bi.isNewItem {
+		if bi, ok := item.(bentoItem); ok {
 			loadedNames[bi.name] = true
 		}
 	}

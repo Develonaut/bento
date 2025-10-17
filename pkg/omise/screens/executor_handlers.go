@@ -5,6 +5,7 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 
+	"bento/pkg/omise/emoji"
 	"bento/pkg/omise/styles"
 )
 
@@ -121,10 +122,10 @@ func (e Executor) handleCompleteMsg(msg ExecutionCompleteMsg) (Executor, tea.Cmd
 	// Add completion message to history based on success/failure
 	if msg.Success {
 		e.status = "Execution completed successfully!"
-		e.lifecycleHistory = append(e.lifecycleHistory, emojiBento+" Bento Packed!")
+		e.lifecycleHistory = append(e.lifecycleHistory, emoji.Bento+" Bento Packed!")
 	} else {
 		e.status = "Execution failed"
-		e.lifecycleHistory = append(e.lifecycleHistory, emojiBento+" Bento Spoiled!")
+		e.lifecycleHistory = append(e.lifecycleHistory, emoji.Bento+" Bento Spoiled!")
 		if msg.Error != nil {
 			e.errorMsg = msg.Error.Error()
 		}
@@ -140,7 +141,7 @@ func (e Executor) handleErrorMsg(msg ExecutionErrorMsg) (Executor, tea.Cmd) {
 	e.status = "Execution error"
 	e.errorMsg = msg.Error.Error()
 	e.progressPercent = 0.0
-	e.lifecycleHistory = append(e.lifecycleHistory, emojiBento+" Bento Spoiled!")
+	e.lifecycleHistory = append(e.lifecycleHistory, emoji.Bento+" Bento Spoiled!")
 	return e, nil
 }
 

@@ -8,11 +8,6 @@ import (
 
 // View renders the browser
 func (b Browser) View() string {
-	// Show action menu if active
-	if b.actionMenu != nil {
-		return b.actionMenu.form.View()
-	}
-
 	if b.confirmDialog != nil {
 		return lipgloss.JoinVertical(
 			lipgloss.Left,

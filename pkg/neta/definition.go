@@ -47,6 +47,11 @@ type Definition struct {
 	// Name is the human-readable identifier for this node
 	Name string `yaml:"name" json:"name"`
 
+	// Icon is an emoji icon for this bento (optional)
+	// Used in UI displays like browser lists and executors
+	// If not specified, a deterministic emoji will be generated from the name
+	Icon string `yaml:"icon,omitempty" json:"icon,omitempty"`
+
 	// Parameters contains type-specific configuration.
 	//
 	// Parameters uses map[string]interface{} to support heterogeneous node

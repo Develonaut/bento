@@ -8,6 +8,7 @@ import (
 	"github.com/charmbracelet/lipgloss"
 
 	"bento/pkg/neta"
+	"bento/pkg/omise/emoji"
 	"bento/pkg/omise/styles"
 )
 
@@ -30,9 +31,9 @@ func (e Executor) renderFooter() string {
 	// Status line
 	if e.complete {
 		if e.success {
-			lines = append(lines, emojiSuccess+" Success")
+			lines = append(lines, emoji.Success+" Success")
 		} else {
-			lines = append(lines, emojiFailure+" Failed")
+			lines = append(lines, emoji.Failure+" Failed")
 		}
 	}
 
@@ -60,7 +61,7 @@ func (e Executor) idleView(title string) string {
 		lipgloss.Left,
 		title,
 		"",
-		styles.Subtle.Render(emojiBento+" Ready to execute bentos"),
+		styles.Subtle.Render(emoji.Bento+" Ready to execute bentos"),
 		"",
 		styles.Subtle.Render("Select a bento from the Browser and press 'r' to run."),
 	)

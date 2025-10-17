@@ -7,41 +7,41 @@ import (
 	"time"
 
 	"bento/pkg/jubako"
+	"bento/pkg/omise/emoji"
+	"bento/pkg/omise/styles"
 
 	"github.com/charmbracelet/bubbles/list"
 )
 
 // bentoItem represents a bento in the list
 type bentoItem struct {
-	name      string
-	path      string
-	version   string
-	nodeType  string
-	modified  time.Time
-	isNewItem bool
+	name     string
+	path     string
+	version  string
+	nodeType string
+	icon     string
+	modified time.Time
 }
 
 // Title returns the item title
 func (i bentoItem) Title() string {
-	if i.isNewItem {
-		return "Create New Bento"
+	// Use custom icon if set, otherwise generate deterministic emoji from name
+	icon := i.icon
+	if icon == "" {
+		icon = emoji.GetSushi(i.name)
 	}
-	return fmt.Sprintf("%s (v%s)", i.name, i.version)
+
+	versionStyled := styles.Subtle.Render(fmt.Sprintf("v%s", i.version))
+	return fmt.Sprintf("%s %s %s", icon, i.name, versionStyled)
 }
 
 // Description returns the item description
 func (i bentoItem) Description() string {
-	if i.isNewItem {
-		return "Start building a new bento from scratch"
-	}
-	return fmt.Sprintf("%s • Modified: %s", i.nodeType, i.modified.Format("2006-01-02 15:04"))
+	return i.nodeType
 }
 
 // FilterValue returns the value to filter by
 func (i bentoItem) FilterValue() string {
-	if i.isNewItem {
-		return "new create"
-	}
 	return i.name
 }
 
@@ -52,8 +52,7 @@ func loadBentos(store *jubako.Store) ([]list.Item, error) {
 		return nil, err
 	}
 
-	items := make([]list.Item, 0, len(infos)+1)
-	items = append(items, createNewBentoItem())
+	items := make([]list.Item, 0, len(infos))
 
 	for _, info := range infos {
 		if item, ok := loadBentoItem(store, info); ok {
@@ -62,11 +61,6 @@ func loadBentos(store *jubako.Store) ([]list.Item, error) {
 	}
 
 	return items, nil
-}
-
-// createNewBentoItem creates the special "Create New Bento" item
-func createNewBentoItem() bentoItem {
-	return bentoItem{isNewItem: true}
 }
 
 // loadBentoItem loads a single bento item from store
@@ -81,6 +75,7 @@ func loadBentoItem(store *jubako.Store, info jubako.BentoInfo) (bentoItem, bool)
 		path:     info.Path,
 		version:  def.Version,
 		nodeType: def.Type,
+		icon:     def.Icon,
 		modified: info.Modified,
 	}, true
 }

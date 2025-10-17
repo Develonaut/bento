@@ -6,15 +6,9 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 
 	"bento/pkg/omise/components"
+	"bento/pkg/omise/emoji"
 )
 
-// Emoji constants for lifecycle states
-const (
-	emojiBento     = "🍱"
-	emojiExecuting = "⏳"
-	emojiSuccess   = "✓"
-	emojiFailure   = "✗"
-)
 
 // NodeStatus represents node execution state
 type NodeStatus int
@@ -99,7 +93,7 @@ func (e Executor) StartBento(name, path, workDir string) Executor {
 	e.progressPercent = 0.0
 	e.startTime = time.Now()
 	e.endTime = time.Time{} // Zero value
-	e.lifecycleHistory = []string{emojiBento + " Preparing Bento..."}
+	e.lifecycleHistory = []string{emoji.Bento + " Preparing Bento..."}
 	return e
 }
 
