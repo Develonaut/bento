@@ -26,7 +26,7 @@ func (s Settings) activateSetting() (Settings, tea.Cmd) {
 		return s.activateSlowMoForm()
 	case "Save Directory":
 		s.selectingDir = true
-		return s, nil
+		return s, s.dirPicker.Init()
 	}
 
 	return s, nil

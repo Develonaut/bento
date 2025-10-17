@@ -52,6 +52,7 @@ func (s Settings) handleDirectoryPickerMode(msg tea.Msg) (Settings, tea.Cmd) {
 func (s Settings) renderDirectoryPickerView(title string) string {
 	pickerView := s.dirPicker.View()
 	currentPath := styles.Subtle.Render("Current: " + s.dirPicker.CurrentDirectory)
+	help := styles.Subtle.Render("↑/↓: navigate  enter: open dir  s: select current  r: reset  esc: cancel")
 	return lipgloss.JoinVertical(
 		lipgloss.Left,
 		title,
@@ -60,6 +61,8 @@ func (s Settings) renderDirectoryPickerView(title string) string {
 		currentPath,
 		"",
 		pickerView,
+		"",
+		help,
 	)
 }
 

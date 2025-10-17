@@ -18,6 +18,11 @@ type DirPicker struct {
 	defaultDir string
 }
 
+// Init initializes the directory picker and loads the current directory
+func (dp DirPicker) Init() tea.Cmd {
+	return dp.Model.Init()
+}
+
 // NewDirPicker creates a themed directory picker
 // startDir is where the picker opens initially
 // defaultDir is the directory to return to when reset is pressed
@@ -57,9 +62,10 @@ func applyDirPickerStyles(fp filepicker.Model) filepicker.Model {
 func (dp DirPicker) Update(msg tea.Msg) (DirPicker, tea.Cmd) {
 	var cmd tea.Cmd
 
-	// Handle enter key to select current directory
+	// Handle 's' key to select current directory
+	// (Enter is used by filepicker for navigation into directories)
 	if keyMsg, ok := msg.(tea.KeyMsg); ok {
-		if keyMsg.String() == "enter" {
+		if keyMsg.String() == "s" {
 			// Select the current directory
 			return dp, func() tea.Msg {
 				return DirSelectedMsg{Path: dp.Model.CurrentDirectory}
@@ -67,6 +73,7 @@ func (dp DirPicker) Update(msg tea.Msg) (DirPicker, tea.Cmd) {
 		}
 	}
 
+	// Let filepicker handle Enter for navigation
 	dp.Model, cmd = dp.Model.Update(msg)
 
 	// Check if a directory was selected from the list
