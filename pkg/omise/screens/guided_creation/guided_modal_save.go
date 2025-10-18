@@ -12,6 +12,18 @@ import (
 
 func (m *GuidedModal) saveBento() tea.Cmd {
 	return func() tea.Msg {
+		// Recover from panics during save to ensure terminal is restored
+		var panicMsg *GuidedCompleteMsg
+		defer func() {
+			if r := recover(); r != nil {
+				panicMsg = &GuidedCompleteMsg{
+					Success:   false,
+					Err:       fmt.Errorf("panic during save: %v", r),
+					Cancelled: false,
+				}
+			}
+		}()
+
 		// Validate the bento before saving
 		if err := m.validator.Validate(*m.definition); err != nil {
 			return GuidedCompleteMsg{
@@ -56,6 +68,11 @@ func (m *GuidedModal) saveBento() tea.Cmd {
 				Err:       err,
 				Cancelled: false,
 			}
+		}
+
+		// Check if panic occurred and return panic message instead
+		if panicMsg != nil {
+			return *panicMsg
 		}
 
 		return GuidedCompleteMsg{

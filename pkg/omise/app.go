@@ -7,10 +7,16 @@ import (
 	"path/filepath"
 
 	tea "github.com/charmbracelet/bubbletea"
+
+	"bento/pkg/omise/screens/shared"
 )
 
 // Launch starts the TUI application
 func Launch() error {
+	// Initialize debug mode if DEBUG env var is set
+	shared.InitDebug()
+	defer shared.CloseDebug()
+
 	// Check if stdout is a terminal (cross-platform)
 	if fileInfo, _ := os.Stdout.Stat(); (fileInfo.Mode() & os.ModeCharDevice) == 0 {
 		// Not a terminal - exit gracefully

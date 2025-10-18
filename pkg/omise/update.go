@@ -11,6 +11,9 @@ import (
 
 // Update handles messages and updates the model
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	// Log all messages to debug file if debug mode is enabled
+	shared.DebugMsg(msg, "Model.Update")
+
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
 		return m.handleResize(msg)

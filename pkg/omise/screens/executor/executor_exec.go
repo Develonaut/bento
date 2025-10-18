@@ -40,6 +40,14 @@ func ExecuteBentoCmd(bentoName string, workDir string, program *tea.Program) tea
 
 // executeBentoInBackground runs bento execution in background
 func executeBentoInBackground(bentoName, workDir string, program *tea.Program) {
+	// Recover from panics to ensure terminal is restored
+	defer func() {
+		if r := recover(); r != nil {
+			err := fmt.Errorf("panic during bento execution: %v", r)
+			sendExecutionError(err)
+		}
+	}()
+
 	def, err := loadBentoDefinition(bentoName, workDir)
 	if err != nil {
 		sendExecutionError(err)
