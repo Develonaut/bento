@@ -803,16 +803,31 @@ func calculateLineNumber(content string, offset int) int {
 
 ## Phase 3C: YAML → JSON Migration (4 hours)
 
+**⚠️ IMPORTANT**: See [phase-3-pre-migration.md](./phase-3-pre-migration.md) for converting your user bentos FIRST!
+
 ### Deliverables
 
-1. Replace YAML parser with JSON parser
-2. Remove YAML dependencies
-3. Convert all example files to JSON
-4. Update tests for JSON format only
-5. Documentation updates
-6. Clean up YAML remnants
+1. **Convert user bentos** (`~/.bento/bentos/*.yaml` → `*.json`)
+2. Replace YAML parser with JSON parser
+3. **Verify user bentos work with new parser**
+4. Convert all example files to JSON
+5. Update tests for JSON format only
+6. Documentation updates
+7. Clean up YAML remnants
 
 ### Implementation Steps
+
+#### Step 0: Pre-Migration (20 minutes) - DO THIS FIRST!
+
+**See**: [phase-3-pre-migration.md](./phase-3-pre-migration.md)
+
+1. Backup user's 2 YAML bentos in `~/.bento/bentos/`
+2. Create conversion tool (`tools/yaml2json.go`)
+3. Convert both bentos to JSON
+4. Verify JSON structure is correct
+5. Test YAML bentos still work (before switching parser)
+
+**Result**: You'll have both YAML and JSON versions, ready to switch
 
 #### Step 1: Replace YAML Parser with JSON Parser (1.5 hours)
 
@@ -1308,25 +1323,35 @@ Save as `example.bento.json`
 
 ## Rollout Plan
 
-### Week 1: MVP Implementation
+### RECOMMENDED ORDER: Migration → Editor → Enhancements
+
+**Why Migration First?**
+- User has 2 real bentos in `~/.bento/bentos/` that need converting
+- Can't test editor without JSON files to load
+- Ensures bentos keep working throughout development
+- No context switching between YAML and JSON
+
+### Week 1: Migration + Testing
+
+- **Day 1 Morning**: Pre-migration (convert user bentos, verify)
+- **Day 1 Afternoon**: Replace YAML parser with JSON
+- **Day 2**: Test converted bentos work, convert examples
+- **Day 3**: Update tests, remove YAML code
+- **Day 4**: Documentation
+- **Day 5**: Buffer for issues
+
+### Week 2: MVP Editor
 
 - Day 1-2: Package structure + basic editor
 - Day 3: Validation + formatting
 - Day 4: Templates
 - Day 5: Testing + bug fixes
 
-### Week 2: Enhancements
+### Week 3: Enhancements
 
 - Day 1-2: Syntax highlighting
 - Day 3: Template wizard
 - Day 4: Error improvements
-- Day 5: Testing
-
-### Week 3: Migration
-
-- Day 1-2: JSON parser
-- Day 3: Convert examples + update tests
-- Day 4: Documentation
 - Day 5: Final testing + release
 
 ---
