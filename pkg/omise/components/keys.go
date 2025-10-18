@@ -6,7 +6,6 @@ package components
 type KeyMap struct {
 	Navigation NavigationKeyMap
 	Browser    BrowserKeyMap
-	Editor     EditorKeyMap
 	Settings   SettingsKeyMap
 	Global     GlobalKeyMap
 }
@@ -16,7 +15,6 @@ func NewKeyMap() KeyMap {
 	return KeyMap{
 		Navigation: NewNavigationKeyMap(),
 		Browser:    NewBrowserKeyMap(),
-		Editor:     NewEditorKeyMap(),
 		Settings:   NewSettingsKeyMap(),
 		Global:     NewGlobalKeyMap(),
 	}

@@ -13,15 +13,6 @@ type WorkflowSelectedMsg struct {
 	Path string
 }
 
-// EditBentoMsg signals user wants to edit a bento
-type EditBentoMsg struct {
-	Name string
-	Path string
-}
-
-// CreateBentoMsg signals user wants to create new bento
-type CreateBentoMsg struct{}
-
 // CopyBentoMsg signals user wants to copy a bento
 type CopyBentoMsg struct {
 	Name string

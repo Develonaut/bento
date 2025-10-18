@@ -47,7 +47,7 @@ func (m Model) renderViewport() string {
 func (m Model) renderFooter() string {
 	footerModel := components.NewFooter().SetWidth(m.width)
 	contextualKeys := m.getKeyBindings()
-	useBackKey := m.screen == ScreenEditor || m.screen == ScreenSettings || m.screen == ScreenHelp
+	useBackKey := m.screen == ScreenSettings || m.screen == ScreenHelp
 	footer := footerModel.View(contextualKeys, useBackKey)
 
 	// Add padding to footer
@@ -70,8 +70,6 @@ func (m Model) getKeyBindings() []key.Binding {
 		return m.settings.KeyBindings()
 	case ScreenHelp:
 		return m.help.KeyBindings()
-	case ScreenEditor:
-		return m.editor.KeyBindings()
 	default:
 		return []key.Binding{}
 	}
@@ -90,8 +88,6 @@ func (m Model) renderContent() string {
 		return m.settings.View()
 	case ScreenHelp:
 		return m.help.View()
-	case ScreenEditor:
-		return m.editor.View()
 	default:
 		return ""
 	}

@@ -36,23 +36,13 @@ func TestBrowser_CreateNewKeyboardShortcut(t *testing.T) {
 		t.Fatalf("NewBrowser() error = %v", err)
 	}
 
-	// Test 'n' creates bento - this works without item selected
+	// Test 'n' key - editor feature is currently a no-op
 	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'n'}}
 	_, cmd := browser.Update(msg)
 
-	if cmd == nil {
-		t.Error("Expected command for create bento, got nil")
-		return
-	}
-
-	result := cmd()
-	if result == nil {
-		t.Error("Expected message from command")
-		return
-	}
-
-	if _, ok := result.(CreateBentoMsg); !ok {
-		t.Errorf("Expected CreateBentoMsg, got %T", result)
+	// Editor feature coming soon - should be no-op
+	if cmd != nil {
+		t.Error("Expected no command (editor coming soon), got command")
 	}
 }
 
@@ -218,15 +208,12 @@ func TestBrowser_NewBentoKeyboardShortcut(t *testing.T) {
 		t.Fatalf("NewBrowser() error = %v", err)
 	}
 
-	// Test 'n' key creates new bento
+	// Test 'n' key - editor feature is currently a no-op
 	_, cmd := browser.handleNew()
-	if cmd == nil {
-		t.Fatal("Expected command from handleNew")
-	}
 
-	result := cmd()
-	if _, ok := result.(CreateBentoMsg); !ok {
-		t.Errorf("Expected CreateBentoMsg, got %T", result)
+	// Editor feature coming soon - should be no-op
+	if cmd != nil {
+		t.Error("Expected no command (editor coming soon), got command")
 	}
 }
 

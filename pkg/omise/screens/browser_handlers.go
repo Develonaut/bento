@@ -16,14 +16,10 @@ func (b Browser) handleRun(item *bentoItem) (Browser, tea.Cmd) {
 	}
 }
 
-// handleEdit edits the selected bento
+// handleEdit shows "Coming Soon" message (no-op for now)
 func (b Browser) handleEdit(item *bentoItem) (Browser, tea.Cmd) {
-	return b, func() tea.Msg {
-		return EditBentoMsg{
-			Name: item.name,
-			Path: item.path,
-		}
-	}
+	// Editor feature coming soon - do nothing for now
+	return b, nil
 }
 
 // handleCopy initiates bento copy
@@ -41,9 +37,8 @@ func (b Browser) handleDelete(item *bentoItem) (Browser, tea.Cmd) {
 	return b, nil
 }
 
-// handleNew creates a new bento
+// handleNew shows "Coming Soon" message (no-op for now)
 func (b Browser) handleNew() (Browser, tea.Cmd) {
-	return b, func() tea.Msg {
-		return CreateBentoMsg{}
-	}
+	// Editor feature coming soon - do nothing for now
+	return b, nil
 }

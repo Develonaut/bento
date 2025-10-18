@@ -23,7 +23,7 @@ const (
 	screenCount // Marker for tab cycle end
 
 	// Modal screens (not in tab cycle)
-	ScreenEditor
+	ScreenEditor // TODO: Editor not yet implemented
 )
 
 // String returns the screen name
@@ -49,7 +49,6 @@ type Model struct {
 	pantry   screens.Pantry
 	settings screens.Settings
 	help     screens.Help
-	editor   screens.Editor
 
 	// Application state
 	quitting bool
@@ -79,7 +78,6 @@ func NewModel() Model {
 		pantry:   screens.NewPantry(),
 		settings: screens.NewSettings(),
 		help:     screens.NewHelp(),
-		editor:   screens.Editor{},
 		workDir:  workDir,
 	}
 }
@@ -103,7 +101,6 @@ func NewModelWithWorkDir(workDir string) (Model, error) {
 		pantry:   screens.NewPantry(),
 		settings: screens.NewSettings(),
 		help:     screens.NewHelp(),
-		editor:   screens.Editor{},
 		workDir:  workDir,
 	}, nil
 }

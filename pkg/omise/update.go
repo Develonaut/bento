@@ -5,10 +5,8 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 
-	"bento/pkg/jubako"
 	"bento/pkg/omise/screens"
 	"bento/pkg/omise/styles"
-	"bento/pkg/pantry"
 )
 
 // Update handles messages and updates the model
@@ -22,18 +20,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m.handleBentoSelected(msg)
 	case screens.WorkflowSelectedMsg:
 		return m.handleWorkflowSelected(msg)
-	case screens.EditBentoMsg:
-		return m.handleEditBento(msg)
-	case screens.CreateBentoMsg:
-		return m.handleCreateBento(msg)
 	case screens.BentoOperationCompleteMsg:
 		return m.handleBentoOperation(msg)
-	case screens.EditorSavedMsg:
-		return m.handleEditorSaved(msg)
-	case screens.EditorCancelledMsg:
-		return m.handleEditorCancelled(msg)
-	case screens.RunBentoFromEditorMsg:
-		return m.handleRunBentoFromEditor(msg)
 	case screens.StartExecutionMsg:
 		return m.handleStartExecution(msg)
 	case styles.ThemeChangedMsg:
@@ -63,68 +51,91 @@ func (m Model) handleResize(msg tea.WindowSizeMsg) (tea.Model, tea.Cmd) {
 
 // handleKey processes keyboard input
 func (m Model) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
-	// Check if Settings screen is in modal mode (picker open)
-	// If so, let the screen handle tab/shift+tab instead of global handler
-	if m.screen == ScreenSettings && m.settings.InModalMode() {
-		return m.updateScreen(msg)
+	// Always handle quit keys globally, even when delegating to screen
+	if msg.String() == "q" || msg.String() == "ctrl+c" {
+		return m.handleQuit()
 	}
 
-	// Check if Editor screen is in modal mode (form input)
-	// If so, let the screen handle tab/shift+tab instead of global handler
-	if m.screen == ScreenEditor && m.editor.InModalMode() {
+	if m.shouldDelegateToScreen() {
 		return m.updateScreen(msg)
 	}
 
 	switch msg.String() {
-	case "q", "ctrl+c":
-		m.quitting = true
-		return m, tea.Quit
-
 	case "?", "h":
-		if tabID, ok := m.tabView.TabFromKey("4"); ok {
-			m = m.SwitchToTab(tabID)
-		}
-		return m, nil
-
+		return m.handleHelpShortcut()
 	case "s":
-		if tabID, ok := m.tabView.TabFromKey("3"); ok {
-			m = m.SwitchToTab(tabID)
-		}
-		return m, nil
-
-	case "tab":
-		// Cycle to next tab
-		m.tabView = m.tabView.NextTab()
-		m.screen = m.TabToScreen(m.tabView.GetActiveTab())
-		return m, nil
-
-	case "shift+tab":
-		// Cycle to previous tab
-		m.tabView = m.tabView.PrevTab()
-		m.screen = m.TabToScreen(m.tabView.GetActiveTab())
-		return m, nil
-
+		return m.handleSettingsShortcut()
+	case "tab", "shift+tab":
+		return m.handleTabNavigation(msg.String())
 	case "1", "2", "3", "4":
-		// Direct tab access
-		if tabID, ok := m.tabView.TabFromKey(msg.String()); ok {
-			m = m.SwitchToTab(tabID)
-			return m, nil
-		}
-		return m.updateScreen(msg)
-
+		return m.handleDirectTabAccess(msg)
 	case "esc":
-		// ESC returns to Browser from any screen (unless in modal mode)
-		if m.screen != ScreenBrowser && m.screen != ScreenEditor {
-			if tabID, ok := m.tabView.TabFromKey("1"); ok {
-				m = m.SwitchToTab(tabID)
-			}
-			return m, nil
-		}
-		return m.updateScreen(msg)
-
+		return m.handleEscape(msg)
 	default:
 		return m.updateScreen(msg)
 	}
+}
+
+// shouldDelegateToScreen checks if screen needs exclusive key handling
+func (m Model) shouldDelegateToScreen() bool {
+	// Settings only needs delegation when in modal mode
+	if m.screen == ScreenSettings && m.settings.InModalMode() {
+		return true
+	}
+	return false
+}
+
+// handleQuit processes quit commands
+func (m Model) handleQuit() (tea.Model, tea.Cmd) {
+	m.quitting = true
+	return m, tea.Quit
+}
+
+// handleHelpShortcut switches to help screen
+func (m Model) handleHelpShortcut() (tea.Model, tea.Cmd) {
+	if tabID, ok := m.tabView.TabFromKey("4"); ok {
+		m = m.SwitchToTab(tabID)
+	}
+	return m, nil
+}
+
+// handleSettingsShortcut switches to settings screen
+func (m Model) handleSettingsShortcut() (tea.Model, tea.Cmd) {
+	if tabID, ok := m.tabView.TabFromKey("3"); ok {
+		m = m.SwitchToTab(tabID)
+	}
+	return m, nil
+}
+
+// handleTabNavigation handles tab and shift+tab
+func (m Model) handleTabNavigation(key string) (tea.Model, tea.Cmd) {
+	if key == "tab" {
+		m.tabView = m.tabView.NextTab()
+	} else {
+		m.tabView = m.tabView.PrevTab()
+	}
+	m.screen = m.TabToScreen(m.tabView.GetActiveTab())
+	return m, nil
+}
+
+// handleDirectTabAccess handles numeric tab shortcuts
+func (m Model) handleDirectTabAccess(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+	if tabID, ok := m.tabView.TabFromKey(msg.String()); ok {
+		m = m.SwitchToTab(tabID)
+		return m, nil
+	}
+	return m.updateScreen(msg)
+}
+
+// handleEscape handles ESC key
+func (m Model) handleEscape(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+	if m.screen != ScreenBrowser {
+		if tabID, ok := m.tabView.TabFromKey("1"); ok {
+			m = m.SwitchToTab(tabID)
+		}
+		return m, nil
+	}
+	return m.updateScreen(msg)
 }
 
 // updateScreen delegates to the current screen
@@ -146,8 +157,6 @@ func (m Model) updateScreen(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.settings, cmd = m.settings.Update(msg)
 	case ScreenHelp:
 		m.help, cmd = m.help.Update(msg)
-	case ScreenEditor:
-		m.editor, cmd = m.editor.Update(msg)
 	}
 
 	return m, tea.Batch(cmd, vpCmd)
@@ -181,86 +190,10 @@ func (m Model) handleStartExecution(msg screens.StartExecutionMsg) (tea.Model, t
 	return m, m.executor.ExecuteCmd(m.program)
 }
 
-// handleEditBento switches to editor for existing bento
-func (m Model) handleEditBento(msg screens.EditBentoMsg) (tea.Model, tea.Cmd) {
-	store, err := jubako.NewStore(m.workDir)
-	if err != nil {
-		return m, nil // Stay on current screen if store creation fails
-	}
-
-	registry := pantry.New()
-	editor, err := screens.NewEditorEdit(store, registry, msg.Name, msg.Path)
-	if err != nil {
-		return m, nil // Stay on current screen if editor creation fails
-	}
-
-	m.editor = editor
-	m.screen = ScreenEditor
-	// Initialize the editor (which initializes any forms if needed)
-	return m, m.editor.Init()
-}
-
-// handleCreateBento switches to editor for new bento
-func (m Model) handleCreateBento(msg screens.CreateBentoMsg) (tea.Model, tea.Cmd) {
-	store, err := jubako.NewStore(m.workDir)
-	if err != nil {
-		return m, nil // Stay on current screen if store creation fails
-	}
-
-	registry := pantry.New()
-	m.editor = screens.NewEditorCreate(store, registry)
-	m.screen = ScreenEditor
-	// Initialize the editor (which initializes the form)
-	return m, m.editor.Init()
-}
-
 // handleBentoOperation handles completion of copy/delete operations
 func (m Model) handleBentoOperation(msg screens.BentoOperationCompleteMsg) (tea.Model, tea.Cmd) {
 	// Delegate to browser screen for refresh
 	return m.updateScreen(msg)
-}
-
-// handleEditorSaved returns to browser after saving
-func (m Model) handleEditorSaved(msg screens.EditorSavedMsg) (tea.Model, tea.Cmd) {
-	m.screen = ScreenBrowser
-	// Refresh browser list
-	return m.updateScreen(screens.BentoListRefreshMsg{})
-}
-
-// handleEditorCancelled returns to browser without saving
-func (m Model) handleEditorCancelled(msg screens.EditorCancelledMsg) (tea.Model, tea.Cmd) {
-	m.screen = ScreenBrowser
-	return m, nil
-}
-
-// handleRunBentoFromEditor runs bento from editor
-func (m Model) handleRunBentoFromEditor(msg screens.RunBentoFromEditorMsg) (tea.Model, tea.Cmd) {
-	// Save bento first if it has a name
-	if m.editor.GetBentoName() != "" {
-		store, err := jubako.NewStore(m.workDir)
-		if err != nil {
-			// If store creation fails, still attempt to run with in-memory definition
-			m.screen = ScreenExecutor
-			m.executor = m.executor.StartBento(m.editor.GetBentoName(), "", m.workDir)
-			return m, m.executor.ExecuteCmd(m.program)
-		}
-
-		if err := store.Save(m.editor.GetBentoName(), m.editor.GetDefinition()); err != nil {
-			// Save failed, but still attempt to run with in-memory definition
-			m.screen = ScreenExecutor
-			m.executor = m.executor.StartBento(m.editor.GetBentoName(), "", m.workDir)
-			return m, m.executor.ExecuteCmd(m.program)
-		}
-	}
-
-	// Switch to executor and run
-	m.screen = ScreenExecutor
-	bentoName := m.editor.GetBentoName()
-	if bentoName == "" {
-		bentoName = "unsaved-bento"
-	}
-	m.executor = m.executor.StartBento(bentoName, "", m.workDir)
-	return m, m.executor.ExecuteCmd(m.program)
 }
 
 // handleThemeChanged propagates theme change to all screens

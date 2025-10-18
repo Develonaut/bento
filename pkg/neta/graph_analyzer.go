@@ -16,30 +16,48 @@ type ExecutionGraph struct {
 
 // AnalyzeExecutionGraph converts a Definition to an execution graph
 func AnalyzeExecutionGraph(def Definition) (*ExecutionGraph, error) {
-	// For non-group nodes, create simple single-node graph
 	if !def.IsGroup() {
-		node := &ExecutionGraphNode{
-			ID:           def.ID,
-			Name:         def.Name,
-			Type:         def.Type,
-			Weight:       1,
-			Dependencies: []string{},
-		}
-		return &ExecutionGraph{
-			Nodes: map[string]*ExecutionGraphNode{
-				def.ID: node,
-			},
-			Edges:          []ExecutionGraphEdge{},
-			ExecutionOrder: [][]string{{def.ID}},
-			CriticalPath:   []string{def.ID},
-			TotalWeight:    1,
-			MaxParallelism: 1,
-		}, nil
+		return createSingleNodeGraph(def), nil
 	}
 
-	// Build graph from edges
+	nodes := buildGraphNodes(def.Nodes)
+	edges := buildGraphEdges(def.Edges, nodes)
+
+	if hasCycle(nodes, edges) {
+		return nil, fmt.Errorf("circular dependency detected in execution graph")
+	}
+
+	executionOrder, err := topologicalSort(nodes, edges)
+	if err != nil {
+		return nil, err
+	}
+
+	return buildExecutionGraph(nodes, edges, executionOrder), nil
+}
+
+// createSingleNodeGraph creates a graph for a single non-group node
+func createSingleNodeGraph(def Definition) *ExecutionGraph {
+	node := &ExecutionGraphNode{
+		ID:           def.ID,
+		Name:         def.Name,
+		Type:         def.Type,
+		Weight:       1,
+		Dependencies: []string{},
+	}
+	return &ExecutionGraph{
+		Nodes:          map[string]*ExecutionGraphNode{def.ID: node},
+		Edges:          []ExecutionGraphEdge{},
+		ExecutionOrder: [][]string{{def.ID}},
+		CriticalPath:   []string{def.ID},
+		TotalWeight:    1,
+		MaxParallelism: 1,
+	}
+}
+
+// buildGraphNodes creates nodes map from child definitions
+func buildGraphNodes(children []Definition) map[string]*ExecutionGraphNode {
 	nodes := make(map[string]*ExecutionGraphNode)
-	for _, childDef := range def.Nodes {
+	for _, childDef := range children {
 		nodes[childDef.ID] = &ExecutionGraphNode{
 			ID:           childDef.ID,
 			Name:         childDef.Name,
@@ -48,43 +66,28 @@ func AnalyzeExecutionGraph(def Definition) (*ExecutionGraph, error) {
 			Dependencies: []string{},
 		}
 	}
+	return nodes
+}
 
-	// Build dependency map from edges
-	edges := make([]ExecutionGraphEdge, 0, len(def.Edges))
-	for _, edge := range def.Edges {
+// buildGraphEdges creates edges and populates dependencies
+func buildGraphEdges(defEdges []NodeEdge, nodes map[string]*ExecutionGraphNode) []ExecutionGraphEdge {
+	edges := make([]ExecutionGraphEdge, 0, len(defEdges))
+	for _, edge := range defEdges {
 		edges = append(edges, ExecutionGraphEdge{
 			From: edge.Source,
 			To:   edge.Target,
 		})
-
-		// Add dependency
 		if targetNode, ok := nodes[edge.Target]; ok {
 			targetNode.Dependencies = append(targetNode.Dependencies, edge.Source)
 		}
 	}
+	return edges
+}
 
-	// Detect cycles
-	if hasCycle(nodes, edges) {
-		return nil, fmt.Errorf("circular dependency detected in execution graph")
-	}
-
-	// Topological sort to get execution order
-	executionOrder, err := topologicalSort(nodes, edges)
-	if err != nil {
-		return nil, err
-	}
-
-	// Calculate critical path (longest path)
+// buildExecutionGraph assembles final graph with metrics
+func buildExecutionGraph(nodes map[string]*ExecutionGraphNode, edges []ExecutionGraphEdge, executionOrder [][]string) *ExecutionGraph {
 	criticalPath := calculateCriticalPath(nodes, executionOrder)
-
-	// Calculate total weight and max parallelism
-	totalWeight := len(nodes)
-	maxParallelism := 1
-	for _, layer := range executionOrder {
-		if len(layer) > maxParallelism {
-			maxParallelism = len(layer)
-		}
-	}
+	totalWeight, maxParallelism := calculateGraphMetrics(nodes, executionOrder)
 
 	return &ExecutionGraph{
 		Nodes:          nodes,
@@ -93,12 +96,35 @@ func AnalyzeExecutionGraph(def Definition) (*ExecutionGraph, error) {
 		CriticalPath:   criticalPath,
 		TotalWeight:    totalWeight,
 		MaxParallelism: maxParallelism,
-	}, nil
+	}
+}
+
+// calculateGraphMetrics computes total weight and max parallelism
+func calculateGraphMetrics(nodes map[string]*ExecutionGraphNode, executionOrder [][]string) (int, int) {
+	totalWeight := len(nodes)
+	maxParallelism := 1
+	for _, layer := range executionOrder {
+		if len(layer) > maxParallelism {
+			maxParallelism = len(layer)
+		}
+	}
+	return totalWeight, maxParallelism
 }
 
 // topologicalSort performs Kahn's algorithm for topological sorting
 func topologicalSort(nodes map[string]*ExecutionGraphNode, edges []ExecutionGraphEdge) ([][]string, error) {
-	// Calculate in-degree for each node
+	inDegree := calculateInDegree(nodes, edges)
+	queue := findNodesWithNoDependencies(inDegree)
+	layers, visited := processTopologicalLayers(queue, edges, inDegree)
+
+	if visited != len(nodes) {
+		return nil, fmt.Errorf("graph contains a cycle")
+	}
+	return layers, nil
+}
+
+// calculateInDegree computes in-degree for all nodes
+func calculateInDegree(nodes map[string]*ExecutionGraphNode, edges []ExecutionGraphEdge) map[string]int {
 	inDegree := make(map[string]int)
 	for id := range nodes {
 		inDegree[id] = 0
@@ -106,89 +132,92 @@ func topologicalSort(nodes map[string]*ExecutionGraphNode, edges []ExecutionGrap
 	for _, edge := range edges {
 		inDegree[edge.To]++
 	}
+	return inDegree
+}
 
-	// Find all nodes with in-degree 0 (no dependencies)
+// findNodesWithNoDependencies returns nodes with in-degree 0
+func findNodesWithNoDependencies(inDegree map[string]int) []string {
 	queue := []string{}
 	for id, degree := range inDegree {
 		if degree == 0 {
 			queue = append(queue, id)
 		}
 	}
+	return queue
+}
 
+// processTopologicalLayers builds execution layers using Kahn's algorithm
+func processTopologicalLayers(queue []string, edges []ExecutionGraphEdge, inDegree map[string]int) ([][]string, int) {
 	layers := [][]string{}
 	visited := 0
 
 	for len(queue) > 0 {
-		// All nodes in queue can execute in parallel
 		layer := make([]string, len(queue))
 		copy(layer, queue)
 		layers = append(layers, layer)
 
-		// Process current layer
-		nextQueue := []string{}
-		for _, nodeID := range queue {
-			visited++
+		nextQueue := processLayer(queue, edges, inDegree, &visited)
+		queue = nextQueue
+	}
+	return layers, visited
+}
 
-			// Reduce in-degree for all dependent nodes
-			for _, edge := range edges {
-				if edge.From == nodeID {
-					inDegree[edge.To]--
-					if inDegree[edge.To] == 0 {
-						nextQueue = append(nextQueue, edge.To)
-					}
+// processLayer processes one layer and returns next queue
+func processLayer(queue []string, edges []ExecutionGraphEdge, inDegree map[string]int, visited *int) []string {
+	nextQueue := []string{}
+	for _, nodeID := range queue {
+		*visited++
+		for _, edge := range edges {
+			if edge.From == nodeID {
+				inDegree[edge.To]--
+				if inDegree[edge.To] == 0 {
+					nextQueue = append(nextQueue, edge.To)
 				}
 			}
 		}
-
-		queue = nextQueue
 	}
-
-	// Check if all nodes were visited (no cycles)
-	if visited != len(nodes) {
-		return nil, fmt.Errorf("graph contains a cycle")
-	}
-
-	return layers, nil
+	return nextQueue
 }
 
 // hasCycle detects if there's a cycle in the graph using DFS
 func hasCycle(nodes map[string]*ExecutionGraphNode, edges []ExecutionGraphEdge) bool {
-	// Build adjacency list
+	adjacency := buildAdjacencyList(edges)
+	visited := make(map[string]bool)
+	recStack := make(map[string]bool)
+
+	for nodeID := range nodes {
+		if !visited[nodeID] && detectCycleDFS(nodeID, adjacency, visited, recStack) {
+			return true
+		}
+	}
+	return false
+}
+
+// buildAdjacencyList creates adjacency list from edges
+func buildAdjacencyList(edges []ExecutionGraphEdge) map[string][]string {
 	adjacency := make(map[string][]string)
 	for _, edge := range edges {
 		adjacency[edge.From] = append(adjacency[edge.From], edge.To)
 	}
+	return adjacency
+}
 
-	visited := make(map[string]bool)
-	recStack := make(map[string]bool)
+// detectCycleDFS performs DFS to detect cycles
+func detectCycleDFS(nodeID string, adjacency map[string][]string, visited, recStack map[string]bool) bool {
+	visited[nodeID] = true
+	recStack[nodeID] = true
 
-	var hasCycleDFS func(string) bool
-	hasCycleDFS = func(nodeID string) bool {
-		visited[nodeID] = true
-		recStack[nodeID] = true
-
-		for _, neighbor := range adjacency[nodeID] {
-			if !visited[neighbor] {
-				if hasCycleDFS(neighbor) {
-					return true
-				}
-			} else if recStack[neighbor] {
+	for _, neighbor := range adjacency[nodeID] {
+		if !visited[neighbor] {
+			if detectCycleDFS(neighbor, adjacency, visited, recStack) {
 				return true
 			}
-		}
-
-		recStack[nodeID] = false
-		return false
-	}
-
-	for nodeID := range nodes {
-		if !visited[nodeID] {
-			if hasCycleDFS(nodeID) {
-				return true
-			}
+		} else if recStack[neighbor] {
+			return true
 		}
 	}
 
+	recStack[nodeID] = false
 	return false
 }
 

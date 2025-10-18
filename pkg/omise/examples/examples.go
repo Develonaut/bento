@@ -48,73 +48,93 @@ type Category struct {
 // GetAll returns all examples organized by category
 func GetAll() []Category {
 	return []Category{
-		{
-			Name: "HTTP Requests",
-			Examples: []Example{
-				{
-					ID:          "http-get",
-					Name:        "Simple GET Request",
-					Description: "Fetch data from an API endpoint",
-					Category:    "HTTP Requests",
-					Content:     httpGetExample,
-				},
-				{
-					ID:          "http-post",
-					Name:        "POST with JSON Body",
-					Description: "Send data to an API endpoint",
-					Category:    "HTTP Requests",
-					Content:     httpPostExample,
-				},
+		createHTTPRequestExamples(),
+		createDataTransformationExamples(),
+		createControlFlowExamples(),
+		createCompleteWorkflowExamples(),
+	}
+}
+
+// createHTTPRequestExamples creates HTTP request examples
+func createHTTPRequestExamples() Category {
+	return Category{
+		Name: "HTTP Requests",
+		Examples: []Example{
+			{
+				ID:          "http-get",
+				Name:        "Simple GET Request",
+				Description: "Fetch data from an API endpoint",
+				Category:    "HTTP Requests",
+				Content:     httpGetExample,
+			},
+			{
+				ID:          "http-post",
+				Name:        "POST with JSON Body",
+				Description: "Send data to an API endpoint",
+				Category:    "HTTP Requests",
+				Content:     httpPostExample,
 			},
 		},
-		{
-			Name: "Data Transformation",
-			Examples: []Example{
-				{
-					ID:          "transform-jq",
-					Name:        "Extract User IDs",
-					Description: "Use JQ to filter and transform JSON data",
-					Category:    "Data Transformation",
-					Content:     transformJQExample,
-				},
+	}
+}
+
+// createDataTransformationExamples creates data transformation examples
+func createDataTransformationExamples() Category {
+	return Category{
+		Name: "Data Transformation",
+		Examples: []Example{
+			{
+				ID:          "transform-jq",
+				Name:        "Extract User IDs",
+				Description: "Use JQ to filter and transform JSON data",
+				Category:    "Data Transformation",
+				Content:     transformJQExample,
 			},
 		},
-		{
-			Name: "Control Flow",
-			Examples: []Example{
-				{
-					ID:          "conditional-if",
-					Name:        "Check Success Status",
-					Description: "Execute different actions based on conditions",
-					Category:    "Control Flow",
-					Content:     conditionalIfExample,
-				},
-				{
-					ID:          "loop-for",
-					Name:        "Process Multiple Users",
-					Description: "Iterate over a list of items",
-					Category:    "Control Flow",
-					Content:     loopForExample,
-				},
+	}
+}
+
+// createControlFlowExamples creates control flow examples
+func createControlFlowExamples() Category {
+	return Category{
+		Name: "Control Flow",
+		Examples: []Example{
+			{
+				ID:          "conditional-if",
+				Name:        "Check Success Status",
+				Description: "Execute different actions based on conditions",
+				Category:    "Control Flow",
+				Content:     conditionalIfExample,
+			},
+			{
+				ID:          "loop-for",
+				Name:        "Process Multiple Users",
+				Description: "Iterate over a list of items",
+				Category:    "Control Flow",
+				Content:     loopForExample,
 			},
 		},
-		{
-			Name: "Complete Workflows",
-			Examples: []Example{
-				{
-					ID:          "sequence",
-					Name:        "Multi-Step Workflow",
-					Description: "Chain multiple operations together",
-					Category:    "Complete Workflows",
-					Content:     sequenceExample,
-				},
-				{
-					ID:          "complete-api-workflow",
-					Name:        "Complete API Workflow",
-					Description: "Full example with HTTP, transform, and conditionals",
-					Category:    "Complete Workflows",
-					Content:     completeWorkflowExample,
-				},
+	}
+}
+
+// createCompleteWorkflowExamples creates complete workflow examples
+func createCompleteWorkflowExamples() Category {
+	return Category{
+		Name: "Complete Workflows",
+		Examples: []Example{
+			{
+				ID:          "sequence",
+				Name:        "Multi-Step Workflow",
+				Description: "Chain multiple operations together",
+				Category:    "Complete Workflows",
+				Content:     sequenceExample,
+			},
+			{
+				ID:          "complete-api-workflow",
+				Name:        "Complete API Workflow",
+				Description: "Full example with HTTP, transform, and conditionals",
+				Category:    "Complete Workflows",
+				Content:     completeWorkflowExample,
 			},
 		},
 	}

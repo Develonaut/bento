@@ -29,8 +29,8 @@ func TestBrowserToExecutorFlow(t *testing.T) {
 		teatest.WithInitialTermSize(80, 24),
 	)
 
-	// Wait for initial render - look for Browser header
-	waitForContent(t, tm, "🍱 Bento | Browser")
+	// Wait for initial render - look for app header
+	waitForContent(t, tm, "🍱 Bento v0.1.0")
 
 	// Navigate down to skip the "+ Create New Bento" item
 	tm.Send(tea.KeyMsg{Type: tea.KeyDown})
@@ -95,7 +95,7 @@ func TestQuitBehavior(t *testing.T) {
 			)
 
 			// Wait for initial render
-			waitForContent(t, tm, "🍱 Bento | Browser")
+			waitForContent(t, tm, "🍱 Bento v0.1.0")
 
 			// Send quit key
 			tm.Send(tt.key)
@@ -261,4 +261,64 @@ func readCurrentOutput(t *testing.T, tm *teatest.TestModel) []byte {
 	buf := make([]byte, 8192)
 	n, _ := tm.Output().Read(buf)
 	return buf[:n]
+}
+
+// TestBrowserToEditorFlow tests pressing 'e' on a bento to open the editor
+// TODO: This test is skipped until the editor feature is implemented
+func TestBrowserToEditorFlow(t *testing.T) {
+	t.Skip("Editor feature not yet implemented - this test serves as a specification for future implementation")
+
+	// Create test bento in temp directory
+	workDir := t.TempDir()
+	createTestBento(t, workDir)
+
+	m, err := NewModelWithWorkDir(workDir)
+	if err != nil {
+		t.Fatalf("NewModelWithWorkDir error: %v", err)
+	}
+
+	tm := teatest.NewTestModel(
+		t, m,
+		teatest.WithInitialTermSize(80, 24),
+	)
+
+	// Wait for initial render - look for app header
+	waitForContent(t, tm, "🍱 Bento v0.1.0")
+
+	// Navigate down to skip the "+ Create New Bento" item and select first bento
+	tm.Send(tea.KeyMsg{Type: tea.KeyDown})
+	time.Sleep(50 * time.Millisecond)
+
+	// Press 'e' to edit the selected bento
+	tm.Send(tea.KeyMsg{
+		Type:  tea.KeyRunes,
+		Runes: []rune{'e'},
+	})
+
+	// Give time for screen transition to editor
+	time.Sleep(100 * time.Millisecond)
+
+	// Quit to finish test
+	tm.Send(tea.KeyMsg{
+		Type:  tea.KeyRunes,
+		Runes: []rune{'q'},
+	})
+
+	// Verify final model state
+	tm.WaitFinished(t, teatest.WithFinalTimeout(2*time.Second))
+	fm := tm.FinalModel(t)
+	model, ok := fm.(Model)
+	if !ok {
+		t.Fatal("Final model is not Model type")
+	}
+
+	// Should be on editor screen after pressing 'e'
+	if model.screen != ScreenEditor {
+		t.Errorf("Expected screen to be Editor, got %v", model.screen)
+	}
+
+	// When editor is implemented, this test should also verify:
+	// - Editor shows the bento name
+	// - Editor displays the bento's nodes/configuration
+	// - User can navigate and edit the bento
 }

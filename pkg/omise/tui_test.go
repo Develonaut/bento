@@ -7,8 +7,6 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/x/exp/teatest"
-
-	"bento/pkg/omise/screens"
 )
 
 // TestCreateBentoFormFlow tests the create bento message flow
@@ -58,33 +56,5 @@ func TestCreateBentoFormTyping(t *testing.T) {
 	t.Logf("Output:\n%s", string(output))
 	if !bytes.Contains(output, []byte("my-test")) {
 		t.Errorf("expected typed text 'my-test' to appear in output")
-	}
-}
-
-// TestEditorInitCommand tests that Init() command is returned when creating editor
-func TestEditorInitCommand(t *testing.T) {
-	workDir := t.TempDir()
-
-	model, err := NewModelWithWorkDir(workDir)
-	if err != nil {
-		t.Fatalf("failed to create model: %v", err)
-	}
-
-	// Send CreateBentoMsg
-	result, cmd := model.Update(screens.CreateBentoMsg{})
-
-	m, ok := result.(Model)
-	if !ok {
-		t.Fatal("result is not Model type")
-	}
-
-	// Check we switched to editor
-	if m.screen != ScreenEditor {
-		t.Error("expected to switch to editor screen")
-	}
-
-	// Check that Init() command was returned
-	if cmd == nil {
-		t.Fatal("expected Init() command to be returned, got nil")
 	}
 }
