@@ -82,10 +82,32 @@ func TestGuidedCreation_CompleteFlow(t *testing.T) {
 	tm.Send(tea.KeyMsg{Type: tea.KeyDown})
 	time.Sleep(50 * time.Millisecond)
 	tm.Send(tea.KeyMsg{Type: tea.KeyEnter})
-	time.Sleep(300 * time.Millisecond) // Increased delay for file system flush
 
-	// Verify bento was saved
-	bentos, err := store.List()
+	// Verify bento was saved (with retry logic for file system flush)
+	var bentos []jubako.BentoInfo
+	var def neta.Definition
+	var loadErr error
+
+	// Retry up to 5 times with increasing delays
+	for i := 0; i < 5; i++ {
+		time.Sleep(time.Duration(100+i*100) * time.Millisecond)
+
+		bentos, err = store.List()
+		if err != nil {
+			continue
+		}
+
+		if len(bentos) != 1 {
+			continue
+		}
+
+		def, loadErr = store.Load(bentos[0].Name)
+		if loadErr == nil {
+			// Successfully loaded
+			break
+		}
+	}
+
 	if err != nil {
 		t.Fatalf("Failed to list bentos: %v", err)
 	}
@@ -94,12 +116,8 @@ func TestGuidedCreation_CompleteFlow(t *testing.T) {
 		t.Fatalf("Expected 1 bento after creation, got %d", len(bentos))
 	}
 
-	bentoInfo := bentos[0]
-
-	// Load full definition to verify details (use Name which is the filename)
-	def, err := store.Load(bentoInfo.Name)
-	if err != nil {
-		t.Fatalf("Failed to load bento definition: %v", err)
+	if loadErr != nil {
+		t.Fatalf("Failed to load bento definition: %v", loadErr)
 	}
 
 	if def.Description != "A test workflow" {
@@ -197,13 +215,32 @@ func TestGuidedCreation_MultipleNodes(t *testing.T) {
 	tm.Send(tea.KeyMsg{Type: tea.KeyDown}) // Move to "Done"
 	time.Sleep(50 * time.Millisecond)
 	tm.Send(tea.KeyMsg{Type: tea.KeyEnter})
-	time.Sleep(100 * time.Millisecond)
 
-	// Give file system a moment to flush
-	time.Sleep(100 * time.Millisecond)
+	// Verify bento with retry logic for file system flush
+	var bentos []jubako.BentoInfo
+	var def neta.Definition
+	var loadErr error
 
-	// Verify bento with 2 nodes
-	bentos, err := store.List()
+	// Retry up to 5 times with increasing delays
+	for i := 0; i < 5; i++ {
+		time.Sleep(time.Duration(100+i*100) * time.Millisecond)
+
+		bentos, err = store.List()
+		if err != nil {
+			continue
+		}
+
+		if len(bentos) != 1 {
+			continue
+		}
+
+		def, loadErr = store.Load(bentos[0].Name)
+		if loadErr == nil {
+			// Successfully loaded
+			break
+		}
+	}
+
 	if err != nil {
 		t.Fatalf("Failed to list bentos: %v", err)
 	}
@@ -212,10 +249,8 @@ func TestGuidedCreation_MultipleNodes(t *testing.T) {
 		t.Fatalf("Expected 1 bento, got %d", len(bentos))
 	}
 
-	bentoInfo := bentos[0]
-	def, err := store.Load(bentoInfo.Name)
-	if err != nil {
-		t.Fatalf("Failed to load bento definition: %v", err)
+	if loadErr != nil {
+		t.Fatalf("Failed to load bento definition: %v", loadErr)
 	}
 
 	if len(def.Nodes) != 2 {
@@ -625,4 +660,554 @@ func findSubstring(s, substr string) bool {
 		}
 	}
 	return false
+}
+
+// TestGuidedCreation_DeleteNode tests deleting a node with Ctrl+D
+func TestGuidedCreation_DeleteNode(t *testing.T) {
+	h := newTestHelper(t)
+	defer h.cleanup()
+
+	// Fill metadata
+	h.fillMetadata("Test Bento", "Testing delete")
+	time.Sleep(100 * time.Millisecond)
+
+	// Add a complete HTTP node first
+	h.selectNodeType(0)
+	h.fillHTTPNode("fetch_data", "https://api.example.com", "GET")
+	time.Sleep(100 * time.Millisecond)
+
+	// Add another node
+	h.selectContinue(0) // add
+	time.Sleep(100 * time.Millisecond)
+
+	// Select file.write
+	h.selectNodeType(2)
+	time.Sleep(100 * time.Millisecond)
+
+	// Fill node name but then delete it
+	h.tm.Send(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("test_node")})
+	time.Sleep(50 * time.Millisecond)
+
+	// Delete the node with Ctrl+D
+	h.tm.Send(tea.KeyMsg{Type: tea.KeyCtrlD})
+	time.Sleep(100 * time.Millisecond)
+
+	// Now save
+	h.selectContinue(1) // done
+	time.Sleep(300 * time.Millisecond)
+
+	// Verify only 1 node was saved (the delete worked)
+	def := h.verifyBento("Test Bento")
+	h.assertNodeCount(def, 1)
+	h.assertHTTPNode(def.Nodes[0], "fetch_data", "https://api.example.com", "GET")
+}
+
+// TestGuidedCreation_HistoryCapture tests that history is captured correctly
+func TestGuidedCreation_HistoryCapture(t *testing.T) {
+	tmpDir := t.TempDir()
+	store, err := jubako.NewStore(tmpDir)
+	if err != nil {
+		t.Fatalf("Failed to create store: %v", err)
+	}
+
+	modal := NewGuidedModal(store, tmpDir, 120, 40)
+
+	// Manually test history functions
+	// Start at metadata stage
+	if modal.stage != guidedStageMetadata {
+		t.Fatalf("Expected to start at metadata stage")
+	}
+
+	// Capture snapshot
+	modal.captureSnapshot()
+
+	// Should have captured metadata stage
+	if len(modal.history.stages) != 1 {
+		t.Errorf("Expected 1 history entry after capture, got %d", len(modal.history.stages))
+	}
+
+	if len(modal.history.stages) > 0 && modal.history.stages[0] != guidedStageMetadata {
+		t.Errorf("Expected first history entry to be metadata stage")
+	}
+
+	// Move to next stage and capture again
+	modal.stage = guidedStageNodeTypeSelect
+	modal.captureSnapshot()
+
+	if len(modal.history.stages) != 2 {
+		t.Errorf("Expected 2 history entries after second capture, got %d", len(modal.history.stages))
+	}
+
+	t.Log("History capture test completed successfully")
+}
+
+// TestGuidedCreation_EditMenu tests the edit menu functionality
+func TestGuidedCreation_EditMenu(t *testing.T) {
+	tmpDir := t.TempDir()
+	store, err := jubako.NewStore(tmpDir)
+	if err != nil {
+		t.Fatalf("Failed to create store: %v", err)
+	}
+
+	// Create an existing bento to edit
+	originalDef := neta.Definition{
+		Version:     "1.0",
+		Type:        "group.sequence",
+		Name:        "Original Bento",
+		Description: "Original description",
+		Icon:        "🍱",
+		Nodes: []neta.Definition{
+			{
+				Version: "1.0",
+				Type:    "http",
+				Name:    "test_node",
+				Parameters: map[string]interface{}{
+					"url":    "https://example.com",
+					"method": "GET",
+				},
+			},
+		},
+	}
+
+	if err := store.Save("original-bento", originalDef); err != nil {
+		t.Fatalf("Failed to save original bento: %v", err)
+	}
+
+	// Load it for editing
+	modal, err := NewGuidedModalForEdit(store, tmpDir, 120, 40, "original-bento")
+	if err != nil {
+		t.Fatalf("Failed to create edit modal: %v", err)
+	}
+
+	// Should start at edit menu
+	if modal.stage != guidedStageEditMenu {
+		t.Errorf("Expected to start at edit menu stage, got %d", modal.stage)
+	}
+
+	// Should be in editing mode
+	if !modal.editing {
+		t.Error("Expected editing flag to be true")
+	}
+
+	// Definition should be loaded
+	if modal.definition.Name != "Original Bento" {
+		t.Errorf("Expected name 'Original Bento', got '%s'", modal.definition.Name)
+	}
+
+	if len(modal.definition.Nodes) != 1 {
+		t.Errorf("Expected 1 node, got %d", len(modal.definition.Nodes))
+	}
+
+	t.Log("Edit menu initialization test completed successfully")
+}
+
+// TestGuidedCreation_EditMetadata tests editing bento metadata
+func TestGuidedCreation_EditMetadata(t *testing.T) {
+	tmpDir := t.TempDir()
+	store, err := jubako.NewStore(tmpDir)
+	if err != nil {
+		t.Fatalf("Failed to create store: %v", err)
+	}
+
+	// Create an existing bento
+	originalDef := neta.Definition{
+		Version:     "1.0",
+		Type:        "group.sequence",
+		Name:        "Test Bento",
+		Description: "Original description",
+		Icon:        "🍱",
+		Nodes:       []neta.Definition{},
+	}
+
+	if err := store.Save("test-bento", originalDef); err != nil {
+		t.Fatalf("Failed to save bento: %v", err)
+	}
+
+	// Load for editing
+	modal, err := NewGuidedModalForEdit(store, tmpDir, 120, 40, "test-bento")
+	if err != nil {
+		t.Fatalf("Failed to create edit modal: %v", err)
+	}
+
+	tm := teatest.NewTestModel(t, modal, teatest.WithInitialTermSize(120, 40))
+	defer tm.Quit()
+
+	// Select "Edit metadata" option (first option)
+	tm.Send(tea.KeyMsg{Type: tea.KeyEnter})
+	time.Sleep(100 * time.Millisecond)
+
+	// Should now be on metadata form
+	// Change name
+	tm.Send(tea.KeyMsg{Type: tea.KeyCtrlU}) // Clear field
+	time.Sleep(50 * time.Millisecond)
+	tm.Send(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("Updated Bento")})
+	tm.Send(tea.KeyMsg{Type: tea.KeyEnter})
+	time.Sleep(50 * time.Millisecond)
+
+	// Change description
+	tm.Send(tea.KeyMsg{Type: tea.KeyCtrlU}) // Clear field
+	time.Sleep(50 * time.Millisecond)
+	tm.Send(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("Updated description")})
+	tm.Send(tea.KeyMsg{Type: tea.KeyEnter})
+	time.Sleep(100 * time.Millisecond)
+
+	// Should be back at edit menu
+	// Now save
+	tm.Send(tea.KeyMsg{Type: tea.KeyDown}) // Move to "Add a new node"
+	time.Sleep(20 * time.Millisecond)
+	tm.Send(tea.KeyMsg{Type: tea.KeyDown}) // Move to "Delete a node"
+	time.Sleep(20 * time.Millisecond)
+	tm.Send(tea.KeyMsg{Type: tea.KeyDown}) // Move to "Save and exit"
+	time.Sleep(20 * time.Millisecond)
+	tm.Send(tea.KeyMsg{Type: tea.KeyDown}) // Move past delete
+	time.Sleep(20 * time.Millisecond)
+	tm.Send(tea.KeyMsg{Type: tea.KeyEnter})
+	time.Sleep(500 * time.Millisecond)
+
+	// Verify metadata was updated
+	var def neta.Definition
+	var loadErr error
+
+	for i := 0; i < 5; i++ {
+		time.Sleep(time.Duration(100+i*100) * time.Millisecond)
+		def, loadErr = store.Load("test-bento")
+		if loadErr == nil {
+			break
+		}
+	}
+
+	if loadErr != nil {
+		t.Fatalf("Failed to load updated bento: %v", loadErr)
+	}
+
+	if def.Name != "Updated Bento" {
+		t.Errorf("Expected name 'Updated Bento', got '%s'", def.Name)
+	}
+
+	if def.Description != "Updated description" {
+		t.Errorf("Expected description 'Updated description', got '%s'", def.Description)
+	}
+
+	// Version should be incremented
+	if def.Version != "1.1" {
+		t.Errorf("Expected version 1.1, got %s", def.Version)
+	}
+
+	t.Log("Edit metadata test completed successfully")
+}
+
+// TestGuidedCreation_DeleteNode_EditMenu tests deleting a node via edit menu
+func TestGuidedCreation_DeleteNode_EditMenu(t *testing.T) {
+
+	tmpDir := t.TempDir()
+	store, err := jubako.NewStore(tmpDir)
+	if err != nil {
+		t.Fatalf("Failed to create store: %v", err)
+	}
+
+	// Create a bento with 2 nodes
+	originalDef := neta.Definition{
+		Version: "1.0",
+		Type:    "group.sequence",
+		Name:    "Delete Test",
+		Icon:    "🍱",
+		Nodes: []neta.Definition{
+			{
+				Version: "1.0",
+				Type:    "http",
+				Name:    "node_to_keep",
+				Parameters: map[string]interface{}{
+					"url":    "https://keep.com",
+					"method": "GET",
+				},
+			},
+			{
+				Version: "1.0",
+				Type:    "http",
+				Name:    "node_to_delete",
+				Parameters: map[string]interface{}{
+					"url":    "https://delete.com",
+					"method": "POST",
+				},
+			},
+		},
+	}
+
+	if err := store.Save("delete-test", originalDef); err != nil {
+		t.Fatalf("Failed to save bento: %v", err)
+	}
+
+	// Load for editing
+	modal, err := NewGuidedModalForEdit(store, tmpDir, 120, 40, "delete-test")
+	if err != nil {
+		t.Fatalf("Failed to create edit modal: %v", err)
+	}
+
+	tm := teatest.NewTestModel(t, modal, teatest.WithInitialTermSize(120, 40))
+	defer tm.Quit()
+
+	// Navigate to "Delete a node"
+	tm.Send(tea.KeyMsg{Type: tea.KeyDown}) // Edit node
+	time.Sleep(20 * time.Millisecond)
+	tm.Send(tea.KeyMsg{Type: tea.KeyDown}) // Add node
+	time.Sleep(20 * time.Millisecond)
+	tm.Send(tea.KeyMsg{Type: tea.KeyDown}) // Delete node
+	time.Sleep(20 * time.Millisecond)
+	tm.Send(tea.KeyMsg{Type: tea.KeyEnter})
+	time.Sleep(100 * time.Millisecond)
+
+	// Should show node list
+	// Select first node (default selection) which is node_to_keep
+	// Press Enter to delete it
+	tm.Send(tea.KeyMsg{Type: tea.KeyEnter})
+	time.Sleep(100 * time.Millisecond)
+
+	// Should be back at edit menu
+	// Now save
+	tm.Send(tea.KeyMsg{Type: tea.KeyDown}) // Edit node
+	time.Sleep(20 * time.Millisecond)
+	tm.Send(tea.KeyMsg{Type: tea.KeyDown}) // Add node
+	time.Sleep(20 * time.Millisecond)
+	tm.Send(tea.KeyMsg{Type: tea.KeyDown}) // Delete node
+	time.Sleep(20 * time.Millisecond)
+	tm.Send(tea.KeyMsg{Type: tea.KeyDown}) // Save
+	time.Sleep(20 * time.Millisecond)
+	tm.Send(tea.KeyMsg{Type: tea.KeyEnter})
+	time.Sleep(500 * time.Millisecond)
+
+	// Verify node was deleted
+	var def neta.Definition
+	var loadErr error
+
+	for i := 0; i < 5; i++ {
+		time.Sleep(time.Duration(100+i*100) * time.Millisecond)
+		def, loadErr = store.Load("delete-test")
+		if loadErr == nil {
+			break
+		}
+	}
+
+	if loadErr != nil {
+		t.Fatalf("Failed to load updated bento: %v", loadErr)
+	}
+
+	if len(def.Nodes) != 1 {
+		t.Fatalf("Expected 1 node after deletion, got %d", len(def.Nodes))
+	}
+
+	if def.Nodes[0].Name != "node_to_delete" {
+		t.Errorf("Expected remaining node to be 'node_to_delete', got '%s'", def.Nodes[0].Name)
+	}
+
+	t.Log("Delete node test completed successfully")
+}
+
+// TestGuidedCreation_EditNodeParameters tests editing node parameters with pre-filled values
+func TestGuidedCreation_EditNodeParameters(t *testing.T) {
+	tmpDir := t.TempDir()
+	store, err := jubako.NewStore(tmpDir)
+	if err != nil {
+		t.Fatalf("Failed to create store: %v", err)
+	}
+
+	// Create a bento with an HTTP node
+	originalDef := neta.Definition{
+		Version: "1.0",
+		Type:    "group.sequence",
+		Name:    "Edit Params Test",
+		Icon:    "🍱",
+		Nodes: []neta.Definition{
+			{
+				Version: "1.0",
+				Type:    "http",
+				Name:    "api_call",
+				Parameters: map[string]interface{}{
+					"url":    "https://original.com",
+					"method": "GET",
+				},
+			},
+		},
+	}
+
+	if err := store.Save("edit-params-test", originalDef); err != nil {
+		t.Fatalf("Failed to save bento: %v", err)
+	}
+
+	// Load for editing
+	modal, err := NewGuidedModalForEdit(store, tmpDir, 120, 40, "edit-params-test")
+	if err != nil {
+		t.Fatalf("Failed to create edit modal: %v", err)
+	}
+
+	tm := teatest.NewTestModel(t, modal, teatest.WithInitialTermSize(120, 40))
+	defer tm.Quit()
+
+	// Navigate to "Edit an existing node"
+	tm.Send(tea.KeyMsg{Type: tea.KeyDown}) // Edit an existing node
+	time.Sleep(20 * time.Millisecond)
+	tm.Send(tea.KeyMsg{Type: tea.KeyEnter})
+	time.Sleep(100 * time.Millisecond)
+
+	// Should show node list with api_call pre-selected
+	// Press Enter to edit it
+	tm.Send(tea.KeyMsg{Type: tea.KeyEnter})
+	time.Sleep(100 * time.Millisecond)
+
+	// Should now be on HTTP node edit form with pre-filled values
+	// The form should have:
+	// - Name: api_call
+	// - URL: https://original.com
+	// - Method: GET
+
+	// Change the URL by clearing and entering new value
+	tm.Send(tea.KeyMsg{Type: tea.KeyCtrlU}) // Clear name field
+	time.Sleep(50 * time.Millisecond)
+	tm.Send(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("updated_api_call")})
+	tm.Send(tea.KeyMsg{Type: tea.KeyEnter})
+	time.Sleep(50 * time.Millisecond)
+
+	// Change URL
+	tm.Send(tea.KeyMsg{Type: tea.KeyCtrlU}) // Clear URL field
+	time.Sleep(50 * time.Millisecond)
+	tm.Send(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("https://updated.com")})
+	tm.Send(tea.KeyMsg{Type: tea.KeyEnter})
+	time.Sleep(50 * time.Millisecond)
+
+	// Keep method as GET (just press Enter to skip)
+	tm.Send(tea.KeyMsg{Type: tea.KeyEnter})
+	time.Sleep(50 * time.Millisecond)
+
+	// Skip headers (Enter)
+	tm.Send(tea.KeyMsg{Type: tea.KeyEnter})
+	time.Sleep(50 * time.Millisecond)
+
+	// Skip body (Enter)
+	tm.Send(tea.KeyMsg{Type: tea.KeyEnter})
+	time.Sleep(100 * time.Millisecond)
+
+	// Should be back at edit menu
+	// Navigate to Save
+	tm.Send(tea.KeyMsg{Type: tea.KeyDown}) // Edit node
+	time.Sleep(20 * time.Millisecond)
+	tm.Send(tea.KeyMsg{Type: tea.KeyDown}) // Add node
+	time.Sleep(20 * time.Millisecond)
+	tm.Send(tea.KeyMsg{Type: tea.KeyDown}) // Delete node
+	time.Sleep(20 * time.Millisecond)
+	tm.Send(tea.KeyMsg{Type: tea.KeyDown}) // Save
+	time.Sleep(20 * time.Millisecond)
+	tm.Send(tea.KeyMsg{Type: tea.KeyEnter})
+	time.Sleep(500 * time.Millisecond)
+
+	// Verify node was updated
+	var def neta.Definition
+	var loadErr error
+
+	for i := 0; i < 5; i++ {
+		time.Sleep(time.Duration(100+i*100) * time.Millisecond)
+		def, loadErr = store.Load("edit-params-test")
+		if loadErr == nil {
+			break
+		}
+	}
+
+	if loadErr != nil {
+		t.Fatalf("Failed to load updated bento: %v", loadErr)
+	}
+
+	if len(def.Nodes) != 1 {
+		t.Fatalf("Expected 1 node, got %d", len(def.Nodes))
+	}
+
+	// Verify node was updated
+	node := def.Nodes[0]
+	if node.Name != "updated_api_call" {
+		t.Errorf("Expected name 'updated_api_call', got '%s'", node.Name)
+	}
+
+	if url, ok := node.Parameters["url"].(string); !ok || url != "https://updated.com" {
+		t.Errorf("Expected URL 'https://updated.com', got '%v'", node.Parameters["url"])
+	}
+
+	if method, ok := node.Parameters["method"].(string); !ok || method != "GET" {
+		t.Errorf("Expected method 'GET', got '%v'", node.Parameters["method"])
+	}
+
+	t.Log("Edit node parameters test completed successfully")
+}
+
+// TestGuidedCreation_NoChangeNoVersionIncrement tests that version doesn't increment if nothing changed
+func TestGuidedCreation_NoChangeNoVersionIncrement(t *testing.T) {
+	tmpDir := t.TempDir()
+	store, err := jubako.NewStore(tmpDir)
+	if err != nil {
+		t.Fatalf("Failed to create store: %v", err)
+	}
+
+	// Create a bento
+	originalDef := neta.Definition{
+		Version: "1.0",
+		Type:    "group.sequence",
+		Name:    "No Change Test",
+		Icon:    "🍱",
+		Nodes: []neta.Definition{
+			{
+				Version: "1.0",
+				Type:    "http",
+				Name:    "api_call",
+				Parameters: map[string]interface{}{
+					"url":    "https://example.com",
+					"method": "GET",
+				},
+			},
+		},
+	}
+
+	if err := store.Save("no-change-test", originalDef); err != nil {
+		t.Fatalf("Failed to save bento: %v", err)
+	}
+
+	// Load for editing
+	modal, err := NewGuidedModalForEdit(store, tmpDir, 120, 40, "no-change-test")
+	if err != nil {
+		t.Fatalf("Failed to create edit modal: %v", err)
+	}
+
+	tm := teatest.NewTestModel(t, modal, teatest.WithInitialTermSize(120, 40))
+	defer tm.Quit()
+
+	// Just save without making any changes
+	// Navigate to "Save and exit" (index 4)
+	tm.Send(tea.KeyMsg{Type: tea.KeyDown}) // Edit node
+	time.Sleep(20 * time.Millisecond)
+	tm.Send(tea.KeyMsg{Type: tea.KeyDown}) // Add node
+	time.Sleep(20 * time.Millisecond)
+	tm.Send(tea.KeyMsg{Type: tea.KeyDown}) // Delete node
+	time.Sleep(20 * time.Millisecond)
+	tm.Send(tea.KeyMsg{Type: tea.KeyDown}) // Save
+	time.Sleep(20 * time.Millisecond)
+	tm.Send(tea.KeyMsg{Type: tea.KeyEnter})
+	time.Sleep(500 * time.Millisecond)
+
+	// Verify version was NOT incremented
+	var def neta.Definition
+	var loadErr error
+
+	for i := 0; i < 5; i++ {
+		time.Sleep(time.Duration(100+i*100) * time.Millisecond)
+		def, loadErr = store.Load("no-change-test")
+		if loadErr == nil {
+			break
+		}
+	}
+
+	if loadErr != nil {
+		t.Fatalf("Failed to load bento: %v", loadErr)
+	}
+
+	// Version should still be 1.0 (not incremented)
+	if def.Version != "1.0" {
+		t.Errorf("Expected version to stay at 1.0 when no changes made, got %s", def.Version)
+	}
+
+	t.Log("No change no version increment test completed successfully")
 }

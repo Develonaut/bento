@@ -8,6 +8,7 @@ import (
 	"github.com/charmbracelet/x/exp/teatest"
 
 	"bento/pkg/jubako"
+	"bento/pkg/neta"
 )
 
 // TestBrowser_GuidedCreationBlocksNavigation tests that during guided creation,
@@ -354,4 +355,159 @@ func (m *browserTestModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func (m *browserTestModel) View() string {
 	return m.browser.View()
+}
+
+// TestBrowser_EditBentoWorkflow tests the complete edit workflow
+func TestBrowser_EditBentoWorkflow(t *testing.T) {
+	tmpDir := t.TempDir()
+	store, err := jubako.NewStore(tmpDir)
+	if err != nil {
+		t.Fatalf("Failed to create store: %v", err)
+	}
+
+	// First, create a bento programmatically to edit
+	originalDef := neta.Definition{
+		Version:     "1.0",
+		Type:        "group.sequence",
+		Name:        "Test Workflow",
+		Description: "Original description",
+		Icon:        "🍱",
+		Nodes: []neta.Definition{
+			{
+				Version: "1.0",
+				Type:    "http",
+				Name:    "original_node",
+				Parameters: map[string]interface{}{
+					"url":    "https://original.com",
+					"method": "GET",
+				},
+			},
+		},
+	}
+
+	if err := store.Save("test-workflow", originalDef); err != nil {
+		t.Fatalf("Failed to create initial bento: %v", err)
+	}
+
+	// Create browser with the existing bento
+	browser, err := NewBrowser(tmpDir)
+	if err != nil {
+		t.Fatalf("Failed to create browser: %v", err)
+	}
+
+	tm := teatest.NewTestModel(
+		t,
+		&browserTestModel{browser: browser},
+		teatest.WithInitialTermSize(120, 40),
+	)
+	defer tm.Quit()
+
+	// Wait for initial render
+	time.Sleep(100 * time.Millisecond)
+
+	// Press 'e' to edit the selected bento
+	tm.Send(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("e")})
+	time.Sleep(100 * time.Millisecond)
+
+	// Should now be in guided modal at edit menu
+	// Navigate to "Add a new node" option (index 2)
+	tm.Send(tea.KeyMsg{Type: tea.KeyDown}) // Edit an existing node
+	time.Sleep(20 * time.Millisecond)
+	tm.Send(tea.KeyMsg{Type: tea.KeyDown}) // Add a new node
+	time.Sleep(20 * time.Millisecond)
+	tm.Send(tea.KeyMsg{Type: tea.KeyEnter}) // Select "Add a new node"
+	time.Sleep(100 * time.Millisecond)
+
+	// Select node type - file.write (index 2)
+	tm.Send(tea.KeyMsg{Type: tea.KeyDown})
+	time.Sleep(50 * time.Millisecond)
+	tm.Send(tea.KeyMsg{Type: tea.KeyDown})
+	time.Sleep(50 * time.Millisecond)
+	tm.Send(tea.KeyMsg{Type: tea.KeyEnter})
+	time.Sleep(100 * time.Millisecond)
+
+	// Fill file.write parameters
+	tm.Send(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("new_file_node")})
+	tm.Send(tea.KeyMsg{Type: tea.KeyEnter})
+	time.Sleep(50 * time.Millisecond)
+
+	tm.Send(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("/tmp/output.txt")})
+	tm.Send(tea.KeyMsg{Type: tea.KeyEnter})
+	time.Sleep(50 * time.Millisecond)
+
+	tm.Send(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("test content")})
+	tm.Send(tea.KeyMsg{Type: tea.KeyEnter})
+	time.Sleep(100 * time.Millisecond)
+
+	// Should be back at edit menu
+	// Navigate to "Save and exit" (index 4)
+	tm.Send(tea.KeyMsg{Type: tea.KeyDown}) // Edit an existing node
+	time.Sleep(20 * time.Millisecond)
+	tm.Send(tea.KeyMsg{Type: tea.KeyDown}) // Add a new node
+	time.Sleep(20 * time.Millisecond)
+	tm.Send(tea.KeyMsg{Type: tea.KeyDown}) // Delete a node
+	time.Sleep(20 * time.Millisecond)
+	tm.Send(tea.KeyMsg{Type: tea.KeyDown}) // Save and exit
+	time.Sleep(20 * time.Millisecond)
+	tm.Send(tea.KeyMsg{Type: tea.KeyEnter})
+	time.Sleep(500 * time.Millisecond) // Wait for save
+
+	// Verify the bento was updated
+	var def neta.Definition
+	var loadErr error
+
+	// Retry loading with delays
+	for i := 0; i < 5; i++ {
+		time.Sleep(time.Duration(100+i*100) * time.Millisecond)
+		def, loadErr = store.Load("test-workflow")
+		if loadErr == nil {
+			break
+		}
+	}
+
+	if loadErr != nil {
+		t.Fatalf("Failed to load edited bento: %v", loadErr)
+	}
+
+	// Verify version was incremented
+	if def.Version != "1.1" {
+		t.Errorf("Expected version 1.1 after edit, got %s", def.Version)
+	}
+
+	// Verify we now have 2 nodes
+	if len(def.Nodes) != 2 {
+		t.Fatalf("Expected 2 nodes after edit, got %d", len(def.Nodes))
+	}
+
+	// Verify original node is still there
+	foundOriginal := false
+	for _, node := range def.Nodes {
+		if node.Name == "original_node" {
+			foundOriginal = true
+			if url, ok := node.Parameters["url"].(string); !ok || url != "https://original.com" {
+				t.Errorf("Original node URL was modified")
+			}
+		}
+	}
+
+	if !foundOriginal {
+		t.Error("Original node was lost during edit")
+	}
+
+	// Verify new node was added
+	foundNew := false
+	for _, node := range def.Nodes {
+		if node.Name == "new_file_node" {
+			foundNew = true
+			if node.Type != "file.write" {
+				t.Errorf("Expected file.write type, got %s", node.Type)
+			}
+		}
+	}
+
+	if !foundNew {
+		t.Error("New node was not added")
+	}
+
+	t.Log("Edit workflow completed successfully - version incremented and node added")
 }

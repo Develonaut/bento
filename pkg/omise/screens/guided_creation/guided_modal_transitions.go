@@ -10,9 +10,33 @@ import (
 
 // handleStageTransition manages transitions between guided creation stages
 func (m *GuidedModal) handleStageTransition() (*GuidedModal, tea.Cmd) {
+	// Exit navigation mode if we were navigating
+	if m.navigating {
+		m.exitNavigationMode()
+	}
+
 	switch m.stage {
 	case guidedStageMetadata:
-		// Metadata complete - move to node type selection
+		// Capture snapshot before transition
+		m.captureSnapshot()
+
+		// Update definition with metadata
+		if m.editing {
+			// In edit mode, use temp fields
+			m.updateDefinitionFromEditForm()
+		} else {
+			// In create mode, use regular form fields
+			m.updateDefinitionFromForm()
+		}
+
+		// If in edit mode, return to edit menu
+		if m.editing {
+			m.stage = guidedStageEditMenu
+			m.form = m.createEditMenuForm()
+			return m, m.form.Init()
+		}
+
+		// Otherwise, move to node type selection
 		m.stage = guidedStageNodeTypeSelect
 		m.currentNode = nil // Reset current node
 		m.form = m.createNodeTypeSelectForm()
@@ -25,6 +49,9 @@ func (m *GuidedModal) handleStageTransition() (*GuidedModal, tea.Cmd) {
 			// No type selected, stay on selection form
 			return m, nil
 		}
+
+		// Capture snapshot before transition
+		m.captureSnapshot()
 
 		// Initialize current node with selected type
 		m.currentNode = &neta.Definition{
@@ -48,6 +75,9 @@ func (m *GuidedModal) handleStageTransition() (*GuidedModal, tea.Cmd) {
 
 		// Validation passed - clear error
 		m.validationErr = nil
+
+		// Capture snapshot before transition
+		m.captureSnapshot()
 
 		// Check if the node we're about to add is a group
 		isGroup := isGroupNode(m.currentNode.Type)
@@ -80,12 +110,23 @@ func (m *GuidedModal) handleStageTransition() (*GuidedModal, tea.Cmd) {
 			return m, m.form.Init()
 		}
 
+		// If in edit mode, return to edit menu
+		if m.editing {
+			m.currentNode = nil
+			m.stage = guidedStageEditMenu
+			m.form = m.createEditMenuForm()
+			return m, m.form.Init()
+		}
+
 		// Not a group, proceed to normal continue stage
 		m.stage = guidedStageContinue
 		m.form = m.createContinueForm()
 		return m, m.form.Init()
 
 	case guidedStageContinue:
+		// Capture snapshot before transition
+		m.captureSnapshot()
+
 		// Check user's choice
 		choice := m.form.GetString("continue")
 		if choice == "add" {
@@ -101,6 +142,9 @@ func (m *GuidedModal) handleStageTransition() (*GuidedModal, tea.Cmd) {
 		}
 
 	case guidedStageGroupContext:
+		// Capture snapshot before transition
+		m.captureSnapshot()
+
 		// Handle group context menu choice
 		choice := m.form.GetString("group_context")
 
@@ -140,6 +184,114 @@ func (m *GuidedModal) handleStageTransition() (*GuidedModal, tea.Cmd) {
 			m.state = guidedStateCompleted
 			return m, m.saveBento()
 		}
+
+	case guidedStageEditMenu:
+		// Capture snapshot before transition
+		m.captureSnapshot()
+
+		// Handle edit menu choice
+		choice := m.form.GetString("edit_choice")
+
+		switch choice {
+		case "metadata":
+			// Edit metadata
+			m.stage = guidedStageMetadata
+			m.form = m.createMetadataEditForm()
+			return m, m.form.Init()
+
+		case "add_node":
+			// Go to standard node creation flow
+			m.stage = guidedStageNodeTypeSelect
+			m.form = m.createNodeTypeSelectForm()
+			return m, m.form.Init()
+
+		case "edit_node":
+			// Show list of nodes to select for editing
+			m.deletingNode = false
+			m.stage = guidedStageNodeList
+			m.form = m.createNodeListForm(false)
+			return m, m.form.Init()
+
+		case "delete_node":
+			// Show list of nodes to select for deletion
+			m.deletingNode = true
+			m.stage = guidedStageNodeList
+			m.form = m.createNodeListForm(true)
+			return m, m.form.Init()
+
+		case "save":
+			// Save and exit
+			m.state = guidedStateCompleted
+			return m, m.saveBento()
+
+		case "cancel":
+			// Cancel without saving
+			m.state = guidedStateCancelled
+			return m, func() tea.Msg {
+				return GuidedCompleteMsg{Cancelled: true}
+			}
+		}
+
+	case guidedStageNodeList:
+		// Capture snapshot before transition
+		m.captureSnapshot()
+
+		// Load selected node from temp field
+		nodeName := m.tempSelectedNode
+		if nodeName == "" {
+			// Back to menu
+			m.stage = guidedStageEditMenu
+			m.form = m.createEditMenuForm()
+			return m, m.form.Init()
+		}
+
+		// Find node in definition
+		node := m.findNodeByName(nodeName)
+		if node == nil {
+			// Node not found, return to menu
+			m.stage = guidedStageEditMenu
+			m.form = m.createEditMenuForm()
+			return m, m.form.Init()
+		}
+
+		// Check if we're deleting or editing based on the flag
+		if m.deletingNode {
+			// Delete the node
+			if m.deleteNodeByName(nodeName) {
+				// Successfully deleted
+			}
+			// Clear the flag and return to edit menu
+			m.deletingNode = false
+			m.stage = guidedStageEditMenu
+			m.form = m.createEditMenuForm()
+			return m, m.form.Init()
+		}
+
+		// Editing mode - set as current node and load appropriate form
+		m.editingNodeName = nodeName
+		m.currentNode = node
+		m.stage = guidedStageNodeEdit
+		m.form = m.createNodeFormForTypeWithValues(node.Type, node)
+		return m, m.form.Init()
+
+	case guidedStageNodeEdit:
+		// Capture snapshot before transition
+		m.captureSnapshot()
+
+		// Update node parameters from temp fields (not from form GetString)
+		m.updateCurrentNodeFromTempFields(m.currentNode.Type)
+
+		// Update the node in place in the definition
+		m.updateNodeInPlace(m.editingNodeName, m.currentNode)
+
+		// Clear editing state
+		m.editingNodeName = ""
+		m.currentNode = nil
+
+		// Return to edit menu
+		m.stage = guidedStageEditMenu
+		m.form = m.createEditMenuForm()
+		return m, m.form.Init()
 	}
 
 	return m, nil

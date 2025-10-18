@@ -21,8 +21,17 @@ func (b Browser) handleRun(item *bentoItem) (Browser, tea.Cmd) {
 
 // handleEdit opens the guided editor for the selected bento
 func (b Browser) handleEdit(item *bentoItem) (Browser, tea.Cmd) {
-	// TODO: Implement guided editing flow
-	return b, nil
+	// Create the guided modal for editing
+	modal, err := guided_creation.NewGuidedModalForEdit(b.store, b.store.WorkDir(), b.width, b.height, item.name)
+	if err != nil {
+		// TODO: Show error to user
+		return b, nil
+	}
+
+	b.guidedModal = modal
+
+	// Initialize the modal
+	return b, modal.Init()
 }
 
 // handleCopy initiates bento copy

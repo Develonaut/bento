@@ -66,7 +66,20 @@ func (m *GuidedModal) renderFooter() string {
 	if hasError {
 		return m.appErrorBoundaryView("")
 	}
-	return m.appBoundaryView(m.form.Help().ShortHelpView(m.form.KeyBinds()))
+
+	// Build help text with navigation shortcuts
+	formHelp := m.form.Help().ShortHelpView(m.form.KeyBinds())
+	navHelp := m.renderNavigationHelp()
+	helpText := formHelp
+	if navHelp != "" {
+		if formHelp != "" {
+			helpText += " • " + navHelp
+		} else {
+			helpText = navHelp
+		}
+	}
+
+	return m.appBoundaryView(helpText)
 }
 
 func (m *GuidedModal) errorView() string {
@@ -115,4 +128,25 @@ func (m *GuidedModal) renderBreadcrumb() string {
 
 	breadcrumbText := "Context: " + strings.Join(parts, " > ")
 	return m.styles.Breadcrumb.Render(breadcrumbText)
+}
+
+// renderNavigationHelp shows available navigation shortcuts
+func (m *GuidedModal) renderNavigationHelp() string {
+	var parts []string
+
+	// Show navigation if we have history
+	if len(m.history.stages) > 0 {
+		parts = append(parts, "ctrl+↑/↓: navigate")
+	}
+
+	// Show delete if on node stage
+	if m.stage == guidedStageNodeParameters && m.currentNode != nil {
+		parts = append(parts, "ctrl+d: delete")
+	}
+
+	if len(parts) == 0 {
+		return ""
+	}
+
+	return strings.Join(parts, " • ")
 }
