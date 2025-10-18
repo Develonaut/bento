@@ -1,5 +1,6 @@
 
 - [ ] Add more sushi emojis to the emoji package for better variety.
+- [ ] Port Atomiton Nodes to Neta Nodes. [text](../../../atomiton/packages/@atomiton/nodes)
 - [ ] Move hello world bentos to the pantry and allow copying from there to their bento screen.
 - [ ] Dead Code Audit (investigate if go tools can help):
   - [ ] pkg/omise/emoji/emoji.go: unused emojis?

@@ -39,16 +39,16 @@ type ExecutionGraphEdge struct {
 
 // ExecutionGraphState holds the full state of graph execution
 type ExecutionGraphState struct {
-	Nodes           map[string]*ExecutionGraphNode
-	Edges           []ExecutionGraphEdge
-	ExecutionOrder  [][]string // Topologically sorted layers
-	CriticalPath    []string   // Longest path through the graph
-	TotalWeight     int
-	MaxParallelism  int
-	IsExecuting     bool
-	StartTime       time.Time
-	EndTime         time.Time
-	CachedProgress  float64 // Weighted progress (0-100)
+	Nodes          map[string]*ExecutionGraphNode
+	Edges          []ExecutionGraphEdge
+	ExecutionOrder [][]string // Topologically sorted layers
+	CriticalPath   []string   // Longest path through the graph
+	TotalWeight    int
+	MaxParallelism int
+	IsExecuting    bool
+	StartTime      time.Time
+	EndTime        time.Time
+	CachedProgress float64 // Weighted progress (0-100)
 }
 
 // ExecutionGraphStore manages execution state with thread-safe operations

@@ -257,9 +257,7 @@ func (m *GuidedModal) handleStageTransition() (*GuidedModal, tea.Cmd) {
 		// Check if we're deleting or editing based on the flag
 		if m.deletingNode {
 			// Delete the node
-			if m.deleteNodeByName(nodeName) {
-				// Successfully deleted
-			}
+			_ = m.deleteNodeByName(nodeName)
 			// Clear the flag and return to edit menu
 			m.deletingNode = false
 			m.stage = guidedStageEditMenu

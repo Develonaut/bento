@@ -26,7 +26,7 @@ func TestBrowser_GuidedCreationBlocksNavigation(t *testing.T) {
 		&browserTestModel{browser: browser},
 		teatest.WithInitialTermSize(120, 40),
 	)
-	defer tm.Quit()
+	defer func() { _ = tm.Quit() }()
 
 	// Initial state: should show browser
 	tm.WaitFinished(t, teatest.WithFinalTimeout(100*time.Millisecond))
@@ -80,7 +80,7 @@ func TestBrowser_GuidedCreationDoubleEscape(t *testing.T) {
 		&browserTestModel{browser: browser},
 		teatest.WithInitialTermSize(120, 40),
 	)
-	defer tm.Quit()
+	defer func() { _ = tm.Quit() }()
 
 	// Start guided creation
 	tm.Send(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("n")})
@@ -140,7 +140,7 @@ func TestBrowser_GuidedCreationReturnsToList(t *testing.T) {
 		&browserTestModel{browser: browser},
 		teatest.WithInitialTermSize(120, 40),
 	)
-	defer tm.Quit()
+	defer func() { _ = tm.Quit() }()
 
 	// Verify empty list
 	store, _ := jubako.NewStore(tmpDir)
@@ -233,7 +233,7 @@ func TestBrowser_NoTabNavigationDuringGuidedFlow(t *testing.T) {
 		&browserTestModel{browser: browser},
 		teatest.WithInitialTermSize(120, 40),
 	)
-	defer tm.Quit()
+	defer func() { _ = tm.Quit() }()
 
 	// Start guided creation
 	tm.Send(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("n")})
@@ -276,7 +276,7 @@ func TestBrowser_NoSettingsOrHelpDuringGuidedFlow(t *testing.T) {
 		&browserTestModel{browser: browser},
 		teatest.WithInitialTermSize(120, 40),
 	)
-	defer tm.Quit()
+	defer func() { _ = tm.Quit() }()
 
 	// Start guided creation
 	tm.Send(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("n")})
@@ -316,7 +316,7 @@ func TestBrowser_QuitStillWorksDuringGuidedFlow(t *testing.T) {
 		&browserTestModel{browser: browser},
 		teatest.WithInitialTermSize(120, 40),
 	)
-	defer tm.Quit()
+	defer func() { _ = tm.Quit() }()
 
 	// Start guided creation
 	tm.Send(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("n")})
@@ -400,7 +400,7 @@ func TestBrowser_EditBentoWorkflow(t *testing.T) {
 		&browserTestModel{browser: browser},
 		teatest.WithInitialTermSize(120, 40),
 	)
-	defer tm.Quit()
+	defer func() { _ = tm.Quit() }()
 
 	// Wait for initial render
 	time.Sleep(100 * time.Millisecond)

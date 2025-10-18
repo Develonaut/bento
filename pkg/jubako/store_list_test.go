@@ -82,8 +82,8 @@ func TestStore_List(t *testing.T) {
 	})
 
 	t.Run("list skips invalid files", func(t *testing.T) {
-		// Create an invalid .bento.yaml file
-		invalidPath := filepath.Join(tmpDir, "invalid.bento.yaml")
+		// Create an invalid .bento.json file
+		invalidPath := filepath.Join(tmpDir, "invalid.bento.json")
 		if err := os.WriteFile(invalidPath, []byte("invalid: yaml: content:"), 0644); err != nil {
 			t.Fatalf("Failed to write invalid file: %v", err)
 		}

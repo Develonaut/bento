@@ -44,10 +44,10 @@ func TestDiscovery_Find(t *testing.T) {
 		path    string
 		isBento bool
 	}{
-		{filepath.Join(tmpDir, "dir1", "flow1.bento.yaml"), true},
-		{filepath.Join(tmpDir, "dir1", "flow2.bento.yaml"), true},
-		{filepath.Join(tmpDir, "dir2", "flow3.bento.yaml"), true},
-		{filepath.Join(tmpDir, "dir2", "nested", "flow4.bento.yaml"), true},
+		{filepath.Join(tmpDir, "dir1", "flow1.bento.json"), true},
+		{filepath.Join(tmpDir, "dir1", "flow2.bento.json"), true},
+		{filepath.Join(tmpDir, "dir2", "flow3.bento.json"), true},
+		{filepath.Join(tmpDir, "dir2", "nested", "flow4.bento.json"), true},
 		{filepath.Join(tmpDir, "dir1", "not-bento.yaml"), false},
 		{filepath.Join(tmpDir, "dir1", "readme.md"), false},
 	}
@@ -67,12 +67,12 @@ func TestDiscovery_Find(t *testing.T) {
 			return
 		}
 
-		expectedCount := 4 // Only .bento.yaml files
+		expectedCount := 4 // Only .bento.json files
 		if len(found) != expectedCount {
 			t.Errorf("Find() got %d files, want %d", len(found), expectedCount)
 		}
 
-		// Verify all found files are .bento.yaml files
+		// Verify all found files are .bento.json files
 		for _, path := range found {
 			if !isBentoFile(path) {
 				t.Errorf("Find() returned non-bento file: %s", path)
@@ -132,12 +132,12 @@ func TestIsBentoFile(t *testing.T) {
 	}{
 		{
 			name: "valid bento file",
-			path: "/path/to/example.bento.yaml",
+			path: "/path/to/example.bento.json",
 			want: true,
 		},
 		{
 			name: "valid bento file with longer name",
-			path: "/path/to/my-complex-bento.bento.yaml",
+			path: "/path/to/my-complex-bento.bento.json",
 			want: true,
 		},
 		{
@@ -206,8 +206,8 @@ func TestFindInPath(t *testing.T) {
 
 	// Create test files
 	files := []string{
-		filepath.Join(tmpDir, "test1.bento.yaml"),
-		filepath.Join(tmpDir, "test2.bento.yaml"),
+		filepath.Join(tmpDir, "test1.bento.json"),
+		filepath.Join(tmpDir, "test2.bento.json"),
 		filepath.Join(tmpDir, "other.yaml"),
 	}
 
@@ -224,7 +224,7 @@ func TestFindInPath(t *testing.T) {
 			return
 		}
 
-		expectedCount := 2 // Only .bento.yaml files
+		expectedCount := 2 // Only .bento.json files
 		if len(found) != expectedCount {
 			t.Errorf("findInPath() got %d files, want %d", len(found), expectedCount)
 		}

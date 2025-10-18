@@ -11,77 +11,104 @@ import (
 func TestParser_ParseBytes(t *testing.T) {
 	tests := []struct {
 		name    string
-		yaml    string
+		json    string
 		wantErr bool
 	}{
 		{
 			name: "valid http node",
-			yaml: `version: "1.0"
-type: http
-name: Test
-parameters:
-  url: https://example.com
-  method: GET`,
+			json: `{
+  "version": "1.0",
+  "type": "http",
+  "name": "Test",
+  "parameters": {
+    "url": "https://example.com",
+    "method": "GET"
+  }
+}`,
 			wantErr: false,
 		},
 		{
 			name: "valid group node",
-			yaml: `version: "1.0"
-type: sequence
-name: Test Group
-nodes:
-  - version: "1.0"
-    type: http
-    name: Step 1
-    parameters:
-      url: https://example.com
-  - version: "1.0"
-    type: http
-    name: Step 2
-    parameters:
-      url: https://example.com/api`,
+			json: `{
+  "version": "1.0",
+  "type": "sequence",
+  "name": "Test Group",
+  "nodes": [
+    {
+      "version": "1.0",
+      "type": "http",
+      "name": "Step 1",
+      "parameters": {
+        "url": "https://example.com"
+      }
+    },
+    {
+      "version": "1.0",
+      "type": "http",
+      "name": "Step 2",
+      "parameters": {
+        "url": "https://example.com/api"
+      }
+    }
+  ]
+}`,
 			wantErr: false,
 		},
 		{
 			name: "missing version",
-			yaml: `type: http
-name: Test
-parameters:
-  url: https://example.com`,
+			json: `{
+  "type": "http",
+  "name": "Test",
+  "parameters": {
+    "url": "https://example.com"
+  }
+}`,
 			wantErr: true,
 		},
 		{
 			name: "incompatible version",
-			yaml: `version: "2.0"
-type: http
-name: Test
-parameters:
-  url: https://example.com`,
+			json: `{
+  "version": "2.0",
+  "type": "http",
+  "name": "Test",
+  "parameters": {
+    "url": "https://example.com"
+  }
+}`,
 			wantErr: true,
 		},
 		{
 			name: "missing type",
-			yaml: `version: "1.0"
-name: Test
-parameters:
-  url: https://example.com`,
+			json: `{
+  "version": "1.0",
+  "name": "Test",
+  "parameters": {
+    "url": "https://example.com"
+  }
+}`,
 			wantErr: true,
 		},
 		{
-			name:    "invalid yaml",
-			yaml:    `this: is: not: valid: yaml:`,
+			name:    "invalid json",
+			json:    `{"this": "is" "not" "valid"}`,
 			wantErr: true,
 		},
 		{
 			name: "group with invalid child version",
-			yaml: `version: "1.0"
-type: sequence
-name: Test Group
-nodes:
-  - type: http
-    name: Missing Version
-    parameters:
-      url: https://example.com`,
+			json: `{
+  "version": "1.0",
+  "type": "sequence",
+  "name": "Test Group",
+  "nodes": [
+    {
+      "type": "http",
+      "name": "Missing Version",
+      "parameters": {
+        "url": "https://example.com"
+      }
+    }
+  ]
+}`,
 			wantErr: true,
 		},
 	}
@@ -89,7 +116,7 @@ nodes:
 	parser := NewParser()
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			def, err := parser.ParseBytes([]byte(tt.yaml))
+			def, err := parser.ParseBytes([]byte(tt.json))
 			if (err != nil) != tt.wantErr {
 				t.Errorf("ParseBytes() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -106,15 +133,18 @@ func TestParser_Parse(t *testing.T) {
 	tmpDir := t.TempDir()
 
 	// Valid bento file
-	validYAML := `version: "1.0"
-type: http
-name: Test Bento
-parameters:
-  url: https://example.com
-  method: GET`
+	validJSON := `{
+  "version": "1.0",
+  "type": "http",
+  "name": "Test Bento",
+  "parameters": {
+    "url": "https://example.com",
+    "method": "GET"
+  }
+}`
 
-	validPath := filepath.Join(tmpDir, "valid.bento.yaml")
-	if err := os.WriteFile(validPath, []byte(validYAML), 0644); err != nil {
+	validPath := filepath.Join(tmpDir, "valid.bento.json")
+	if err := os.WriteFile(validPath, []byte(validJSON), 0644); err != nil {
 		t.Fatalf("Failed to write test file: %v", err)
 	}
 
@@ -135,7 +165,7 @@ parameters:
 	})
 
 	t.Run("non-existent file", func(t *testing.T) {
-		_, err := parser.Parse(filepath.Join(tmpDir, "nonexistent.yaml"))
+		_, err := parser.Parse(filepath.Join(tmpDir, "nonexistent.json"))
 		if err == nil {
 			t.Error("Parse() expected error for non-existent file")
 		}
@@ -168,7 +198,7 @@ func TestParser_Format(t *testing.T) {
 		// Verify we can parse it back
 		parsed, err := parser.ParseBytes(data)
 		if err != nil {
-			t.Errorf("Format() produced invalid YAML: %v", err)
+			t.Errorf("Format() produced invalid JSON: %v", err)
 		}
 		if parsed.Type != def.Type {
 			t.Errorf("Format/Parse roundtrip failed: got type %v, want %v", parsed.Type, def.Type)
@@ -180,16 +210,19 @@ func TestParser_ParseIconAndDescription(t *testing.T) {
 	parser := NewParser()
 
 	t.Run("with icon and description", func(t *testing.T) {
-		yaml := `version: "1.0"
-type: http
-name: Test API
-icon: 🌐
-description: Makes an API call to fetch data
-parameters:
-  url: https://example.com
-  method: GET`
+		json := `{
+  "version": "1.0",
+  "type": "http",
+  "name": "Test API",
+  "icon": "🌐",
+  "description": "Makes an API call to fetch data",
+  "parameters": {
+    "url": "https://example.com",
+    "method": "GET"
+  }
+}`
 
-		def, err := parser.ParseBytes([]byte(yaml))
+		def, err := parser.ParseBytes([]byte(json))
 		if err != nil {
 			t.Fatalf("ParseBytes() error = %v", err)
 		}
@@ -204,14 +237,17 @@ parameters:
 	})
 
 	t.Run("without icon and description", func(t *testing.T) {
-		yaml := `version: "1.0"
-type: http
-name: Test API
-parameters:
-  url: https://example.com
-  method: GET`
+		json := `{
+  "version": "1.0",
+  "type": "http",
+  "name": "Test API",
+  "parameters": {
+    "url": "https://example.com",
+    "method": "GET"
+  }
+}`
 
-		def, err := parser.ParseBytes([]byte(yaml))
+		def, err := parser.ParseBytes([]byte(json))
 		if err != nil {
 			t.Fatalf("ParseBytes() error = %v", err)
 		}

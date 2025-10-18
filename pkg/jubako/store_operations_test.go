@@ -80,14 +80,14 @@ func TestStore_SaveAndLoad(t *testing.T) {
 		}
 	})
 
-	t.Run("save with .bento.yaml extension", func(t *testing.T) {
-		err := store.Save("test.bento.yaml", def)
+	t.Run("save with .bento.json extension", func(t *testing.T) {
+		err := store.Save("test.bento.json", def)
 		if err != nil {
 			t.Errorf("Save() error = %v", err)
 		}
 
 		// Verify file was created
-		path := filepath.Join(tmpDir, "test.bento.yaml")
+		path := filepath.Join(tmpDir, "test.bento.json")
 		if _, err := os.Stat(path); os.IsNotExist(err) {
 			t.Error("Save() did not create file")
 		}
@@ -155,12 +155,12 @@ func TestStore_PathFor(t *testing.T) {
 		{
 			name:  "name without extension",
 			input: "test",
-			want:  "test.bento.yaml",
+			want:  "test.bento.json",
 		},
 		{
 			name:  "name with extension",
-			input: "test.bento.yaml",
-			want:  "test.bento.yaml",
+			input: "test.bento.json",
+			want:  "test.bento.json",
 		},
 	}
 

@@ -30,8 +30,8 @@ type ProgressMessenger interface {
 // Itamae orchestrates the execution of neta definitions.
 type Itamae struct {
 	pantry        Registry
-	messenger     ProgressMessenger // Optional - can be nil
-	slowMoDelayMs int               // Delay in milliseconds for slow-mo mode (0 = off)
+	messenger     ProgressMessenger         // Optional - can be nil
+	slowMoDelayMs int                       // Delay in milliseconds for slow-mo mode (0 = off)
 	store         *neta.ExecutionGraphStore // Optional - for graph-based execution tracking
 }
 
@@ -43,8 +43,8 @@ type Registry interface {
 // New creates a new Itamae with the provided registry.
 func New(registry Registry) *Itamae {
 	return &Itamae{
-		pantry:       registry,
-		messenger:    nil,
+		pantry:        registry,
+		messenger:     nil,
 		slowMoDelayMs: 0,
 	}
 }
@@ -52,8 +52,8 @@ func New(registry Registry) *Itamae {
 // NewWithMessenger creates an Itamae with progress messaging.
 func NewWithMessenger(registry Registry, messenger ProgressMessenger) *Itamae {
 	return &Itamae{
-		pantry:       registry,
-		messenger:    messenger,
+		pantry:        registry,
+		messenger:     messenger,
 		slowMoDelayMs: 0,
 	}
 }

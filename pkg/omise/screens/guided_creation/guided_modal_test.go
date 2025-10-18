@@ -830,7 +830,7 @@ func TestGuidedCreation_EditMetadata(t *testing.T) {
 	}
 
 	tm := teatest.NewTestModel(t, modal, teatest.WithInitialTermSize(120, 40))
-	defer tm.Quit()
+	defer func() { _ = tm.Quit() }()
 
 	// Select "Edit metadata" option (first option)
 	tm.Send(tea.KeyMsg{Type: tea.KeyEnter})
@@ -944,7 +944,7 @@ func TestGuidedCreation_DeleteNode_EditMenu(t *testing.T) {
 	}
 
 	tm := teatest.NewTestModel(t, modal, teatest.WithInitialTermSize(120, 40))
-	defer tm.Quit()
+	defer func() { _ = tm.Quit() }()
 
 	// Navigate to "Delete a node"
 	tm.Send(tea.KeyMsg{Type: tea.KeyDown}) // Edit node
@@ -1040,7 +1040,7 @@ func TestGuidedCreation_EditNodeParameters(t *testing.T) {
 	}
 
 	tm := teatest.NewTestModel(t, modal, teatest.WithInitialTermSize(120, 40))
-	defer tm.Quit()
+	defer func() { _ = tm.Quit() }()
 
 	// Navigate to "Edit an existing node"
 	tm.Send(tea.KeyMsg{Type: tea.KeyDown}) // Edit an existing node
@@ -1173,7 +1173,7 @@ func TestGuidedCreation_NoChangeNoVersionIncrement(t *testing.T) {
 	}
 
 	tm := teatest.NewTestModel(t, modal, teatest.WithInitialTermSize(120, 40))
-	defer tm.Quit()
+	defer func() { _ = tm.Quit() }()
 
 	// Just save without making any changes
 	// Navigate to "Save and exit" (index 4)

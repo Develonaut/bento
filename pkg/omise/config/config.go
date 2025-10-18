@@ -156,17 +156,3 @@ func parseInt(s string) (int, error) {
 func formatInt(i int) string {
 	return strconv.Itoa(i)
 }
-
-// parseBool parses a boolean from a string
-func parseBool(s string) bool {
-	s = strings.ToLower(strings.TrimSpace(s))
-	return s == "true" || s == "1" || s == "yes"
-}
-
-// formatBool formats a boolean as a string
-func formatBool(b bool) string {
-	if b {
-		return "true"
-	}
-	return "false"
-}
