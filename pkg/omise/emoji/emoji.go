@@ -1,7 +1,11 @@
 // Package emoji provides standardized emoji utilities for the Omise TUI.
 package emoji
 
-import "hash/fnv"
+import (
+	"hash/fnv"
+	"math/rand"
+	"time"
+)
 
 // Sushi-themed emojis for general use
 var Sushi = []string{"🍣", "🍙", "🥢", "🍥"}
@@ -31,4 +35,13 @@ func GetDeterministic(key string, emojis []string) string {
 // GetSushi returns a deterministic sushi emoji based on a key
 func GetSushi(key string) string {
 	return GetDeterministic(key, Sushi)
+}
+
+// RandomSushi returns a random sushi emoji
+func RandomSushi() string {
+	if len(Sushi) == 0 {
+		return Bento
+	}
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	return Sushi[r.Intn(len(Sushi))]
 }

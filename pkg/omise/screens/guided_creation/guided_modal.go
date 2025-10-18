@@ -24,6 +24,7 @@ const (
 	guidedStageNodeTypeSelect
 	guidedStageNodeParameters
 	guidedStageContinue
+	guidedStageGroupContext
 )
 
 // GuidedModal is a bubbletea-integrated modal for creating/editing bentos
@@ -47,6 +48,10 @@ type GuidedModal struct {
 
 	// Current node being built
 	currentNode *neta.Definition
+
+	// Group hierarchy tracking
+	nodeStack     []*neta.Definition // Stack of parent nodes
+	currentParent *neta.Definition   // Current parent being edited (nil = root)
 
 	// Validation error to display
 	validationErr error

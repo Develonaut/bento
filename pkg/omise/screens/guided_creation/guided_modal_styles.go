@@ -19,7 +19,8 @@ type GuidedStyles struct {
 	StatusHeader,
 	Highlight,
 	ErrorHeaderText,
-	Help lipgloss.Style
+	Help,
+	Breadcrumb lipgloss.Style
 }
 
 func NewGuidedStyles(lg *lipgloss.Renderer) *GuidedStyles {
@@ -44,5 +45,9 @@ func NewGuidedStyles(lg *lipgloss.Renderer) *GuidedStyles {
 		Foreground(guidedRed)
 	s.Help = lg.NewStyle().
 		Foreground(lipgloss.Color("240"))
+	s.Breadcrumb = lg.NewStyle().
+		Foreground(lipgloss.Color("246")).
+		Italic(true).
+		Padding(0, 1, 0, 2)
 	return &s
 }

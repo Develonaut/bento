@@ -8,55 +8,65 @@ import (
 )
 
 func (m *GuidedModal) View() string {
-	s := m.styles
-
 	switch m.state {
 	case guidedStateCompleted:
-		title := s.Highlight.Render(m.definition.Name)
-		var b strings.Builder
-		fmt.Fprintf(&b, "✓ Bento created successfully!\n\n")
-		fmt.Fprintf(&b, "Name: %s\n", title)
-		fmt.Fprintf(&b, "Nodes: %d\n", len(m.definition.Nodes))
-		fmt.Fprintf(&b, "\nPress any key to return to browser...")
-		return s.Status.Margin(0, 1).Padding(1, 2).Width(60).Render(b.String()) + "\n\n"
-
+		return m.renderCompleted()
 	case guidedStateCancelled:
-		var b strings.Builder
-		fmt.Fprintf(&b, "✗ Bento creation cancelled\n\n")
-		fmt.Fprintf(&b, "Press any key to return to browser...")
-		return s.Status.Margin(0, 1).Padding(1, 2).Width(60).Render(b.String()) + "\n\n"
-
+		return m.renderCancelled()
 	default:
-		// Form (left side)
-		v := strings.TrimSuffix(m.form.View(), "\n\n")
-		form := m.lg.NewStyle().Margin(1, 0).Render(v)
-
-		// Preview (right side)
-		preview := m.renderPreview(lipgloss.Height(form))
-
-		errors := m.form.Errors()
-
-		// Check for both form validation errors and node validation errors
-		hasError := len(errors) > 0 || m.validationErr != nil
-
-		header := m.appBoundaryView("Create New Bento")
-		if hasError {
-			if m.validationErr != nil {
-				header = m.appErrorBoundaryView("Validation Error: " + m.validationErr.Error())
-			} else {
-				header = m.appErrorBoundaryView(m.errorView())
-			}
-		}
-
-		body := lipgloss.JoinHorizontal(lipgloss.Left, form, preview)
-
-		footer := m.appBoundaryView(m.form.Help().ShortHelpView(m.form.KeyBinds()))
-		if hasError {
-			footer = m.appErrorBoundaryView("")
-		}
-
-		return s.Base.Render(header + "\n" + body + "\n\n" + footer)
+		return m.renderActiveForm()
 	}
+}
+
+func (m *GuidedModal) renderCompleted() string {
+	title := m.styles.Highlight.Render(m.definition.Name)
+	var b strings.Builder
+	fmt.Fprintf(&b, "✓ Bento created successfully!\n\n")
+	fmt.Fprintf(&b, "Name: %s\n", title)
+	fmt.Fprintf(&b, "Nodes: %d\n", len(m.definition.Nodes))
+	fmt.Fprintf(&b, "\nPress any key to return to browser...")
+	return m.styles.Status.Margin(0, 1).Padding(1, 2).Width(60).Render(b.String()) + "\n\n"
+}
+
+func (m *GuidedModal) renderCancelled() string {
+	var b strings.Builder
+	fmt.Fprintf(&b, "✗ Bento creation cancelled\n\n")
+	fmt.Fprintf(&b, "Press any key to return to browser...")
+	return m.styles.Status.Margin(0, 1).Padding(1, 2).Width(60).Render(b.String()) + "\n\n"
+}
+
+func (m *GuidedModal) renderActiveForm() string {
+	form := m.renderForm()
+	preview := m.renderPreview(lipgloss.Height(form))
+	header := m.renderHeader()
+	breadcrumb := m.renderBreadcrumb()
+	footer := m.renderFooter()
+	body := lipgloss.JoinHorizontal(lipgloss.Left, form, preview)
+	return m.styles.Base.Render(header + "\n" + breadcrumb + "\n" + body + "\n\n" + footer)
+}
+
+func (m *GuidedModal) renderForm() string {
+	v := strings.TrimSuffix(m.form.View(), "\n\n")
+	return m.lg.NewStyle().Margin(1, 0).Render(v)
+}
+
+func (m *GuidedModal) renderHeader() string {
+	hasError := len(m.form.Errors()) > 0 || m.validationErr != nil
+	if !hasError {
+		return m.appBoundaryView("Create New Bento")
+	}
+	if m.validationErr != nil {
+		return m.appErrorBoundaryView("Validation Error: " + m.validationErr.Error())
+	}
+	return m.appErrorBoundaryView(m.errorView())
+}
+
+func (m *GuidedModal) renderFooter() string {
+	hasError := len(m.form.Errors()) > 0 || m.validationErr != nil
+	if hasError {
+		return m.appErrorBoundaryView("")
+	}
+	return m.appBoundaryView(m.form.Help().ShortHelpView(m.form.KeyBinds()))
 }
 
 func (m *GuidedModal) errorView() string {
@@ -85,4 +95,24 @@ func (m *GuidedModal) appErrorBoundaryView(text string) string {
 		lipgloss.WithWhitespaceChars("/"),
 		lipgloss.WithWhitespaceForeground(guidedRed),
 	)
+}
+
+// renderBreadcrumb shows the current hierarchy context
+func (m *GuidedModal) renderBreadcrumb() string {
+	if m.currentParent == nil {
+		// At root level
+		return m.styles.Breadcrumb.Render("Context: Root")
+	}
+
+	// Build breadcrumb from stack
+	parts := []string{"Root"}
+	for _, parent := range m.nodeStack {
+		if parent != nil {
+			parts = append(parts, parent.Name)
+		}
+	}
+	parts = append(parts, m.currentParent.Name)
+
+	breadcrumbText := "Context: " + strings.Join(parts, " > ")
+	return m.styles.Breadcrumb.Render(breadcrumbText)
 }

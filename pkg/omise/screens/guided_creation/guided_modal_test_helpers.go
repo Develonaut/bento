@@ -50,10 +50,6 @@ func (h *testHelper) cleanup() {
 
 // fillMetadata fills the bento metadata form
 func (h *testHelper) fillMetadata(name, description string) {
-	// Icon (default)
-	h.tm.Send(tea.KeyMsg{Type: tea.KeyEnter})
-	time.Sleep(50 * time.Millisecond)
-
 	// Name
 	h.tm.Send(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune(name)})
 	h.tm.Send(tea.KeyMsg{Type: tea.KeyEnter})
@@ -229,4 +225,67 @@ func (h *testHelper) assertFileWriteNode(node neta.Definition, name, path, conte
 			h.t.Errorf("Expected content '%s', got '%v'", content, node.Parameters["content"])
 		}
 	}
+}
+
+// fillSequenceNode fills a group.sequence node form
+func (h *testHelper) fillSequenceNode(name string) {
+	// Name
+	h.tm.Send(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune(name)})
+	h.tm.Send(tea.KeyMsg{Type: tea.KeyEnter})
+	time.Sleep(100 * time.Millisecond)
+}
+
+// fillParallelNode fills a group.parallel node form
+func (h *testHelper) fillParallelNode(name string) {
+	// Name
+	h.tm.Send(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune(name)})
+	h.tm.Send(tea.KeyMsg{Type: tea.KeyEnter})
+	time.Sleep(100 * time.Millisecond)
+}
+
+// selectGroupContext selects an option from the group context menu
+// 0 = "Add child to group"
+// 1 = "Add another node at current level"
+// 2 = "Done with current level"
+// 3 = "Save bento"
+func (h *testHelper) selectGroupContext(choice int) {
+	for i := 0; i < choice; i++ {
+		h.tm.Send(tea.KeyMsg{Type: tea.KeyDown})
+		time.Sleep(50 * time.Millisecond)
+	}
+	h.tm.Send(tea.KeyMsg{Type: tea.KeyEnter})
+	time.Sleep(100 * time.Millisecond)
+}
+
+// assertGroupNode verifies a group node's properties
+func (h *testHelper) assertGroupNode(node neta.Definition, nodeType, name string, expectedChildCount int) {
+	if node.Type != nodeType {
+		h.t.Errorf("Expected %s node, got '%s'", nodeType, node.Type)
+	}
+
+	if node.Name != name {
+		h.t.Errorf("Expected node name '%s', got '%s'", name, node.Name)
+	}
+
+	if len(node.Nodes) != expectedChildCount {
+		h.t.Errorf("Expected %d child nodes, got %d", expectedChildCount, len(node.Nodes))
+	}
+}
+
+// assertChildNode finds and asserts a child node within a parent group
+func (h *testHelper) assertChildNode(parent neta.Definition, index int, nodeType, name string) neta.Definition {
+	if index >= len(parent.Nodes) {
+		h.t.Fatalf("Child index %d out of range (parent has %d children)", index, len(parent.Nodes))
+	}
+
+	child := parent.Nodes[index]
+	if child.Type != nodeType {
+		h.t.Errorf("Expected child[%d] type '%s', got '%s'", index, nodeType, child.Type)
+	}
+
+	if child.Name != name {
+		h.t.Errorf("Expected child[%d] name '%s', got '%s'", index, name, child.Name)
+	}
+
+	return child
 }

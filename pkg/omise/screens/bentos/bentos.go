@@ -251,4 +251,3 @@ func (b Browser) KeyBindings() []key.Binding {
 		b.keys.Delete,
 	}
 }
-

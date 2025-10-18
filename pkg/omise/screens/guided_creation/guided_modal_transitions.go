@@ -46,11 +46,41 @@ func (m *GuidedModal) handleStageTransition() (*GuidedModal, tea.Cmd) {
 			return m, nil
 		}
 
-		// Validation passed - clear error and add node to definition
+		// Validation passed - clear error
 		m.validationErr = nil
-		m.definition.Nodes = append(m.definition.Nodes, *m.currentNode)
 
-		// Move to continue prompt
+		// Check if the node we're about to add is a group
+		isGroup := isGroupNode(m.currentNode.Type)
+		if isGroup {
+			// Initialize the group's Nodes array if needed
+			if m.currentNode.Nodes == nil {
+				m.currentNode.Nodes = []neta.Definition{}
+			}
+		}
+
+		// Add node to current parent (or root)
+		m.addNodeToCurrent(*m.currentNode)
+
+		// If it's a group, we need to get a pointer to the node we just added
+		// so we can use it as the parent for children
+		var addedNodePtr *neta.Definition
+		if isGroup {
+			nodes := m.getCurrentNodes()
+			addedNodePtr = &(*nodes)[len(*nodes)-1]
+		}
+
+		// If group, show group context menu
+		if isGroup {
+			// Store pointer to the group we just added
+			m.currentNode = addedNodePtr
+
+			// Move to group context prompt
+			m.stage = guidedStageGroupContext
+			m.form = m.createGroupContextForm(m.currentNode.Name)
+			return m, m.form.Init()
+		}
+
+		// Not a group, proceed to normal continue stage
 		m.stage = guidedStageContinue
 		m.form = m.createContinueForm()
 		return m, m.form.Init()
@@ -66,6 +96,47 @@ func (m *GuidedModal) handleStageTransition() (*GuidedModal, tea.Cmd) {
 			return m, m.form.Init()
 		} else {
 			// Done - save bento
+			m.state = guidedStateCompleted
+			return m, m.saveBento()
+		}
+
+	case guidedStageGroupContext:
+		// Handle group context menu choice
+		choice := m.form.GetString("group_context")
+
+		switch choice {
+		case "add_child":
+			// Push current node onto stack and make it the parent
+			m.pushParentContext(m.currentNode)
+
+			// Reset current node and go to type selection
+			m.currentNode = nil
+			m.stage = guidedStageNodeTypeSelect
+			m.form = m.createNodeTypeSelectForm()
+			return m, m.form.Init()
+
+		case "add_sibling":
+			// Add another node at the same level
+			m.currentNode = nil
+			m.stage = guidedStageNodeTypeSelect
+			m.form = m.createNodeTypeSelectForm()
+			return m, m.form.Init()
+
+		case "done_level":
+			// Pop back to parent level
+			if m.popParentContext() {
+				// Successfully popped to parent level
+				m.stage = guidedStageContinue
+				m.form = m.createContinueForm()
+				return m, m.form.Init()
+			} else {
+				// Already at root, save
+				m.state = guidedStateCompleted
+				return m, m.saveBento()
+			}
+
+		case "save":
+			// Save and exit
 			m.state = guidedStateCompleted
 			return m, m.saveBento()
 		}

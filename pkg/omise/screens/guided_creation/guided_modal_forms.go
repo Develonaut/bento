@@ -9,29 +9,10 @@ import (
 )
 
 func (m *GuidedModal) createMetadataForm() *huh.Form {
-	var name, description, icon string
-	icon = emoji.Bento // Default icon
-
-	// Create icon options from sushi emojis
-	iconOptions := []huh.Option[string]{
-		huh.NewOption("🍱 Bento Box", emoji.Bento),
-	}
-	for _, e := range emoji.Sushi {
-		iconOptions = append(iconOptions, huh.NewOption(e, e))
-	}
-
-	// Calculate form width: total width - preview width (40) - margins
-	formWidth := m.width - 40 - 8
+	var name, description string
 
 	return huh.NewForm(
 		huh.NewGroup(
-			huh.NewSelect[string]().
-				Key("icon").
-				Title("Icon").
-				Description("Choose an emoji to represent this bento").
-				Options(iconOptions...).
-				Value(&icon),
-
 			huh.NewInput().
 				Key("name").
 				Title("Name").
@@ -52,7 +33,7 @@ func (m *GuidedModal) createMetadataForm() *huh.Form {
 				CharLimit(200),
 		).Title("Bento Metadata:"),
 	).
-		WithWidth(formWidth).
+		WithWidth(m.width - 48).
 		WithShowHelp(false).
 		WithShowErrors(false)
 }
@@ -65,36 +46,34 @@ func (m *GuidedModal) updateDefinitionFromForm() {
 	if desc := m.form.GetString("description"); desc != "" {
 		m.definition.Description = desc
 	}
-	if icon := m.form.GetString("icon"); icon != "" {
-		m.definition.Icon = icon
+	// Assign random icon if not already set
+	if m.definition.Icon == "" {
+		m.definition.Icon = emoji.RandomSushi()
 	}
 }
 
 func (m *GuidedModal) createNodeTypeSelectForm() *huh.Form {
 	var nodeType string
-
-	// Calculate form width: total width - preview width (40) - margins
-	formWidth := m.width - 40 - 8
-
 	return huh.NewForm(
 		huh.NewGroup(
 			huh.NewSelect[string]().
 				Key("node_type").
 				Title("Node Type").
 				Description("Choose the type of node to add").
-				Options(
-					huh.NewOption("HTTP Request", "http"),
-					huh.NewOption("Transform (jq)", "transform.jq"),
-					huh.NewOption("File Write", "file.write"),
-					huh.NewOption("Sequence Group", "group.sequence"),
-					huh.NewOption("Parallel Group", "group.parallel"),
-				).
+				Options(m.nodeTypeOptions()...).
 				Value(&nodeType),
 		).Title("Add Node:"),
-	).
-		WithWidth(formWidth).
-		WithShowHelp(false).
-		WithShowErrors(false)
+	).WithWidth(m.width - 48).WithShowHelp(false).WithShowErrors(false)
+}
+
+func (m *GuidedModal) nodeTypeOptions() []huh.Option[string] {
+	return []huh.Option[string]{
+		huh.NewOption("HTTP Request", "http"),
+		huh.NewOption("Transform (jq)", "transform.jq"),
+		huh.NewOption("File Write", "file.write"),
+		huh.NewOption("Sequence Group", "group.sequence"),
+		huh.NewOption("Parallel Group", "group.parallel"),
+	}
 }
 
 func (m *GuidedModal) createNodeFormForType(nodeType string) *huh.Form {
@@ -117,10 +96,6 @@ func (m *GuidedModal) createNodeFormForType(nodeType string) *huh.Form {
 
 func (m *GuidedModal) createContinueForm() *huh.Form {
 	var choice string
-
-	// Calculate form width: total width - preview width (40) - margins
-	formWidth := m.width - 40 - 8
-
 	return huh.NewForm(
 		huh.NewGroup(
 			huh.NewSelect[string]().
@@ -132,8 +107,5 @@ func (m *GuidedModal) createContinueForm() *huh.Form {
 				).
 				Value(&choice),
 		).Title("Node Added Successfully!"),
-	).
-		WithWidth(formWidth).
-		WithShowHelp(false).
-		WithShowErrors(false)
+	).WithWidth(m.width - 48).WithShowHelp(false).WithShowErrors(false)
 }
