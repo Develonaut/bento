@@ -10,11 +10,13 @@ import (
 	"bento/pkg/itamae"
 	"bento/pkg/jubako"
 	"bento/pkg/neta"
+	"bento/pkg/neta/bento"
 	"bento/pkg/neta/conditional"
 	"bento/pkg/neta/file"
 	"bento/pkg/neta/group"
 	"bento/pkg/neta/http"
 	"bento/pkg/neta/loop"
+	"bento/pkg/neta/shell"
 	"bento/pkg/neta/transform"
 	"bento/pkg/omise/config"
 	"bento/pkg/pantry"
@@ -57,7 +59,7 @@ func executeBentoInBackground(bentoName, workDir string, program *tea.Program) {
 	sendInitMessage(program, def)
 	waitForInitialization(program)
 
-	result, err := runBentoExecution(def, program)
+	result, err := runBentoExecution(def, workDir, program)
 	executionState.running = false
 
 	sendExecutionResult(result, err)
@@ -110,17 +112,17 @@ func sendExecutionResult(result neta.Result, err error) {
 }
 
 // runBentoExecution creates chef and executes bento
-func runBentoExecution(def neta.Definition, program *tea.Program) (neta.Result, error) {
+func runBentoExecution(def neta.Definition, workDir string, program *tea.Program) (neta.Result, error) {
 	registry := pantry.New()
 	messenger := &executorMessenger{program: program}
 	chef := itamae.NewWithMessenger(registry, messenger)
 
 	// Create and attach execution graph store for graph-based execution tracking
-	store := neta.NewExecutionGraphStore()
-	chef.SetStore(store)
+	graphStore := neta.NewExecutionGraphStore()
+	chef.SetStore(graphStore)
 
 	// Subscribe to store changes to update UI
-	store.Subscribe(func(state neta.ExecutionGraphState) {
+	graphStore.Subscribe(func(state neta.ExecutionGraphState) {
 		if program != nil {
 			program.Send(GraphStateUpdateMsg{State: state})
 		}
@@ -132,7 +134,7 @@ func runBentoExecution(def neta.Definition, program *tea.Program) (neta.Result, 
 		chef.SetSlowMoDelay(cfg.SlowMoDelayMs)
 	}
 
-	registerStandardNetas(registry, chef)
+	registerStandardNetas(registry, chef, workDir)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 	defer cancel()
@@ -141,14 +143,30 @@ func runBentoExecution(def neta.Definition, program *tea.Program) (neta.Result, 
 }
 
 // registerStandardNetas registers all built-in neta types
-func registerStandardNetas(registry *pantry.Pantry, chef *itamae.Itamae) {
+func registerStandardNetas(registry *pantry.Pantry, chef *itamae.Itamae, workDir string) {
+	// Core nodes
 	_ = registry.Register("http", http.New())
 	_ = registry.Register("transform.jq", transform.NewJQ())
+
+	// File operations
 	_ = registry.Register("file.write", file.NewWriter())
+	_ = registry.Register("file.mkdir", file.NewMkdir())
+	_ = registry.Register("file.csv", file.NewCSV())
+
+	// Shell operations
+	_ = registry.Register("shell.command", shell.NewCommand())
+
+	// Control flow
 	_ = registry.Register("group.sequence", group.NewSequence(chef))
 	_ = registry.Register("group.parallel", group.NewParallel(chef))
 	_ = registry.Register("conditional.if", conditional.NewIf(chef))
 	_ = registry.Register("loop.for", loop.NewFor(chef))
+
+	// Bento composition - create store for loading sub-bentos
+	bentoStore, err := jubako.NewStore(workDir)
+	if err == nil {
+		_ = registry.Register("bento.execute", bento.NewExecute(bentoStore, chef))
+	}
 }
 
 // initialProgressMsg returns initial progress message
