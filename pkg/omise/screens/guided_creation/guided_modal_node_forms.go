@@ -14,6 +14,9 @@ func (m *GuidedModal) createHTTPNodeForm() *huh.Form {
 	var nodeName, url, method, headers, body string
 	method = "GET" // Default
 
+	// Calculate form width: total width - preview width (40) - margins
+	formWidth := m.width - 40 - 8
+
 	return huh.NewForm(
 		huh.NewGroup(
 			huh.NewInput().
@@ -68,7 +71,7 @@ func (m *GuidedModal) createHTTPNodeForm() *huh.Form {
 				Value(&body),
 		).Title("HTTP Node:"),
 	).
-		WithWidth(50).
+		WithWidth(formWidth).
 		WithShowHelp(false).
 		WithShowErrors(false)
 }
@@ -76,6 +79,9 @@ func (m *GuidedModal) createHTTPNodeForm() *huh.Form {
 // createJQNodeForm creates a form for transform.jq nodes
 func (m *GuidedModal) createJQNodeForm() *huh.Form {
 	var nodeName, query, input string
+
+	// Calculate form width: total width - preview width (40) - margins
+	formWidth := m.width - 40 - 8
 
 	return huh.NewForm(
 		huh.NewGroup(
@@ -110,7 +116,7 @@ func (m *GuidedModal) createJQNodeForm() *huh.Form {
 				Value(&input),
 		).Title("Transform (jq) Node:"),
 	).
-		WithWidth(50).
+		WithWidth(formWidth).
 		WithShowHelp(false).
 		WithShowErrors(false)
 }
@@ -118,6 +124,9 @@ func (m *GuidedModal) createJQNodeForm() *huh.Form {
 // createFileWriteNodeForm creates a form for file.write nodes
 func (m *GuidedModal) createFileWriteNodeForm() *huh.Form {
 	var nodeName, path, content string
+
+	// Calculate form width: total width - preview width (40) - margins
+	formWidth := m.width - 40 - 8
 
 	return huh.NewForm(
 		huh.NewGroup(
@@ -152,7 +161,7 @@ func (m *GuidedModal) createFileWriteNodeForm() *huh.Form {
 				Value(&content),
 		).Title("File Write Node:"),
 	).
-		WithWidth(50).
+		WithWidth(formWidth).
 		WithShowHelp(false).
 		WithShowErrors(false)
 }
@@ -160,6 +169,9 @@ func (m *GuidedModal) createFileWriteNodeForm() *huh.Form {
 // createSequenceNodeForm creates a form for group.sequence nodes
 func (m *GuidedModal) createSequenceNodeForm() *huh.Form {
 	var nodeName string
+
+	// Calculate form width: total width - preview width (40) - margins
+	formWidth := m.width - 40 - 8
 
 	return huh.NewForm(
 		huh.NewGroup(
@@ -176,7 +188,7 @@ func (m *GuidedModal) createSequenceNodeForm() *huh.Form {
 				}),
 		).Title("Sequence Group Node:"),
 	).
-		WithWidth(50).
+		WithWidth(formWidth).
 		WithShowHelp(false).
 		WithShowErrors(false)
 }
@@ -184,6 +196,9 @@ func (m *GuidedModal) createSequenceNodeForm() *huh.Form {
 // createParallelNodeForm creates a form for group.parallel nodes
 func (m *GuidedModal) createParallelNodeForm() *huh.Form {
 	var nodeName string
+
+	// Calculate form width: total width - preview width (40) - margins
+	formWidth := m.width - 40 - 8
 
 	return huh.NewForm(
 		huh.NewGroup(
@@ -200,7 +215,7 @@ func (m *GuidedModal) createParallelNodeForm() *huh.Form {
 				}),
 		).Title("Parallel Group Node:"),
 	).
-		WithWidth(50).
+		WithWidth(formWidth).
 		WithShowHelp(false).
 		WithShowErrors(false)
 }

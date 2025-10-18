@@ -20,6 +20,9 @@ func (m *GuidedModal) createMetadataForm() *huh.Form {
 		iconOptions = append(iconOptions, huh.NewOption(e, e))
 	}
 
+	// Calculate form width: total width - preview width (40) - margins
+	formWidth := m.width - 40 - 8
+
 	return huh.NewForm(
 		huh.NewGroup(
 			huh.NewSelect[string]().
@@ -49,7 +52,7 @@ func (m *GuidedModal) createMetadataForm() *huh.Form {
 				CharLimit(200),
 		).Title("Bento Metadata:"),
 	).
-		WithWidth(50).
+		WithWidth(formWidth).
 		WithShowHelp(false).
 		WithShowErrors(false)
 }
@@ -70,6 +73,9 @@ func (m *GuidedModal) updateDefinitionFromForm() {
 func (m *GuidedModal) createNodeTypeSelectForm() *huh.Form {
 	var nodeType string
 
+	// Calculate form width: total width - preview width (40) - margins
+	formWidth := m.width - 40 - 8
+
 	return huh.NewForm(
 		huh.NewGroup(
 			huh.NewSelect[string]().
@@ -86,7 +92,7 @@ func (m *GuidedModal) createNodeTypeSelectForm() *huh.Form {
 				Value(&nodeType),
 		).Title("Add Node:"),
 	).
-		WithWidth(50).
+		WithWidth(formWidth).
 		WithShowHelp(false).
 		WithShowErrors(false)
 }
@@ -112,6 +118,9 @@ func (m *GuidedModal) createNodeFormForType(nodeType string) *huh.Form {
 func (m *GuidedModal) createContinueForm() *huh.Form {
 	var choice string
 
+	// Calculate form width: total width - preview width (40) - margins
+	formWidth := m.width - 40 - 8
+
 	return huh.NewForm(
 		huh.NewGroup(
 			huh.NewSelect[string]().
@@ -124,7 +133,7 @@ func (m *GuidedModal) createContinueForm() *huh.Form {
 				Value(&choice),
 		).Title("Node Added Successfully!"),
 	).
-		WithWidth(50).
+		WithWidth(formWidth).
 		WithShowHelp(false).
 		WithShowErrors(false)
 }
