@@ -18,9 +18,9 @@ var (
 )
 
 var packCmd = &cobra.Command{
-	Use:   "pack [file.bento.yaml]",
+	Use:   "pack [file.bento.json]",
 	Short: "Execute a bento",
-	Long: `Pack executes a .bento.yaml file.
+	Long: `Pack executes a .bento.json file.
 
 This runs all nodes in the bento and reports results.`,
 	Args: cobra.ExactArgs(1),

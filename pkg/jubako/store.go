@@ -50,9 +50,14 @@ func (s *Store) Delete(name string) error {
 	return os.Remove(path)
 }
 
+// WorkDir returns the working directory.
+func (s *Store) WorkDir() string {
+	return s.workDir
+}
+
 // List returns all bentos in the store.
 func (s *Store) List() ([]BentoInfo, error) {
-	pattern := filepath.Join(s.workDir, "*.bento.yaml")
+	pattern := filepath.Join(s.workDir, "*.bento.json")
 	matches, err := filepath.Glob(pattern)
 	if err != nil {
 		return nil, err
@@ -72,8 +77,8 @@ func (s *Store) List() ([]BentoInfo, error) {
 
 // pathFor returns the file path for a bento name.
 func (s *Store) pathFor(name string) string {
-	if !strings.HasSuffix(name, ".bento.yaml") {
-		name += ".bento.yaml"
+	if !strings.HasSuffix(name, ".bento.json") {
+		name += ".bento.json"
 	}
 	return filepath.Join(s.workDir, name)
 }

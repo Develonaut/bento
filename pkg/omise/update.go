@@ -5,7 +5,7 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 
-	"bento/pkg/omise/screens"
+	"bento/pkg/omise/screens/shared"
 	"bento/pkg/omise/styles"
 )
 
@@ -16,13 +16,13 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m.handleResize(msg)
 	case tea.KeyMsg:
 		return m.handleKey(msg)
-	case screens.BentoSelectedMsg:
+	case shared.BentoSelectedMsg:
 		return m.handleBentoSelected(msg)
-	case screens.WorkflowSelectedMsg:
+	case shared.WorkflowSelectedMsg:
 		return m.handleWorkflowSelected(msg)
-	case screens.BentoOperationCompleteMsg:
+	case shared.BentoOperationCompleteMsg:
 		return m.handleBentoOperation(msg)
-	case screens.StartExecutionMsg:
+	case shared.StartExecutionMsg:
 		return m.handleStartExecution(msg)
 	case styles.ThemeChangedMsg:
 		return m.handleThemeChanged(msg)
@@ -61,14 +61,8 @@ func (m Model) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	}
 
 	switch msg.String() {
-	case "?", "h":
-		return m.handleHelpShortcut()
-	case "s":
-		return m.handleSettingsShortcut()
 	case "tab", "shift+tab":
 		return m.handleTabNavigation(msg.String())
-	case "1", "2", "3", "4":
-		return m.handleDirectTabAccess(msg)
 	case "esc":
 		return m.handleEscape(msg)
 	default:
@@ -78,10 +72,16 @@ func (m Model) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 
 // shouldDelegateToScreen checks if screen needs exclusive key handling
 func (m Model) shouldDelegateToScreen() bool {
-	// Settings only needs delegation when in modal mode
+	// Settings needs delegation when in modal mode
 	if m.screen == ScreenSettings && m.settings.InModalMode() {
 		return true
 	}
+
+	// Browser needs delegation when guided modal is active
+	if m.screen == ScreenBrowser && m.browser.HasActiveModal() {
+		return true
+	}
+
 	return false
 }
 
@@ -89,22 +89,6 @@ func (m Model) shouldDelegateToScreen() bool {
 func (m Model) handleQuit() (tea.Model, tea.Cmd) {
 	m.quitting = true
 	return m, tea.Quit
-}
-
-// handleHelpShortcut switches to help screen
-func (m Model) handleHelpShortcut() (tea.Model, tea.Cmd) {
-	if tabID, ok := m.tabView.TabFromKey("4"); ok {
-		m = m.SwitchToTab(tabID)
-	}
-	return m, nil
-}
-
-// handleSettingsShortcut switches to settings screen
-func (m Model) handleSettingsShortcut() (tea.Model, tea.Cmd) {
-	if tabID, ok := m.tabView.TabFromKey("3"); ok {
-		m = m.SwitchToTab(tabID)
-	}
-	return m, nil
 }
 
 // handleTabNavigation handles tab and shift+tab
@@ -116,15 +100,6 @@ func (m Model) handleTabNavigation(key string) (tea.Model, tea.Cmd) {
 	}
 	m.screen = m.TabToScreen(m.tabView.GetActiveTab())
 	return m, nil
-}
-
-// handleDirectTabAccess handles numeric tab shortcuts
-func (m Model) handleDirectTabAccess(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
-	if tabID, ok := m.tabView.TabFromKey(msg.String()); ok {
-		m = m.SwitchToTab(tabID)
-		return m, nil
-	}
-	return m.updateScreen(msg)
 }
 
 // handleEscape handles ESC key
@@ -163,21 +138,21 @@ func (m Model) updateScreen(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 // handleBentoSelected switches to executor and starts bento (legacy)
-func (m Model) handleBentoSelected(msg screens.BentoSelectedMsg) (tea.Model, tea.Cmd) {
+func (m Model) handleBentoSelected(msg shared.BentoSelectedMsg) (tea.Model, tea.Cmd) {
 	m.screen = ScreenExecutor
 	m.executor = m.executor.StartBento(msg.Name, msg.Path, m.workDir)
 	return m, m.executor.ExecuteCmd(m.program)
 }
 
 // handleWorkflowSelected switches to executor and queues delayed execution
-func (m Model) handleWorkflowSelected(msg screens.WorkflowSelectedMsg) (tea.Model, tea.Cmd) {
+func (m Model) handleWorkflowSelected(msg shared.WorkflowSelectedMsg) (tea.Model, tea.Cmd) {
 	m.screen = ScreenExecutor
 	m.executor = m.executor.StartBento(msg.Name, msg.Path, m.workDir)
 
 	// Return command that sends StartExecutionMsg after 500ms delay
 	return m, func() tea.Msg {
 		time.Sleep(500 * time.Millisecond)
-		return screens.StartExecutionMsg{
+		return shared.StartExecutionMsg{
 			Name:    msg.Name,
 			Path:    msg.Path,
 			WorkDir: m.workDir,
@@ -186,12 +161,12 @@ func (m Model) handleWorkflowSelected(msg screens.WorkflowSelectedMsg) (tea.Mode
 }
 
 // handleStartExecution begins actual execution after UI transition delay
-func (m Model) handleStartExecution(msg screens.StartExecutionMsg) (tea.Model, tea.Cmd) {
+func (m Model) handleStartExecution(msg shared.StartExecutionMsg) (tea.Model, tea.Cmd) {
 	return m, m.executor.ExecuteCmd(m.program)
 }
 
 // handleBentoOperation handles completion of copy/delete operations
-func (m Model) handleBentoOperation(msg screens.BentoOperationCompleteMsg) (tea.Model, tea.Cmd) {
+func (m Model) handleBentoOperation(msg shared.BentoOperationCompleteMsg) (tea.Model, tea.Cmd) {
 	// Delegate to browser screen for refresh
 	return m.updateScreen(msg)
 }

@@ -1,15 +1,14 @@
 package jubako
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
-
-	"gopkg.in/yaml.v3"
 
 	"bento/pkg/neta"
 )
 
-// Parser handles .bento.yaml file parsing.
+// Parser handles .bento.json file parsing.
 type Parser struct{}
 
 // NewParser creates a new parser.
@@ -17,7 +16,7 @@ func NewParser() *Parser {
 	return &Parser{}
 }
 
-// Parse reads and parses a .bento.yaml file.
+// Parse reads and parses a .bento.json file.
 func (p *Parser) Parse(path string) (neta.Definition, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {
@@ -27,15 +26,12 @@ func (p *Parser) Parse(path string) (neta.Definition, error) {
 	return p.ParseBytes(data)
 }
 
-// ParseBytes parses .bento.yaml from bytes.
+// ParseBytes parses .bento.json from bytes.
 func (p *Parser) ParseBytes(data []byte) (neta.Definition, error) {
 	var def neta.Definition
-	if err := yaml.Unmarshal(data, &def); err != nil {
-		return neta.Definition{}, fmt.Errorf("invalid YAML: %w", err)
+	if err := json.Unmarshal(data, &def); err != nil {
+		return neta.Definition{}, fmt.Errorf("invalid JSON: %w", err)
 	}
-
-	// Normalize group definitions (extract child nodes from parameters)
-	def = normalizeDefinition(def)
 
 	// Assign IDs to nodes that don't have them
 	def = assignNodeIDs(def)
@@ -50,9 +46,9 @@ func (p *Parser) ParseBytes(data []byte) (neta.Definition, error) {
 	return def, nil
 }
 
-// Format converts a definition to YAML.
+// Format converts a definition to JSON.
 func (p *Parser) Format(def neta.Definition) ([]byte, error) {
-	data, err := yaml.Marshal(def)
+	data, err := json.MarshalIndent(def, "", "  ")
 	if err != nil {
 		return nil, fmt.Errorf("marshal failed: %w", err)
 	}
@@ -73,69 +69,6 @@ func validateDefinition(def neta.Definition) error {
 	}
 
 	return nil
-}
-
-// normalizeDefinition extracts child nodes from parameters for group types
-func normalizeDefinition(def neta.Definition) neta.Definition {
-	// Check if this is a group type with nodes in parameters
-	if isGroupType(def.Type) && len(def.Nodes) == 0 {
-		if nodes, ok := extractNodesFromParams(def.Parameters); ok {
-			def.Nodes = nodes
-		}
-	}
-
-	// Recursively normalize child nodes
-	for i := range def.Nodes {
-		def.Nodes[i] = normalizeDefinition(def.Nodes[i])
-	}
-
-	return def
-}
-
-// isGroupType checks if a type is a group orchestration type
-func isGroupType(nodeType string) bool {
-	return nodeType == "group.sequence" ||
-		nodeType == "group.parallel" ||
-		nodeType == "loop.for" ||
-		nodeType == "conditional.if"
-}
-
-// extractNodesFromParams attempts to extract child nodes from parameters
-func extractNodesFromParams(params map[string]interface{}) ([]neta.Definition, bool) {
-	nodesParam, ok := params["nodes"]
-	if !ok {
-		return nil, false
-	}
-
-	// Handle []interface{} from YAML unmarshaling
-	nodesSlice, ok := nodesParam.([]interface{})
-	if !ok {
-		return nil, false
-	}
-
-	nodes := make([]neta.Definition, 0, len(nodesSlice))
-	for _, item := range nodesSlice {
-		// Convert map to Definition via re-marshaling
-		itemMap, ok := item.(map[string]interface{})
-		if !ok {
-			continue
-		}
-
-		// Re-marshal and unmarshal to get proper Definition
-		data, err := yaml.Marshal(itemMap)
-		if err != nil {
-			continue
-		}
-
-		var node neta.Definition
-		if err := yaml.Unmarshal(data, &node); err != nil {
-			continue
-		}
-
-		nodes = append(nodes, node)
-	}
-
-	return nodes, len(nodes) > 0
 }
 
 // validateStructure recursively validates version and type of a definition and its children.
@@ -193,6 +126,14 @@ func assignNodeIDsWithCounter(def neta.Definition, counter int) neta.Definition 
 	}
 
 	return def
+}
+
+// isGroupType checks if a type is a group orchestration type
+func isGroupType(nodeType string) bool {
+	return nodeType == "group.sequence" ||
+		nodeType == "group.parallel" ||
+		nodeType == "loop.for" ||
+		nodeType == "conditional.if"
 }
 
 // autoGenerateEdges generates edges for group nodes that don't have explicit edges

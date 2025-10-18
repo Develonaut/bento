@@ -8,7 +8,11 @@ import (
 
 	"bento/pkg/omise/components"
 	"bento/pkg/omise/config"
-	"bento/pkg/omise/screens"
+	"bento/pkg/omise/screens/bentos"
+	"bento/pkg/omise/screens/executor"
+	"bento/pkg/omise/screens/help"
+	"bento/pkg/omise/screens/pantry"
+	"bento/pkg/omise/screens/settings"
 )
 
 // Screen identifies which screen is active
@@ -44,11 +48,11 @@ type Model struct {
 	tabView  components.TabView
 
 	// Screen models
-	browser  screens.Browser
-	executor screens.Executor
-	pantry   screens.Pantry
-	settings screens.Settings
-	help     screens.Help
+	browser  bentos.Browser
+	executor executor.Executor
+	pantry   pantry.Pantry
+	settings settings.Settings
+	help     help.Help
 
 	// Application state
 	quitting bool
@@ -60,10 +64,10 @@ type Model struct {
 func NewModel() Model {
 	// Use default work directory
 	workDir := getDefaultWorkDir()
-	browser, err := screens.NewBrowser(workDir)
+	b, err := bentos.NewBrowser(workDir)
 	if err != nil {
 		// Fall back to empty browser on error
-		browser = screens.Browser{}
+		b = bentos.Browser{}
 	}
 
 	// Create viewport with default size (will be updated on first resize)
@@ -73,18 +77,18 @@ func NewModel() Model {
 		screen:   ScreenBrowser,
 		viewport: vp,
 		tabView:  components.NewTabView(),
-		browser:  browser,
-		executor: screens.NewExecutor(),
-		pantry:   screens.NewPantry(),
-		settings: screens.NewSettings(),
-		help:     screens.NewHelp(),
+		browser:  b,
+		executor: executor.NewExecutor(),
+		pantry:   pantry.NewPantry(),
+		settings: settings.NewSettings(),
+		help:     help.NewHelp(),
 		workDir:  workDir,
 	}
 }
 
 // NewModelWithWorkDir creates model with configured work directory
 func NewModelWithWorkDir(workDir string) (Model, error) {
-	browser, err := screens.NewBrowser(workDir)
+	b, err := bentos.NewBrowser(workDir)
 	if err != nil {
 		return Model{}, err
 	}
@@ -96,11 +100,11 @@ func NewModelWithWorkDir(workDir string) (Model, error) {
 		screen:   ScreenBrowser,
 		viewport: vp,
 		tabView:  components.NewTabView(),
-		browser:  browser,
-		executor: screens.NewExecutor(),
-		pantry:   screens.NewPantry(),
-		settings: screens.NewSettings(),
-		help:     screens.NewHelp(),
+		browser:  b,
+		executor: executor.NewExecutor(),
+		pantry:   pantry.NewPantry(),
+		settings: settings.NewSettings(),
+		help:     help.NewHelp(),
 		workDir:  workDir,
 	}, nil
 }

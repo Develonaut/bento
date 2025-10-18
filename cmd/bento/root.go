@@ -25,7 +25,7 @@ Run 'bento' without arguments to launch the interactive TUI (Phase 4).
 Or use commands directly for scripting and automation.
 
 Available commands:
-  prepare - Validate a .bento.yaml file
+  prepare - Validate a .bento.json file
   pack    - Execute a bento
   pantry  - List/search available neta types
   taste   - Dry run a bento

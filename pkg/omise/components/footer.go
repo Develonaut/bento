@@ -45,7 +45,18 @@ func (f FooterModel) View(contextualKeys []key.Binding, useBackKey bool) string 
 	} else {
 		globalKeys = f.global.ShortHelp()
 	}
-	allKeys := append(contextualKeys, globalKeys...)
-	helpText := f.help.ShortHelpView(allKeys)
+
+	// Render contextual keys separately from global keys with a separator
+	var helpText string
+	if len(contextualKeys) > 0 {
+		contextualHelp := f.help.ShortHelpView(contextualKeys)
+		globalHelp := f.help.ShortHelpView(globalKeys)
+		separator := styles.Subtle.Render(" │ ")
+		helpText = contextualHelp + separator + globalHelp
+	} else {
+		// No contextual keys, just show global
+		helpText = f.help.ShortHelpView(globalKeys)
+	}
+
 	return styles.Footer.Render(helpText)
 }

@@ -10,12 +10,12 @@ import (
 )
 
 var prepareCmd = &cobra.Command{
-	Use:   "prepare [file.bento.yaml]",
+	Use:   "prepare [file.bento.json]",
 	Short: "Validate a bento file",
-	Long: `Prepare validates a .bento.yaml file without executing it.
+	Long: `Prepare validates a .bento.json file without executing it.
 
 This checks:
-- YAML syntax is valid
+- JSON syntax is valid
 - Node types are registered
 - Required parameters are present
 - Structure is well-formed`,

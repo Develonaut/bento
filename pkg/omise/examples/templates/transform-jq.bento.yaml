@@ -1,5 +1,0 @@
-version: "1.0"
-type: transform.jq
-name: Extract User IDs
-parameters:
-  query: ".data | map(.id)"

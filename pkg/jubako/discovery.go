@@ -22,7 +22,7 @@ func NewDiscovery(paths ...string) *Discovery {
 	}
 }
 
-// Find searches for .bento.yaml files.
+// Find searches for .bento.json files.
 func (d *Discovery) Find() ([]string, error) {
 	found := []string{}
 
@@ -43,14 +43,14 @@ func (d *Discovery) Watch() (<-chan string, error) {
 	return nil, nil
 }
 
-// findInPath searches a single path for .bento.yaml files.
+// findInPath searches a single path for .bento.json files.
 func findInPath(root string) ([]string, error) {
 	found := []string{}
 	err := filepath.Walk(root, walkFunc(&found))
 	return found, err
 }
 
-// walkFunc returns a filepath.WalkFunc that collects .bento.yaml files.
+// walkFunc returns a filepath.WalkFunc that collects .bento.json files.
 func walkFunc(found *[]string) filepath.WalkFunc {
 	return func(path string, info os.FileInfo, err error) error {
 		if err != nil || info.IsDir() {
@@ -63,10 +63,10 @@ func walkFunc(found *[]string) filepath.WalkFunc {
 	}
 }
 
-// isBentoFile checks if a file is a .bento.yaml file.
+// isBentoFile checks if a file is a .bento.json file.
 func isBentoFile(path string) bool {
 	base := filepath.Base(path)
-	return strings.HasSuffix(base, ".bento.yaml")
+	return strings.HasSuffix(base, ".bento.json")
 }
 
 // defaultPaths returns default search paths.

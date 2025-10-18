@@ -7,7 +7,7 @@ import (
 )
 
 var tasteCmd = &cobra.Command{
-	Use:   "taste [file.bento.yaml]",
+	Use:   "taste [file.bento.json]",
 	Short: "Dry run a bento (alias for prepare)",
 	Long: `Taste validates a bento without executing it.
 
