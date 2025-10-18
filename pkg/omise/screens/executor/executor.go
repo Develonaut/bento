@@ -116,13 +116,6 @@ func (e Executor) copyToClipboard() tea.Cmd {
 	}
 }
 
-// copyEntireView copies the entire rendered view to clipboard
-func (e Executor) copyEntireView() tea.Cmd {
-	return func() tea.Msg {
-		return CopyEntireViewCmd(e.View())
-	}
-}
-
 // IsRunning returns whether the executor is currently running
 func (e Executor) IsRunning() bool {
 	return e.running
@@ -145,11 +138,6 @@ func (e Executor) KeyBindings() []key.Binding {
 				key.WithHelp("c", "copy output"),
 			))
 		}
-		// Always show shift+c for debugging
-		keys = append(keys, key.NewBinding(
-			key.WithKeys("C"),
-			key.WithHelp("shift+c", "copy view"),
-		))
 		return keys
 	}
 	// No contextual keys during execution or when no content

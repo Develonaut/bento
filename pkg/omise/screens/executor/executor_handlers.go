@@ -37,8 +37,6 @@ func (e Executor) handleCompleteKeys(msg tea.Msg) (Executor, tea.Cmd, bool) {
 	switch keyMsg.String() {
 	case "c":
 		return e, e.copyToClipboard(), true
-	case "C": // Shift+C copies entire view
-		return e, e.copyEntireView(), true
 	case "r":
 		return e, nil, true
 	}

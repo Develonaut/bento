@@ -21,19 +21,6 @@ func CopyResultCmd(result, bentoName, errorMsg string, success bool) tea.Msg {
 	return CopyResultMsg("✓ Copied to clipboard!")
 }
 
-// CopyEntireViewCmd copies the entire view content to clipboard
-func CopyEntireViewCmd(viewContent string) tea.Msg {
-	if viewContent == "" {
-		return CopyResultMsg("No view content to copy")
-	}
-
-	if err := clipboard.WriteAll(viewContent); err != nil {
-		return CopyResultMsg(fmt.Sprintf("Failed to copy view: %s", err.Error()))
-	}
-
-	return CopyResultMsg("✓ Entire view copied to clipboard!")
-}
-
 // buildClipboardContent formats content for clipboard
 func buildClipboardContent(result, bentoName, errorMsg string, success bool) string {
 	if success && result != "" {
