@@ -17,7 +17,7 @@ func (m *GuidedModal) createMetadataForm() *huh.Form {
 		huh.NewOption("🍱 Bento Box", emoji.Bento),
 	}
 	for _, e := range emoji.Sushi {
-		iconOptions = append(iconOptions, huh.NewOption(e+" "+e, e))
+		iconOptions = append(iconOptions, huh.NewOption(e, e))
 	}
 
 	return huh.NewForm(
