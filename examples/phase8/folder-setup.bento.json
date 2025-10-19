@@ -1,0 +1,106 @@
+{
+  "id": "folder-setup",
+  "type": "group",
+  "version": "1.0.0",
+  "name": "Product Folder Setup",
+  "position": {
+    "x": 0,
+    "y": 0
+  },
+  "metadata": {
+    "description": "Creates folder structure for each product from CSV. Demonstrates loop neta with forEach mode and context passing from CSV reader to file-system operations.",
+    "usage": "bento savor folder-setup.bento.json",
+    "example": "Reads tests/fixtures/products-test.csv and creates products/MOCK-001/, products/MOCK-002/, products/MOCK-003/",
+    "tags": ["phase8", "folders", "loop", "filesystem", "csv"],
+    "phase": "8.3",
+    "demonstrates": ["forEach loop", "template resolution", "context passing", "nested node execution"]
+  },
+  "parameters": {},
+  "inputPorts": [],
+  "outputPorts": [],
+  "nodes": [
+    {
+      "id": "read-csv",
+      "type": "spreadsheet",
+      "version": "1.0.0",
+      "name": "Read Products CSV",
+      "position": {
+        "x": 100,
+        "y": 100
+      },
+      "metadata": {
+        "description": "Reads product CSV and outputs array of row maps with keys: sku, name, description, category"
+      },
+      "parameters": {
+        "operation": "read",
+        "format": "csv",
+        "path": "tests/fixtures/products-test.csv",
+        "hasHeaders": true
+      },
+      "inputPorts": [],
+      "outputPorts": [
+        {
+          "id": "out-1",
+          "name": "rows"
+        }
+      ]
+    },
+    {
+      "id": "create-folders",
+      "type": "loop",
+      "version": "1.0.0",
+      "name": "Create Folder for Each Product",
+      "position": {
+        "x": 300,
+        "y": 100
+      },
+      "metadata": {
+        "description": "Loops through each product row and creates its folder. Uses {{index . \"read-csv\" \"rows\"}} to access the CSV data from the previous node. Inside the loop, {{.item.sku}} accesses the current row's SKU field."
+      },
+      "parameters": {
+        "mode": "forEach",
+        "items": "{{index . \"read-csv\" \"rows\"}}",
+        "showProgress": true
+      },
+      "inputPorts": [
+        {
+          "id": "in-1",
+          "name": "items"
+        }
+      ],
+      "outputPorts": [],
+      "nodes": [
+        {
+          "id": "mkdir",
+          "type": "file-system",
+          "version": "1.0.0",
+          "name": "Create Product Directory",
+          "position": {
+            "x": 100,
+            "y": 100
+          },
+          "metadata": {
+            "description": "Creates products/[SKU]/ directory for the current product. The {{.item.sku}} template resolves to the SKU value from the current CSV row (e.g., MOCK-001). The 'recursive: true' parameter ensures parent directories are created if needed."
+          },
+          "parameters": {
+            "operation": "mkdir",
+            "path": "products/{{.item.sku}}",
+            "recursive": true
+          },
+          "inputPorts": [],
+          "outputPorts": []
+        }
+      ],
+      "edges": []
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "source": "read-csv",
+      "target": "create-folders",
+      "sourcePort": "out-1",
+      "targetPort": "in-1"
+    }
+  ]
+}

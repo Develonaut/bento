@@ -8,6 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Phase 8.3: Folder Setup Bento integration test with forEach loop
+- Loop neta nested node execution support
+- Enhanced template resolution for arrays and maps (not just strings)
+- Type conversion for CSV output arrays ([]map[string]interface{} → []interface{})
+- Integration test for idempotent folder creation
 - Phase 8.2: First integration test with CSV reader bento example
 - Integration test framework with helper utilities
 - 100% CLI command test coverage (15 tests)
@@ -19,11 +24,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Dependency management philosophy documentation
 
 ### Changed
+- Refactored loop.go functions to comply with Bento Box Principle (<30 lines)
+- Enhanced executionContext to support exact template resolution ({{index . "key"}} returns actual value)
+- Added parameter template resolution in executor for nested nodes
+- Implemented times loop body execution (was stub)
 - Improved error messages for missing glow installation
 - Renamed `helpers.go` to `test_utilities.go` for Bento Box compliance
 - Enhanced package documentation for integration tests
 
 ### Fixed
+- Template resolution in loop iteration context ({{.item.field}} now works in nested nodes)
+- Loop body execution for forEach mode (nested nodes now execute properly)
+- Shallow copy documentation added to executionContext
 - Linting errors in progress tests
 - Error handling in test utilities
 

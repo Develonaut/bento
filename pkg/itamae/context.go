@@ -39,13 +39,24 @@ func (ec *executionContext) resolveValue(value interface{}) interface{} {
 }
 
 // resolveString resolves template syntax in a string.
+// If the string is ONLY a template (no literal text), return the actual value.
+// Otherwise, return the string interpolation.
 func (ec *executionContext) resolveString(s string) interface{} {
 	// Check if string contains template syntax
 	if !containsTemplate(s) {
 		return s
 	}
 
-	// Parse and execute template
+	// Special case: if the entire string is a single template expression,
+	// try to return the actual value instead of string representation.
+	// This allows passing arrays/maps through templates.
+	if isExactTemplate(s) {
+		if val := ec.resolveExactTemplate(s); val != nil {
+			return val
+		}
+	}
+
+	// Parse and execute template (returns string interpolation)
 	tmpl, err := template.New("param").Parse(s)
 	if err != nil {
 		return s // Return original if parse fails
@@ -57,6 +68,76 @@ func (ec *executionContext) resolveString(s string) interface{} {
 	}
 
 	return buf.String()
+}
+
+// isExactTemplate checks if a string is EXACTLY one template (no literal text).
+func isExactTemplate(s string) bool {
+	trimmed := strings.TrimSpace(s)
+	return strings.HasPrefix(trimmed, "{{") && strings.HasSuffix(trimmed, "}}")
+}
+
+// resolveExactTemplate resolves a template that is exactly one expression.
+// Returns the actual value from context (array, map, etc.) instead of string.
+func (ec *executionContext) resolveExactTemplate(s string) interface{} {
+	// Extract the expression between {{ and }}
+	trimmed := strings.TrimSpace(s)
+	expr := strings.TrimSpace(trimmed[2 : len(trimmed)-2])
+
+	// Handle "index . \"key1\" \"key2\"..." syntax
+	if strings.HasPrefix(expr, "index .") {
+		return ec.resolveIndexExpression(expr)
+	}
+
+	// Handle simple ".key" or ".key.subkey" syntax
+	if strings.HasPrefix(expr, ".") {
+		return ec.resolveDotExpression(expr[1:]) // Remove leading dot
+	}
+
+	return nil
+}
+
+// resolveIndexExpression resolves {{index . "key1" "key2"}} expressions.
+func (ec *executionContext) resolveIndexExpression(expr string) interface{} {
+	// Parse: index . "key1" "key2" ...
+	parts := strings.Fields(expr)
+	if len(parts) < 3 || parts[0] != "index" || parts[1] != "." {
+		return nil
+	}
+
+	// Extract keys (remove quotes)
+	keys := make([]string, 0, len(parts)-2)
+	for i := 2; i < len(parts); i++ {
+		key := strings.Trim(parts[i], "\"")
+		keys = append(keys, key)
+	}
+
+	// Navigate through the context
+	var current interface{} = ec.nodeData
+	for _, key := range keys {
+		m, ok := current.(map[string]interface{})
+		if !ok {
+			return nil
+		}
+		current = m[key]
+	}
+
+	return current
+}
+
+// resolveDotExpression resolves {{.key.subkey}} expressions.
+func (ec *executionContext) resolveDotExpression(expr string) interface{} {
+	keys := strings.Split(expr, ".")
+	var current interface{} = ec.nodeData
+
+	for _, key := range keys {
+		m, ok := current.(map[string]interface{})
+		if !ok {
+			return nil
+		}
+		current = m[key]
+	}
+
+	return current
 }
 
 // resolveMap resolves templates in a map.
@@ -82,7 +163,11 @@ func containsTemplate(s string) bool {
 	return len(s) > 4 && strings.Contains(s, "{{") && strings.Contains(s, "}}")
 }
 
-// copy creates a deep copy of the execution context.
+// copy creates a shallow copy of the execution context.
+// Note: This performs a shallow copy - the nodeData map is copied,
+// but the values within the map are not deep-copied. This is intentional
+// for performance and works correctly because node outputs are immutable
+// after being set.
 func (ec *executionContext) copy() *executionContext {
 	newCtx := newExecutionContext()
 	for k, v := range ec.nodeData {

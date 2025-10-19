@@ -55,12 +55,13 @@ func (i *Itamae) executeSingle(
 	}
 
 	// Prepare parameters with execution context
+	// Resolve templates in parameters using current execution context
 	params := make(map[string]interface{})
 	for k, v := range def.Parameters {
-		params[k] = v
+		params[k] = execCtx.resolveValue(v)
 	}
 
-	// Add execution context for template resolution
+	// Add execution context for template resolution (for neta that need it)
 	params["_context"] = execCtx.toMap()
 
 	// Execute neta
