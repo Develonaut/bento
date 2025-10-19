@@ -11,10 +11,10 @@
 > **Write tests FIRST to define contracts**
 
 CLI tests should verify:
-1. `bento serve` executes a bento file
-2. `bento inspect` validates without executing
+1. `bento taste` executes a bento file
+2. `bento sniff` validates without executing
 3. `bento menu` lists available bentos
-4. `bento new` creates a template bento
+4. `bento pack` creates a template bento
 5. Flags are parsed correctly (--verbose, --timeout, etc.)
 6. Exit codes are correct (0 for success, 1 for errors)
 7. Output is user-friendly with sushi emojis
@@ -26,16 +26,16 @@ CLI tests should verify:
 Phase 7 brings everything together into a beautiful CLI tool. The cmd/bento package implements all user-facing commands using Cobra, with playful sushi-themed naming.
 
 Commands:
-- **`bento serve`** - Execute a bento (like serving the finished dish)
-- **`bento inspect`** - Validate a bento without executing
+- **`bento taste`** - Execute a bento (taste it to see if it works!)
+- **`bento sniff`** - Validate a bento without executing (sniff it to check if it's fresh)
 - **`bento menu`** - List available bentos (like a restaurant menu)
-- **`bento new`** - Create a new bento template
+- **`bento pack`** - Create a new bento template (pack ingredients into a box)
 
 ---
 
 ## Commands
 
-### `bento serve [file].bento.json`
+### `bento taste [file].bento.json`
 
 Execute a bento workflow.
 
@@ -46,27 +46,27 @@ Execute a bento workflow.
 
 **Examples:**
 ```bash
-bento serve workflow.bento.json
-bento serve workflow.bento.json --verbose
-bento serve workflow.bento.json --timeout 30m
-bento serve workflow.bento.json --var PRODUCT_ID=123
+bento taste workflow.bento.json
+bento taste workflow.bento.json --verbose
+bento taste workflow.bento.json --timeout 30m
+bento taste workflow.bento.json --var PRODUCT_ID=123
 ```
 
 **Output:**
 ```
-🍱 Serving bento: Product Automation
-🍙 Executing neta 'read-csv' (spreadsheet)
-✓ Completed in 124ms
-🍙 Executing neta 'process-products' (loop)
-  ⟳ Processing item 1/50: PROD-001
-  ⟳ Processing item 2/50: PROD-002
+🍱 Tasting bento: Product Automation
+🍙 Tasting neta 'read-csv' (spreadsheet)
+✓ Savored in 124ms
+🍙 Tasting neta 'process-products' (loop)
+  ⟳ Sampling item 1/50: PROD-001
+  ⟳ Sampling item 2/50: PROD-002
   ...
-✓ Completed in 3m 45s
+✓ Devoured in 3m 45s
 
-🍱 Bento served successfully in 3m 46s
+🍱 Delicious! Bento devoured successfully in 3m 46s
 ```
 
-### `bento inspect [file].bento.json`
+### `bento sniff [file].bento.json`
 
 Validate a bento without executing it.
 
@@ -75,20 +75,20 @@ Validate a bento without executing it.
 
 **Examples:**
 ```bash
-bento inspect workflow.bento.json
-bento inspect workflow.bento.json --verbose
+bento sniff workflow.bento.json
+bento sniff workflow.bento.json --verbose
 ```
 
 **Output:**
 ```
-🍱 Inspecting bento: Product Automation
+🍱 Sniffing bento: Product Automation
 ✓ Valid JSON structure
 ✓ All neta types registered
 ✓ All edges valid (sources and targets exist)
 ✓ Required parameters present
 ✓ Pre-flight checks passed
 
-🍱 Bento is ready to serve!
+🍱 Smells fresh! Ready to taste.
 ```
 
 ### `bento menu [directory]`
@@ -126,7 +126,7 @@ bento menu --json
 3 bentos found
 ```
 
-### `bento new [name]`
+### `bento pack [name]`
 
 Create a new bento template.
 
@@ -135,20 +135,20 @@ Create a new bento template.
 
 **Examples:**
 ```bash
-bento new my-workflow
-bento new my-workflow --type loop
+bento pack my-workflow
+bento pack my-workflow --type loop
 ```
 
 **Output:**
 ```
-🍱 Creating new bento: my-workflow
+🍱 Packing new bento: my-workflow
 
 Created: my-workflow.bento.json
 
 Next steps:
   1. Edit my-workflow.bento.json
-  2. Run: bento inspect my-workflow.bento.json
-  3. Run: bento serve my-workflow.bento.json
+  2. Run: bento sniff my-workflow.bento.json
+  3. Run: bento taste my-workflow.bento.json
 ```
 
 ---
@@ -156,10 +156,10 @@ Next steps:
 ## Success Criteria
 
 **Phase 7 Complete When:**
-- [ ] `bento serve` executes bentos with progress output
-- [ ] `bento inspect` validates without executing
+- [ ] `bento taste` executes bentos with progress output
+- [ ] `bento sniff` validates without executing
 - [ ] `bento menu` lists available bentos
-- [ ] `bento new` creates template bentos
+- [ ] `bento pack` creates template bentos
 - [ ] All flags work correctly
 - [ ] Exit codes correct (0 success, 1 error)
 - [ ] User-friendly output with emojis 🍱🍙
@@ -172,9 +172,9 @@ Next steps:
 
 ## Test-First Approach
 
-### Step 1: Test bento serve command
+### Step 1: Test bento taste command
 
-Create `cmd/bento/serve_test.go`:
+Create `cmd/bento/taste_test.go`:
 
 ```go
 package main_test
@@ -186,8 +186,8 @@ import (
 	"testing"
 )
 
-// Test: bento serve should execute a valid bento
-func TestServeCommand_ValidBento(t *testing.T) {
+// Test: bento taste should execute a valid bento
+func TestTasteCommand_ValidBento(t *testing.T) {
 	// Create a simple test bento
 	bentoFile := createTestBento(t, "test.bento.json", `{
 		"id": "test-bento",
@@ -207,18 +207,18 @@ func TestServeCommand_ValidBento(t *testing.T) {
 	}`)
 	defer os.Remove(bentoFile)
 
-	// Run: bento serve test.bento.json
-	cmd := exec.Command("bento", "serve", bentoFile)
+	// Run: bento taste test.bento.json
+	cmd := exec.Command("bento", "taste", bentoFile)
 	output, err := cmd.CombinedOutput()
 
 	if err != nil {
-		t.Fatalf("serve command failed: %v\nOutput: %s", err, string(output))
+		t.Fatalf("taste command failed: %v\nOutput: %s", err, string(output))
 	}
 
 	// Verify output contains success message
 	outputStr := string(output)
-	if !strings.Contains(outputStr, "served successfully") {
-		t.Errorf("Output should contain 'served successfully': %s", outputStr)
+	if !strings.Contains(outputStr, "devoured successfully") || !strings.Contains(outputStr, "Delicious") {
+		t.Errorf("Output should contain success message: %s", outputStr)
 	}
 
 	// Verify emoji usage
@@ -227,8 +227,8 @@ func TestServeCommand_ValidBento(t *testing.T) {
 	}
 }
 
-// Test: bento serve should fail on invalid bento
-func TestServeCommand_InvalidBento(t *testing.T) {
+// Test: bento taste should fail on invalid bento
+func TestTasteCommand_InvalidBento(t *testing.T) {
 	bentoFile := createTestBento(t, "invalid.bento.json", `{
 		"id": "invalid",
 		"type": "group",
@@ -236,12 +236,12 @@ func TestServeCommand_InvalidBento(t *testing.T) {
 	}`)
 	defer os.Remove(bentoFile)
 
-	cmd := exec.Command("bento", "serve", bentoFile)
+	cmd := exec.Command("bento", "taste", bentoFile)
 	output, err := cmd.CombinedOutput()
 
 	// Should exit with error code
 	if err == nil {
-		t.Fatal("serve command should fail on invalid bento")
+		t.Fatal("taste command should fail on invalid bento")
 	}
 
 	// Check exit code
@@ -258,16 +258,16 @@ func TestServeCommand_InvalidBento(t *testing.T) {
 	}
 }
 
-// Test: bento serve --verbose should show detailed output
-func TestServeCommand_VerboseFlag(t *testing.T) {
+// Test: bento taste --verbose should show detailed output
+func TestTasteCommand_VerboseFlag(t *testing.T) {
 	bentoFile := createTestBento(t, "test.bento.json", simpleValidBento())
 	defer os.Remove(bentoFile)
 
-	cmd := exec.Command("bento", "serve", bentoFile, "--verbose")
+	cmd := exec.Command("bento", "taste", bentoFile, "--verbose")
 	output, err := cmd.CombinedOutput()
 
 	if err != nil {
-		t.Fatalf("serve command failed: %v", err)
+		t.Fatalf("taste command failed: %v", err)
 	}
 
 	outputStr := string(output)
@@ -293,36 +293,36 @@ func createTestBento(t *testing.T, name, content string) string {
 }
 ```
 
-### Step 2: Test bento inspect command
+### Step 2: Test bento sniff command
 
 ```go
-// Test: bento inspect should validate without executing
-func TestInspectCommand_ValidBento(t *testing.T) {
+// Test: bento sniff should validate without executing
+func TestSniffCommand_ValidBento(t *testing.T) {
 	bentoFile := createTestBento(t, "test.bento.json", simpleValidBento())
 	defer os.Remove(bentoFile)
 
-	cmd := exec.Command("bento", "inspect", bentoFile)
+	cmd := exec.Command("bento", "sniff", bentoFile)
 	output, err := cmd.CombinedOutput()
 
 	if err != nil {
-		t.Fatalf("inspect command failed: %v\nOutput: %s", err, string(output))
+		t.Fatalf("sniff command failed: %v\nOutput: %s", err, string(output))
 	}
 
 	outputStr := string(output)
 
 	// Should show validation passed
-	if !strings.Contains(outputStr, "ready to serve") {
-		t.Errorf("Output should say 'ready to serve': %s", outputStr)
+	if !strings.Contains(outputStr, "Smells fresh") || !strings.Contains(outputStr, "Ready to taste") {
+		t.Errorf("Output should say bento is fresh and ready: %s", outputStr)
 	}
 
-	// Should NOT execute (check it doesn't say "served successfully")
-	if strings.Contains(outputStr, "served successfully") {
-		t.Error("inspect should NOT execute the bento")
+	// Should NOT execute (check it doesn't say "devoured")
+	if strings.Contains(outputStr, "devoured") {
+		t.Error("sniff should NOT execute the bento")
 	}
 }
 
-// Test: bento inspect should report validation errors clearly
-func TestInspectCommand_InvalidBento(t *testing.T) {
+// Test: bento sniff should report validation errors clearly
+func TestSniffCommand_InvalidBento(t *testing.T) {
 	// Bento with missing required URL parameter
 	bentoFile := createTestBento(t, "invalid.bento.json", `{
 		"id": "invalid",
@@ -338,12 +338,12 @@ func TestInspectCommand_InvalidBento(t *testing.T) {
 	}`)
 	defer os.Remove(bentoFile)
 
-	cmd := exec.Command("bento", "inspect", bentoFile)
+	cmd := exec.Command("bento", "sniff", bentoFile)
 	output, err := cmd.CombinedOutput()
 
 	// Should exit with error
 	if err == nil {
-		t.Fatal("inspect should fail on invalid bento")
+		t.Fatal("sniff should fail on invalid bento")
 	}
 
 	outputStr := string(output)
@@ -396,11 +396,11 @@ func TestMenuCommand_ListBentos(t *testing.T) {
 }
 ```
 
-### Step 4: Test bento new command
+### Step 4: Test bento pack command
 
 ```go
-// Test: bento new should create a template bento
-func TestNewCommand_CreateTemplate(t *testing.T) {
+// Test: bento pack should create a template bento
+func TestPackCommand_CreateTemplate(t *testing.T) {
 	tmpDir := t.TempDir()
 	bentoPath := filepath.Join(tmpDir, "my-workflow.bento.json")
 
@@ -409,11 +409,11 @@ func TestNewCommand_CreateTemplate(t *testing.T) {
 	os.Chdir(tmpDir)
 	defer os.Chdir(oldDir)
 
-	cmd := exec.Command("bento", "new", "my-workflow")
+	cmd := exec.Command("bento", "pack", "my-workflow")
 	output, err := cmd.CombinedOutput()
 
 	if err != nil {
-		t.Fatalf("new command failed: %v\nOutput: %s", err, string(output))
+		t.Fatalf("pack command failed: %v\nOutput: %s", err, string(output))
 	}
 
 	// Verify file was created
@@ -442,10 +442,10 @@ func TestNewCommand_CreateTemplate(t *testing.T) {
 ```
 cmd/bento/
 ├── main.go              # Entry point, Cobra root command (~150 lines)
-├── serve.go             # serve command implementation (~200 lines)
-├── inspect.go           # inspect command implementation (~150 lines)
+├── taste.go             # taste command implementation (~200 lines)
+├── sniff.go             # sniff command implementation (~150 lines)
 ├── menu.go              # menu command implementation (~150 lines)
-├── new.go               # new command implementation (~150 lines)
+├── pack.go              # pack command implementation (~150 lines)
 ├── config.go            # Configuration (Viper) (~100 lines)
 ├── output.go            # Pretty output formatting (~150 lines)
 └── version.go           # Version command (~50 lines)
@@ -494,10 +494,10 @@ Bento lets you build powerful automation workflows using composable
 crafted bento box.
 
 Commands are playfully themed:
-  • serve   - Execute a bento (like serving the finished dish)
-  • inspect - Validate without executing (quality check)
-  • menu    - List available bentos (restaurant menu)
-  • new     - Create a new bento template`,
+  • taste - Execute a bento (taste it to see if it works!)
+  • sniff - Validate without executing (sniff to check if it's fresh)
+  • menu  - List available bentos (restaurant menu)
+  • pack  - Create a new bento template (pack ingredients into a box)`,
 }
 
 func main() {
@@ -507,15 +507,15 @@ func main() {
 }
 
 func init() {
-	rootCmd.AddCommand(serveCmd)
-	rootCmd.AddCommand(inspectCmd)
+	rootCmd.AddCommand(tasteCmd)
+	rootCmd.AddCommand(sniffCmd)
 	rootCmd.AddCommand(menuCmd)
-	rootCmd.AddCommand(newCmd)
+	rootCmd.AddCommand(packCmd)
 	rootCmd.AddCommand(versionCmd)
 }
 ```
 
-**File: `cmd/bento/serve.go`**
+**File: `cmd/bento/taste.go`**
 
 ```go
 package main
@@ -538,28 +538,28 @@ var (
 	timeoutFlag time.Duration
 )
 
-var serveCmd = &cobra.Command{
-	Use:   "serve [file].bento.json",
-	Short: "🍱 Serve a bento (execute workflow)",
+var tasteCmd = &cobra.Command{
+	Use:   "taste [file].bento.json",
+	Short: "🍱 Taste a bento (execute workflow)",
 	Long: `Execute a bento workflow from start to finish.
 
-Like a sushi chef serving the finished dish, this command executes
+Taste your bento to see if it works! This command executes
 all neta in the bento and reports progress.
 
 Examples:
-  bento serve workflow.bento.json
-  bento serve workflow.bento.json --verbose
-  bento serve workflow.bento.json --timeout 30m`,
+  bento taste workflow.bento.json
+  bento taste workflow.bento.json --verbose
+  bento taste workflow.bento.json --timeout 30m`,
 	Args: cobra.ExactArgs(1),
-	RunE: runServe,
+	RunE: runTaste,
 }
 
 func init() {
-	serveCmd.Flags().BoolVarP(&verboseFlag, "verbose", "v", false, "Verbose output")
-	serveCmd.Flags().DurationVar(&timeoutFlag, "timeout", 10*time.Minute, "Execution timeout")
+	tasteCmd.Flags().BoolVarP(&verboseFlag, "verbose", "v", false, "Verbose output")
+	tasteCmd.Flags().DurationVar(&timeoutFlag, "timeout", 10*time.Minute, "Execution timeout")
 }
 
-func runServe(cmd *cobra.Command, args []string) error {
+func runTaste(cmd *cobra.Command, args []string) error {
 	bentoPath := args[0]
 
 	// Load bento
@@ -569,7 +569,7 @@ func runServe(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to load bento: %w", err)
 	}
 
-	fmt.Printf("🍱 Serving bento: %s\n", def.Name)
+	fmt.Printf("🍱 Tasting bento: %s\n", def.Name)
 
 	// Create logger
 	logLevel := shoyu.LevelInfo
@@ -586,12 +586,12 @@ func runServe(cmd *cobra.Command, args []string) error {
 	p := pantry.New()
 	chef := itamae.New(p, logger)
 
-	// Progress callback
+	// Progress callback with fun status words
 	chef.OnProgress(func(nodeID, status string) {
 		if status == "starting" {
-			fmt.Printf("🍙 Executing neta '%s'...\n", nodeID)
+			fmt.Printf("🍙 Tasting neta '%s'...\n", nodeID)
 		} else if status == "completed" {
-			fmt.Printf("✓ Completed\n")
+			fmt.Printf("✓ Savored!\n")
 		}
 	})
 
@@ -605,11 +605,11 @@ func runServe(cmd *cobra.Command, args []string) error {
 	duration := time.Since(start)
 
 	if err != nil {
-		fmt.Printf("\n❌ Bento execution failed: %v\n", err)
+		fmt.Printf("\n❌ Spoiled! Bento execution failed: %v\n", err)
 		return err
 	}
 
-	fmt.Printf("\n🍱 Bento served successfully in %v\n", duration)
+	fmt.Printf("\n🍱 Delicious! Bento devoured successfully in %v\n", duration)
 	fmt.Printf("   %d neta executed\n", result.NodesExecuted)
 
 	return nil
@@ -697,9 +697,10 @@ func errorBox(message string) {
 ## Critical for Phase 8
 
 **Progress Output:**
-- `bento serve` must show real-time progress for long bentos
-- "⟳ Rendering product 3/50... 45% complete"
+- `bento taste` must show real-time progress for long bentos
+- "⟳ Sampling product 3/50... 45% complete"
 - Streaming output from shell-command neta
+- Fun status words: "Tasting", "Savoring", "Devoured", "Spoiled"
 
 **Timeout:**
 - Default 10min timeout is too short for Phase 8 (Blender takes minutes per product)
@@ -747,10 +748,10 @@ Please read:
 Then:
 
 1. Create integration tests in cmd/bento/*_test.go for:
-   - serve command (execute bento, show progress, handle errors)
-   - inspect command (validate without executing)
+   - taste command (execute bento, show progress with fun status words, handle errors)
+   - sniff command (validate without executing - "Smells fresh!")
    - menu command (list bentos in directory)
-   - new command (create template bento)
+   - pack command (create template bento)
    - Flags (--verbose, --timeout, --recursive, etc.)
    - Exit codes (0 for success, 1 for errors)
 
@@ -758,13 +759,13 @@ Then:
 
 3. Implement to make tests pass:
    - cmd/bento/main.go (~150 lines) - Cobra root
-   - cmd/bento/serve.go (~200 lines) - serve command
-   - cmd/bento/inspect.go (~150 lines) - inspect command
+   - cmd/bento/taste.go (~200 lines) - taste command with fun output
+   - cmd/bento/sniff.go (~150 lines) - sniff command
    - cmd/bento/menu.go (~150 lines) - menu command
-   - cmd/bento/new.go (~150 lines) - new command
+   - cmd/bento/pack.go (~150 lines) - pack command
    - cmd/bento/output.go (~150 lines) - Pretty output formatting
 
-4. Build and test manually: `go build -o bento ./cmd/bento && ./bento serve test.bento.json`
+4. Build and test manually: `go build -o bento ./cmd/bento && ./bento taste test.bento.json`
 
 Remember:
 - Write tests FIRST
