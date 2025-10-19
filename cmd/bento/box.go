@@ -1,6 +1,6 @@
-// Package main implements the pack command for creating template bentos.
+// Package main implements the box command for creating template bentos.
 //
-// The pack command creates a new bento template file with a basic structure
+// The box command creates a new bento template file with a basic structure
 // that users can customize. It provides a quick way to start a new workflow.
 package main
 
@@ -16,26 +16,26 @@ import (
 
 var templateType string
 
-var packCmd = &cobra.Command{
-	Use:   "pack [name]",
-	Short: "🍱 Create a new bento template",
+var boxCmd = &cobra.Command{
+	Use:   "box [name]",
+	Short: "🍱 Create a new bento in a box",
 	Long: `Create a new bento template file.
 
-Pack a fresh bento box with a template you can customize.
+Box up a fresh bento with a template you can customize!
 
 Examples:
-  bento pack my-workflow
-  bento pack my-workflow --type simple`,
+  bento box my-workflow
+  bento box my-workflow --type simple`,
 	Args: cobra.ExactArgs(1),
-	RunE: runPack,
+	RunE: runBox,
 }
 
 func init() {
-	packCmd.Flags().StringVar(&templateType, "type", "simple", "Template type (simple, loop, parallel)")
+	boxCmd.Flags().StringVar(&templateType, "type", "simple", "Template type (simple, loop, parallel)")
 }
 
-// runPack executes the pack command logic.
-func runPack(cmd *cobra.Command, args []string) error {
+// runBox executes the box command logic.
+func runBox(cmd *cobra.Command, args []string) error {
 	name := args[0]
 	fileName := name + ".bento.json"
 
@@ -62,7 +62,7 @@ func checkFileExists(fileName string) error {
 
 // createBentoFile creates a new bento template file.
 func createBentoFile(name, fileName string) error {
-	printInfo(fmt.Sprintf("Packing new bento: %s", name))
+	printInfo(fmt.Sprintf("Boxing new bento: %s", name))
 
 	template := createTemplate(name)
 	if err := writeTemplate(fileName, template); err != nil {
@@ -78,8 +78,8 @@ func createBentoFile(name, fileName string) error {
 func showNextSteps(fileName string) {
 	fmt.Println("\nNext steps:")
 	fmt.Printf("  1. Edit %s\n", fileName)
-	fmt.Printf("  2. Run: bento sniff %s\n", fileName)
-	fmt.Printf("  3. Run: bento taste %s\n", fileName)
+	fmt.Printf("  2. Run: bento peek %s\n", fileName)
+	fmt.Printf("  3. Run: bento eat %s\n", fileName)
 }
 
 // createTemplate creates a template bento definition.

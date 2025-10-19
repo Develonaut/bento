@@ -1,6 +1,6 @@
-// Package main implements the sniff command for validating bentos.
+// Package main implements the peek command for validating bentos.
 //
-// The sniff command loads a bento definition and validates it without executing.
+// The peek command loads a bento definition and validates it without executing.
 // It checks structure, neta types, parameters, and edges to ensure the bento
 // is properly configured.
 package main
@@ -14,35 +14,35 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var sniffVerboseFlag bool
+var peekVerboseFlag bool
 
-var sniffCmd = &cobra.Command{
-	Use:   "sniff [file].bento.json",
-	Short: "🍱 Sniff a bento (validate without executing)",
+var peekCmd = &cobra.Command{
+	Use:   "peek [file].bento.json",
+	Short: "🍱 Peek at a bento (validate without executing)",
 	Long: `Validate a bento without executing it.
 
-Sniff your bento to check if it's fresh and properly configured.
+Peek inside your bento box to check if everything looks good!
 This validates structure, neta types, parameters, and connections.
 
 Examples:
-  bento sniff workflow.bento.json
-  bento sniff workflow.bento.json --verbose`,
+  bento peek workflow.bento.json
+  bento peek workflow.bento.json --verbose`,
 	Args: cobra.ExactArgs(1),
-	RunE: runSniff,
+	RunE: runPeek,
 }
 
 func init() {
-	sniffCmd.Flags().BoolVarP(&sniffVerboseFlag, "verbose", "v", false, "Show detailed validation results")
+	peekCmd.Flags().BoolVarP(&peekVerboseFlag, "verbose", "v", false, "Show detailed validation results")
 }
 
-// runSniff executes the sniff command logic.
-func runSniff(cmd *cobra.Command, args []string) error {
-	def, err := loadBentoForSniff(args[0])
+// runPeek executes the peek command logic.
+func runPeek(cmd *cobra.Command, args []string) error {
+	def, err := loadBentoForPeek(args[0])
 	if err != nil {
 		return err
 	}
 
-	if err := validateForSniff(def); err != nil {
+	if err := validateForPeek(def); err != nil {
 		return err
 	}
 
@@ -50,20 +50,20 @@ func runSniff(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-// loadBentoForSniff loads a bento and prints status.
-func loadBentoForSniff(bentoPath string) (*neta.Definition, error) {
+// loadBentoForPeek loads a bento and prints status.
+func loadBentoForPeek(bentoPath string) (*neta.Definition, error) {
 	def, err := loadBento(bentoPath)
 	if err != nil {
 		printError(fmt.Sprintf("Failed to load bento: %v", err))
 		return nil, err
 	}
 
-	printInfo(fmt.Sprintf("Sniffing bento: %s", def.Name))
+	printInfo(fmt.Sprintf("Peeking at bento: %s", def.Name))
 	return def, nil
 }
 
-// validateForSniff validates the bento definition.
-func validateForSniff(def *neta.Definition) error {
+// validateForPeek validates the bento definition.
+func validateForPeek(def *neta.Definition) error {
 	validator := omakase.New()
 	ctx := context.Background()
 
@@ -77,12 +77,12 @@ func validateForSniff(def *neta.Definition) error {
 
 // showValidationResults displays validation results.
 func showValidationResults() {
-	if sniffVerboseFlag {
+	if peekVerboseFlag {
 		printCheck("Valid JSON structure")
 		printCheck("All neta types recognized")
 		printCheck("All edges valid")
 		printCheck("Required parameters present")
 	}
 
-	printSuccess("Smells fresh! Ready to taste.")
+	printSuccess("Looks delicious! Ready to eat.")
 }

@@ -95,7 +95,7 @@ func simpleValidBento(title string) string {
 	return h + title + n
 }
 
-// Test: bento taste command
+// Test: bento eat command
 
 // verifyCommandSuccess checks if command succeeded with expected output.
 func verifyCommandSuccess(t *testing.T, cmd *exec.Cmd, expectedText string) string {
@@ -111,12 +111,12 @@ func verifyCommandSuccess(t *testing.T, cmd *exec.Cmd, expectedText string) stri
 	return outputStr
 }
 
-// TestTasteCommand_ValidBento verifies that taste executes a valid bento successfully.
-func TestTasteCommand_ValidBento(t *testing.T) {
+// TestEatCommand_ValidBento verifies that eat executes a valid bento successfully.
+func TestEatCommand_ValidBento(t *testing.T) {
 	bentoFile := createTestBento(t, "test.bento.json", simpleValidBento(""))
 	defer os.Remove(bentoFile)
 
-	cmd := exec.Command("bento", "taste", bentoFile)
+	cmd := exec.Command("bento", "eat", bentoFile)
 	output := verifyCommandSuccess(t, cmd, "Delicious")
 
 	if !strings.Contains(output, "🍱") {
@@ -144,8 +144,8 @@ func verifyCommandError(t *testing.T, cmd *exec.Cmd) {
 	}
 }
 
-// TestTasteCommand_InvalidBento verifies proper error handling for invalid bentos.
-func TestTasteCommand_InvalidBento(t *testing.T) {
+// TestEatCommand_InvalidBento verifies proper error handling for invalid bentos.
+func TestEatCommand_InvalidBento(t *testing.T) {
 	bentoFile := createTestBento(t, "invalid.bento.json", `{
 		"id": "invalid",
 		"type": "group",
@@ -153,30 +153,30 @@ func TestTasteCommand_InvalidBento(t *testing.T) {
 	}`)
 	defer os.Remove(bentoFile)
 
-	verifyCommandError(t, exec.Command("bento", "taste", bentoFile))
+	verifyCommandError(t, exec.Command("bento", "eat", bentoFile))
 }
 
-// TestTasteCommand_VerboseFlag verifies verbose output includes details.
-func TestTasteCommand_VerboseFlag(t *testing.T) {
+// TestEatCommand_VerboseFlag verifies verbose output includes details.
+func TestEatCommand_VerboseFlag(t *testing.T) {
 	bentoFile := createTestBento(t, "test.bento.json", simpleValidBento(""))
 	defer os.Remove(bentoFile)
 
-	output := verifyCommandSuccess(t, exec.Command("bento", "taste", bentoFile, "--verbose"), "Delicious")
+	output := verifyCommandSuccess(t, exec.Command("bento", "eat", bentoFile, "--verbose"), "Delicious")
 	if !strings.Contains(output, "node-1") {
 		t.Error("Verbose output should mention node IDs")
 	}
 }
 
-// Test: bento sniff command
+// Test: bento peek command
 
-// TestSniffCommand_ValidBento verifies sniff validates without executing.
-func TestSniffCommand_ValidBento(t *testing.T) {
+// TestPeekCommand_ValidBento verifies peek validates without executing.
+func TestPeekCommand_ValidBento(t *testing.T) {
 	bentoFile := createTestBento(t, "test.bento.json", simpleValidBento(""))
 	defer os.Remove(bentoFile)
 
-	output := verifyCommandSuccess(t, exec.Command("bento", "sniff", bentoFile), "Smells fresh")
-	if strings.Contains(output, "Delicious") {
-		t.Error("sniff should NOT execute the bento")
+	output := verifyCommandSuccess(t, exec.Command("bento", "peek", bentoFile), "Looks delicious")
+	if strings.Contains(output, "Delicious! Bento devoured") {
+		t.Error("peek should NOT execute the bento")
 	}
 }
 
@@ -207,12 +207,12 @@ func invalidHTTPBento() string {
 	}`
 }
 
-// TestSniffCommand_InvalidBento verifies sniff reports validation errors clearly.
-func TestSniffCommand_InvalidBento(t *testing.T) {
+// TestPeekCommand_InvalidBento verifies peek reports validation errors clearly.
+func TestPeekCommand_InvalidBento(t *testing.T) {
 	bentoFile := createTestBento(t, "invalid.bento.json", invalidHTTPBento())
 	defer os.Remove(bentoFile)
 
-	verifyCommandError(t, exec.Command("bento", "sniff", bentoFile))
+	verifyCommandError(t, exec.Command("bento", "peek", bentoFile))
 }
 
 // Test: bento menu command
@@ -246,10 +246,10 @@ func TestMenuCommand_EmptyDirectory(t *testing.T) {
 	}
 }
 
-// Test: bento pack command
+// Test: bento box command
 
-// runPackInDir runs pack command in specified directory.
-func runPackInDir(t *testing.T, dir, name string) {
+// runBoxInDir runs box command in specified directory.
+func runBoxInDir(t *testing.T, dir, name string) {
 	t.Helper()
 	oldDir, err := os.Getwd()
 	if err != nil {
@@ -264,7 +264,7 @@ func runPackInDir(t *testing.T, dir, name string) {
 		}
 	}()
 
-	verifyCommandSuccess(t, exec.Command("bento", "pack", name), "Created")
+	verifyCommandSuccess(t, exec.Command("bento", "box", name), "Created")
 }
 
 // verifyBentoJSONValid checks if bento file is valid JSON with correct ID.
@@ -293,12 +293,12 @@ func verifyBentoJSONValid(t *testing.T, path, expectedID string) {
 	}
 }
 
-// TestPackCommand_CreateTemplate verifies pack creates a template bento.
-func TestPackCommand_CreateTemplate(t *testing.T) {
+// TestBoxCommand_CreateTemplate verifies box creates a template bento.
+func TestBoxCommand_CreateTemplate(t *testing.T) {
 	tmpDir := t.TempDir()
 	bentoPath := filepath.Join(tmpDir, "my-workflow.bento.json")
 
-	runPackInDir(t, tmpDir, "my-workflow")
+	runBoxInDir(t, tmpDir, "my-workflow")
 	verifyBentoJSONValid(t, bentoPath, "my-workflow")
 }
 
@@ -328,13 +328,13 @@ func changeToDir(t *testing.T, dir string) {
 	})
 }
 
-// TestPackCommand_OverwriteProtection verifies pack doesn't overwrite existing files.
-func TestPackCommand_OverwriteProtection(t *testing.T) {
+// TestBoxCommand_OverwriteProtection verifies box doesn't overwrite existing files.
+func TestBoxCommand_OverwriteProtection(t *testing.T) {
 	tmpDir := t.TempDir()
 	createExistingFile(t, tmpDir, "existing.bento.json")
 	changeToDir(t, tmpDir)
 
-	cmd := exec.Command("bento", "pack", "existing")
+	cmd := exec.Command("bento", "box", "existing")
 	output, err := cmd.CombinedOutput()
 
 	if err == nil {
