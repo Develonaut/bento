@@ -4,8 +4,8 @@
 // It uses playful sushi-themed commands to make automation fun.
 //
 // Commands:
-//   - eat: Execute a bento workflow
-//   - peek: Validate a bento without executing
+//   - savor: Execute a bento workflow
+//   - sample: Validate a bento without executing
 //   - menu: List available bentos
 //   - box: Create a new bento template
 //
@@ -30,10 +30,10 @@ Bento lets you build powerful automation workflows using composable
 crafted bento box.
 
 Commands are playfully themed:
-  • eat  - Execute a bento (eat and enjoy it!)
-  • peek - Validate without executing (peek inside to check it's ready)
-  • menu - List available bentos (restaurant menu)
-  • box  - Create a new bento template (box up fresh ingredients)`,
+  • savor  - Execute a bento (savor every delicious bite!)
+  • sample - Validate without executing (sample to check if it tastes right)
+  • menu   - List available bentos (restaurant menu)
+  • box    - Create a new bento template (box up fresh ingredients)`,
 }
 
 func main() {
@@ -43,8 +43,8 @@ func main() {
 }
 
 func init() {
-	rootCmd.AddCommand(eatCmd)
-	rootCmd.AddCommand(peekCmd)
+	rootCmd.AddCommand(savorCmd)
+	rootCmd.AddCommand(sampleCmd)
 	rootCmd.AddCommand(menuCmd)
 	rootCmd.AddCommand(boxCmd)
 	rootCmd.AddCommand(versionCmd)

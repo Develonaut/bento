@@ -95,7 +95,7 @@ func simpleValidBento(title string) string {
 	return h + title + n
 }
 
-// Test: bento eat command
+// Test: bento savor command
 
 // verifyCommandSuccess checks if command succeeded with expected output.
 func verifyCommandSuccess(t *testing.T, cmd *exec.Cmd, expectedText string) string {
@@ -111,12 +111,12 @@ func verifyCommandSuccess(t *testing.T, cmd *exec.Cmd, expectedText string) stri
 	return outputStr
 }
 
-// TestEatCommand_ValidBento verifies that eat executes a valid bento successfully.
-func TestEatCommand_ValidBento(t *testing.T) {
+// TestSavorCommand_ValidBento verifies that savor executes a valid bento successfully.
+func TestSavorCommand_ValidBento(t *testing.T) {
 	bentoFile := createTestBento(t, "test.bento.json", simpleValidBento(""))
 	defer os.Remove(bentoFile)
 
-	cmd := exec.Command("bento", "eat", bentoFile)
+	cmd := exec.Command("bento", "savor", bentoFile)
 	output := verifyCommandSuccess(t, cmd, "Delicious")
 
 	if !strings.Contains(output, "🍱") {
@@ -144,8 +144,8 @@ func verifyCommandError(t *testing.T, cmd *exec.Cmd) {
 	}
 }
 
-// TestEatCommand_InvalidBento verifies proper error handling for invalid bentos.
-func TestEatCommand_InvalidBento(t *testing.T) {
+// TestSavorCommand_InvalidBento verifies proper error handling for invalid bentos.
+func TestSavorCommand_InvalidBento(t *testing.T) {
 	bentoFile := createTestBento(t, "invalid.bento.json", `{
 		"id": "invalid",
 		"type": "group",
@@ -153,30 +153,30 @@ func TestEatCommand_InvalidBento(t *testing.T) {
 	}`)
 	defer os.Remove(bentoFile)
 
-	verifyCommandError(t, exec.Command("bento", "eat", bentoFile))
+	verifyCommandError(t, exec.Command("bento", "savor", bentoFile))
 }
 
-// TestEatCommand_VerboseFlag verifies verbose output includes details.
-func TestEatCommand_VerboseFlag(t *testing.T) {
+// TestSavorCommand_VerboseFlag verifies verbose output includes details.
+func TestSavorCommand_VerboseFlag(t *testing.T) {
 	bentoFile := createTestBento(t, "test.bento.json", simpleValidBento(""))
 	defer os.Remove(bentoFile)
 
-	output := verifyCommandSuccess(t, exec.Command("bento", "eat", bentoFile, "--verbose"), "Delicious")
+	output := verifyCommandSuccess(t, exec.Command("bento", "savor", bentoFile, "--verbose"), "Delicious")
 	if !strings.Contains(output, "node-1") {
 		t.Error("Verbose output should mention node IDs")
 	}
 }
 
-// Test: bento peek command
+// Test: bento sample command
 
-// TestPeekCommand_ValidBento verifies peek validates without executing.
-func TestPeekCommand_ValidBento(t *testing.T) {
+// TestSampleCommand_ValidBento verifies sample validates without executing.
+func TestSampleCommand_ValidBento(t *testing.T) {
 	bentoFile := createTestBento(t, "test.bento.json", simpleValidBento(""))
 	defer os.Remove(bentoFile)
 
-	output := verifyCommandSuccess(t, exec.Command("bento", "peek", bentoFile), "Looks delicious")
-	if strings.Contains(output, "Delicious! Bento devoured") {
-		t.Error("peek should NOT execute the bento")
+	output := verifyCommandSuccess(t, exec.Command("bento", "sample", bentoFile), "Tastes great")
+	if strings.Contains(output, "Delicious! Bento savored") {
+		t.Error("sample should NOT execute the bento")
 	}
 }
 
@@ -207,12 +207,12 @@ func invalidHTTPBento() string {
 	}`
 }
 
-// TestPeekCommand_InvalidBento verifies peek reports validation errors clearly.
-func TestPeekCommand_InvalidBento(t *testing.T) {
+// TestSampleCommand_InvalidBento verifies sample reports validation errors clearly.
+func TestSampleCommand_InvalidBento(t *testing.T) {
 	bentoFile := createTestBento(t, "invalid.bento.json", invalidHTTPBento())
 	defer os.Remove(bentoFile)
 
-	verifyCommandError(t, exec.Command("bento", "peek", bentoFile))
+	verifyCommandError(t, exec.Command("bento", "sample", bentoFile))
 }
 
 // Test: bento menu command

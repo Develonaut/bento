@@ -78,8 +78,8 @@ func createBentoFile(name, fileName string) error {
 func showNextSteps(fileName string) {
 	fmt.Println("\nNext steps:")
 	fmt.Printf("  1. Edit %s\n", fileName)
-	fmt.Printf("  2. Run: bento peek %s\n", fileName)
-	fmt.Printf("  3. Run: bento eat %s\n", fileName)
+	fmt.Printf("  2. Run: bento sample %s\n", fileName)
+	fmt.Printf("  3. Run: bento savor %s\n", fileName)
 }
 
 // createTemplate creates a template bento definition.

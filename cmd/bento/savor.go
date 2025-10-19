@@ -1,6 +1,6 @@
-// Package main implements the eat command for executing bentos.
+// Package main implements the savor command for executing bentos.
 //
-// The eat command loads a bento definition from a JSON file and executes it
+// The savor command loads a bento definition from a JSON file and executes it
 // using the itamae orchestration engine. It provides real-time progress updates
 // and displays execution results with fun sushi-themed output.
 package main
@@ -36,29 +36,29 @@ var (
 	timeoutFlag time.Duration
 )
 
-var eatCmd = &cobra.Command{
-	Use:   "eat [file].bento.json",
-	Short: "🍱 Eat a bento (execute workflow)",
+var savorCmd = &cobra.Command{
+	Use:   "savor [file].bento.json",
+	Short: "🍱 Savor a bento (execute workflow)",
 	Long: `Execute a bento workflow from start to finish.
 
-Eat your bento! This command executes all neta in the bento
+Savor your bento! This command executes all neta in the bento
 and reports progress with delicious output.
 
 Examples:
-  bento eat workflow.bento.json
-  bento eat workflow.bento.json --verbose
-  bento eat workflow.bento.json --timeout 30m`,
+  bento savor workflow.bento.json
+  bento savor workflow.bento.json --verbose
+  bento savor workflow.bento.json --timeout 30m`,
 	Args: cobra.ExactArgs(1),
-	RunE: runEat,
+	RunE: runSavor,
 }
 
 func init() {
-	eatCmd.Flags().BoolVarP(&verboseFlag, "verbose", "v", false, "Verbose output")
-	eatCmd.Flags().DurationVar(&timeoutFlag, "timeout", 10*time.Minute, "Execution timeout")
+	savorCmd.Flags().BoolVarP(&verboseFlag, "verbose", "v", false, "Verbose output")
+	savorCmd.Flags().DurationVar(&timeoutFlag, "timeout", 10*time.Minute, "Execution timeout")
 }
 
-// runEat executes the eat command logic.
-func runEat(cmd *cobra.Command, args []string) error {
+// runSavor executes the savor command logic.
+func runSavor(cmd *cobra.Command, args []string) error {
 	def, err := loadAndValidate(args[0])
 	if err != nil {
 		return err
@@ -76,7 +76,7 @@ func loadAndValidate(bentoPath string) (*neta.Definition, error) {
 		return nil, err
 	}
 
-	printInfo(fmt.Sprintf("Eating bento: %s", def.Name))
+	printInfo(fmt.Sprintf("Savoring bento: %s", def.Name))
 
 	if err := validateBento(def); err != nil {
 		printError(fmt.Sprintf("Validation failed: %v", err))
@@ -109,7 +109,7 @@ func executeBento(chef *itamae.Itamae, def *neta.Definition) error {
 		return err
 	}
 
-	printSuccess(fmt.Sprintf("Delicious! Bento devoured successfully in %s", formatDuration(duration)))
+	printSuccess(fmt.Sprintf("Delicious! Bento savored successfully in %s", formatDuration(duration)))
 	fmt.Printf("   %d neta executed\n", result.NodesExecuted)
 	return nil
 }
@@ -166,9 +166,9 @@ func setupProgress(chef *itamae.Itamae) {
 	chef.OnProgress(func(nodeID, status string) {
 		if verboseFlag {
 			if status == "starting" {
-				printProgress(fmt.Sprintf("Eating neta '%s'...", nodeID))
+				printProgress(fmt.Sprintf("Savoring neta '%s'...", nodeID))
 			} else if status == "completed" {
-				printCheck("Yum!")
+				printCheck("Delicious!")
 			}
 		}
 	})
