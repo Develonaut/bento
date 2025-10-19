@@ -8,6 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Phase 8.7: Product Automation Master Bento** - Complete end-to-end workflow integration
+  - Master bento combining all Phase 8 components (CSV → Folders → Figma API → Blender → WebP)
+  - Integration test validating complete product automation workflow
+  - Template resolution inside forEach loop contexts (fixed context passing)
+  - Performance: 17.7s for 3 products (5.9s per product) with mocks
+  - Demonstrates: CSV reading, loops, HTTP requests, shell commands, parallel optimization, file operations
 - Phase 8.6: Image Optimization Bento with parallel WebP conversion
   - Integration tests for parallel image conversion (8 PNGs to WebP)
   - Glob pattern support for filesystem delete operation (`render-*.png`)
