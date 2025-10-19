@@ -3,50 +3,43 @@ package shoyu
 import (
 	"context"
 	"io"
+	"log/slog"
 	"os"
+
+	"github.com/charmbracelet/log"
 )
 
-// logger is the internal interface that both slog and charm implementations satisfy.
-type logger interface {
-	Info(msg string, args ...any)
-	Debug(msg string, args ...any)
-	Warn(msg string, args ...any)
-	Error(msg string, args ...any)
-	InfoContext(ctx context.Context, msg string, args ...any)
-	DebugContext(ctx context.Context, msg string, args ...any)
-	WarnContext(ctx context.Context, msg string, args ...any)
-	ErrorContext(ctx context.Context, msg string, args ...any)
-	With(args ...any) logger
-	Stream(line string)
-	SetOutput(w io.Writer)
-}
-
-// Logger wraps either slog.Logger or charm/log with bento-specific functionality.
-// It provides structured logging with support for both JSON and
-// human-readable console output, as well as streaming for long-running
-// processes like Blender renders.
+// Logger wraps slog.Logger using charm/log as the handler for beautiful output.
+// It provides structured logging with charm's beautiful formatting,
+// as well as streaming for long-running processes like Blender renders.
 type Logger struct {
-	impl logger
+	sl       *slog.Logger
+	handler  *log.Logger
+	onStream StreamCallback
 }
 
 // New creates a new Logger with the given configuration.
+// Uses charm/log as an slog handler for beautiful output.
 // Defaults are applied for missing configuration values:
 //   - Output: os.Stdout
 //   - Level: LevelInfo
-//   - Format: FormatConsole
-//   - UseCharm: false
 func New(cfg Config) *Logger {
 	cfg = applyDefaults(cfg)
 
-	var impl logger
-	if cfg.UseCharm {
-		impl = newCharmLogger(cfg)
-	} else {
-		impl = newSlogLogger(cfg)
-	}
+	// Create charm/log handler with options
+	handler := log.NewWithOptions(cfg.Output, log.Options{
+		Level:           convertLevel(cfg.Level),
+		ReportTimestamp: true,
+		ReportCaller:    false,
+	})
+
+	// Create slog logger using charm handler
+	sl := slog.New(handler)
 
 	return &Logger{
-		impl: impl,
+		sl:       sl,
+		handler:  handler,
+		onStream: cfg.OnStream,
 	}
 }
 
@@ -60,56 +53,68 @@ func applyDefaults(cfg Config) Config {
 		cfg.Level = LevelInfo
 	}
 
-	if cfg.Format == "" {
-		cfg.Format = FormatConsole
-	}
-
 	return cfg
+}
+
+// convertLevel converts our Level type to charm/log Level.
+func convertLevel(level Level) log.Level {
+	switch level {
+	case LevelDebug:
+		return log.DebugLevel
+	case LevelInfo:
+		return log.InfoLevel
+	case LevelWarn:
+		return log.WarnLevel
+	case LevelError:
+		return log.ErrorLevel
+	default:
+		return log.InfoLevel
+	}
 }
 
 // Info logs an informational message with optional key-value pairs.
 // Args must be provided as alternating keys and values.
 func (l *Logger) Info(msg string, args ...any) {
-	l.impl.Info(msg, args...)
+	l.sl.Info(msg, args...)
 }
 
 // Debug logs a debug message with optional key-value pairs.
 // Args must be provided as alternating keys and values.
 func (l *Logger) Debug(msg string, args ...any) {
-	l.impl.Debug(msg, args...)
+	l.sl.Debug(msg, args...)
 }
 
 // Warn logs a warning message with optional key-value pairs.
 // Args must be provided as alternating keys and values.
 func (l *Logger) Warn(msg string, args ...any) {
-	l.impl.Warn(msg, args...)
+	l.sl.Warn(msg, args...)
 }
 
 // Error logs an error message with optional key-value pairs.
 // Args must be provided as alternating keys and values.
 func (l *Logger) Error(msg string, args ...any) {
-	l.impl.Error(msg, args...)
+	l.sl.Error(msg, args...)
 }
 
 // InfoContext logs an informational message with context.
 // This is the preferred method when context is available.
 func (l *Logger) InfoContext(ctx context.Context, msg string, args ...any) {
-	l.impl.InfoContext(ctx, msg, args...)
+	l.sl.InfoContext(ctx, msg, args...)
 }
 
 // DebugContext logs a debug message with context.
 func (l *Logger) DebugContext(ctx context.Context, msg string, args ...any) {
-	l.impl.DebugContext(ctx, msg, args...)
+	l.sl.DebugContext(ctx, msg, args...)
 }
 
 // WarnContext logs a warning message with context.
 func (l *Logger) WarnContext(ctx context.Context, msg string, args ...any) {
-	l.impl.WarnContext(ctx, msg, args...)
+	l.sl.WarnContext(ctx, msg, args...)
 }
 
 // ErrorContext logs an error message with context.
 func (l *Logger) ErrorContext(ctx context.Context, msg string, args ...any) {
-	l.impl.ErrorContext(ctx, msg, args...)
+	l.sl.ErrorContext(ctx, msg, args...)
 }
 
 // With creates a child logger with additional context fields.
@@ -122,7 +127,9 @@ func (l *Logger) ErrorContext(ctx context.Context, msg string, args ...any) {
 //	    "neta_id", "node-1")
 func (l *Logger) With(args ...any) *Logger {
 	return &Logger{
-		impl: l.impl.With(args...),
+		sl:       l.sl.With(args...),
+		handler:  l.handler,
+		onStream: l.onStream,
 	}
 }
 
@@ -132,11 +139,15 @@ func (l *Logger) With(args ...any) *Logger {
 //
 // The line is also logged at debug level for record-keeping.
 func (l *Logger) Stream(line string) {
-	l.impl.Stream(line)
+	if l.onStream != nil {
+		l.onStream(line)
+	}
+
+	// Also log at debug level for record-keeping
+	l.sl.Debug("stream", "output", line)
 }
 
 // SetOutput changes the output destination.
-// Note: This may not work for all backend implementations.
 func (l *Logger) SetOutput(w io.Writer) {
-	l.impl.SetOutput(w)
+	l.handler.SetOutput(w)
 }

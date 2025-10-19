@@ -54,18 +54,9 @@ type Config struct {
 	// Defaults to LevelInfo if not specified.
 	Level Level
 
-	// Format is the output format (JSON or Console).
-	// Defaults to FormatConsole if not specified.
-	Format Format
-
 	// Output is where logs are written.
 	// Defaults to os.Stdout if not specified.
 	Output io.Writer
-
-	// UseCharm enables beautiful charm/log formatting.
-	// When true, uses charmbracelet/log instead of slog for pretty output.
-	// Default: false (uses slog)
-	UseCharm bool
 
 	// OnStream is called for streaming output (optional).
 	// Used for real-time output from long-running processes like Blender.
@@ -93,17 +84,4 @@ const (
 
 	// LevelError shows only error messages.
 	LevelError Level = "error"
-)
-
-// Format represents the output format for log messages.
-type Format string
-
-const (
-	// FormatJSON produces structured JSON output for machine parsing.
-	// Use this for production environments or when logs need to be parsed.
-	FormatJSON Format = "json"
-
-	// FormatConsole produces human-readable console output.
-	// Use this for development or when tailing logs in a terminal.
-	FormatConsole Format = "console"
 )

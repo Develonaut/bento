@@ -3,21 +3,18 @@ package shoyu_test
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"strings"
 	"testing"
 
 	"github.com/Develonaut/bento/pkg/shoyu"
 )
 
-// TestLogger_StructuredJSON verifies that the logger outputs proper JSON
-// with all required fields in structured mode.
-func TestLogger_StructuredJSON(t *testing.T) {
+// TestLogger_Output verifies that the logger outputs messages with key-value pairs.
+func TestLogger_Output(t *testing.T) {
 	var buf bytes.Buffer
 
 	logger := shoyu.New(shoyu.Config{
 		Level:  shoyu.LevelInfo,
-		Format: shoyu.FormatJSON,
 		Output: &buf,
 	})
 
@@ -25,26 +22,18 @@ func TestLogger_StructuredJSON(t *testing.T) {
 		"neta_type", "http-request",
 		"neta_id", "node-1")
 
-	// Parse JSON output
-	var logEntry map[string]interface{}
-	if err := json.Unmarshal(buf.Bytes(), &logEntry); err != nil {
-		t.Fatalf("Failed to parse JSON: %v\nOutput: %s", err, buf.String())
+	output := buf.String()
+
+	if !strings.Contains(output, "Executing HTTP request") {
+		t.Errorf("Output should contain message: %s", output)
 	}
 
-	if logEntry["level"] != "INFO" {
-		t.Errorf("level = %v, want INFO", logEntry["level"])
+	if !strings.Contains(output, "neta_type") || !strings.Contains(output, "http-request") {
+		t.Errorf("Output should contain neta_type=http-request: %s", output)
 	}
 
-	if logEntry["neta_type"] != "http-request" {
-		t.Errorf("neta_type = %v, want http-request", logEntry["neta_type"])
-	}
-
-	if logEntry["neta_id"] != "node-1" {
-		t.Errorf("neta_id = %v, want node-1", logEntry["neta_id"])
-	}
-
-	if logEntry["msg"] != "Executing HTTP request" {
-		t.Errorf("msg = %v, want 'Executing HTTP request'", logEntry["msg"])
+	if !strings.Contains(output, "neta_id") || !strings.Contains(output, "node-1") {
+		t.Errorf("Output should contain neta_id=node-1: %s", output)
 	}
 }
 
@@ -55,7 +44,6 @@ func TestLogger_ConsoleOutput(t *testing.T) {
 
 	logger := shoyu.New(shoyu.Config{
 		Level:  shoyu.LevelInfo,
-		Format: shoyu.FormatConsole,
 		Output: &buf,
 	})
 
@@ -85,7 +73,6 @@ func TestLogger_Levels(t *testing.T) {
 	// Set level to WARN - should not see INFO or DEBUG
 	logger := shoyu.New(shoyu.Config{
 		Level:  shoyu.LevelWarn,
-		Format: shoyu.FormatJSON,
 		Output: &buf,
 	})
 
@@ -115,7 +102,6 @@ func TestLogger_DebugLevel(t *testing.T) {
 
 	logger := shoyu.New(shoyu.Config{
 		Level:  shoyu.LevelDebug,
-		Format: shoyu.FormatJSON,
 		Output: &buf,
 	})
 
@@ -140,7 +126,6 @@ func TestLogger_WithContext(t *testing.T) {
 
 	logger := shoyu.New(shoyu.Config{
 		Level:  shoyu.LevelInfo,
-		Format: shoyu.FormatJSON,
 		Output: &buf,
 	})
 
@@ -151,18 +136,14 @@ func TestLogger_WithContext(t *testing.T) {
 
 	contextLogger.Info("Executing neta")
 
-	// Parse JSON
-	var logEntry map[string]interface{}
-	if err := json.Unmarshal(buf.Bytes(), &logEntry); err != nil {
-		t.Fatalf("Failed to parse JSON: %v", err)
+	output := buf.String()
+
+	if !strings.Contains(output, "trace-123") {
+		t.Errorf("Output should contain trace_id: %s", output)
 	}
 
-	if logEntry["trace_id"] != "trace-123" {
-		t.Errorf("trace_id = %v, want trace-123", logEntry["trace_id"])
-	}
-
-	if logEntry["bento_id"] != "my-workflow" {
-		t.Errorf("bento_id = %v, want my-workflow", logEntry["bento_id"])
+	if !strings.Contains(output, "my-workflow") {
+		t.Errorf("Output should contain bento_id: %s", output)
 	}
 }
 
@@ -175,7 +156,6 @@ func TestLogger_StreamingCallback(t *testing.T) {
 
 	logger := shoyu.New(shoyu.Config{
 		Level:  shoyu.LevelInfo,
-		Format: shoyu.FormatConsole,
 		Output: &buf,
 		OnStream: func(line string) {
 			streamLines = append(streamLines, line)
@@ -207,7 +187,6 @@ func TestLogger_ContextHelpers(t *testing.T) {
 
 	logger := shoyu.New(shoyu.Config{
 		Level:  shoyu.LevelInfo,
-		Format: shoyu.FormatJSON,
 		Output: &buf,
 	})
 
@@ -218,22 +197,18 @@ func TestLogger_ContextHelpers(t *testing.T) {
 
 	logger.Info("Test message")
 
-	// Parse JSON
-	var logEntry map[string]interface{}
-	if err := json.Unmarshal(buf.Bytes(), &logEntry); err != nil {
-		t.Fatalf("Failed to parse JSON: %v", err)
+	output := buf.String()
+
+	if !strings.Contains(output, "workflow-123") {
+		t.Errorf("Output should contain bento_id: %s", output)
 	}
 
-	if logEntry["bento_id"] != "workflow-123" {
-		t.Errorf("bento_id = %v, want workflow-123", logEntry["bento_id"])
+	if !strings.Contains(output, "neta-456") {
+		t.Errorf("Output should contain neta_id: %s", output)
 	}
 
-	if logEntry["neta_id"] != "neta-456" {
-		t.Errorf("neta_id = %v, want neta-456", logEntry["neta_id"])
-	}
-
-	if logEntry["neta_type"] != "http-request" {
-		t.Errorf("neta_type = %v, want http-request", logEntry["neta_type"])
+	if !strings.Contains(output, "http-request") {
+		t.Errorf("Output should contain neta_type: %s", output)
 	}
 }
 
@@ -245,7 +220,6 @@ func TestLogger_StreamReader(t *testing.T) {
 
 	logger := shoyu.New(shoyu.Config{
 		Level:  shoyu.LevelInfo,
-		Format: shoyu.FormatConsole,
 		Output: &buf,
 	})
 
@@ -299,7 +273,6 @@ func TestLogger_InfoContext(t *testing.T) {
 
 	logger := shoyu.New(shoyu.Config{
 		Level:  shoyu.LevelInfo,
-		Format: shoyu.FormatJSON,
 		Output: &buf,
 	})
 

@@ -156,8 +156,7 @@ func createLogger() *shoyu.Logger {
 	}
 
 	return shoyu.New(shoyu.Config{
-		Level:  level,
-		Format: shoyu.FormatConsole,
+		Level: level,
 	})
 }
 
