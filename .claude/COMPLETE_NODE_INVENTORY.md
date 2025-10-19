@@ -1,4 +1,4 @@
-# Complete Atomiton Node Inventory for Bentobox
+# Complete Atomiton Node Inventory for Bento
 
 **Date:** 2025-10-18
 **Purpose:** Complete 1:1 catalog of ALL nodes in @atomiton/nodes for Go migration

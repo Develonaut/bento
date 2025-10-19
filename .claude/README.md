@@ -1,4 +1,4 @@
-# Bentobox - Go CLI for Workflow Automation
+# Bento - Go CLI for Workflow Automation
 
 **Date:** 2025-10-18
 **Purpose:** Port Atomiton's core architecture from TypeScript to Go for a high-performance CLI tool
@@ -8,7 +8,7 @@
 
 ## Project Overview
 
-Bentobox is a complete rewrite of Atomiton's core execution engine in Go, designed to be:
+Bento is a complete rewrite of Atomiton's core execution engine in Go, designed to be:
 
 - ✅ **Fast:** 15-30x faster startup, 6x less memory
 - ✅ **Small:** 20MB binary vs 202MB node_modules
@@ -275,7 +275,7 @@ Memory:           30MB baseline, 150MB peak
 Parallel Nodes:   Event loop (single-threaded)
 ```
 
-### Go Bentobox CLI (Projected)
+### Go Bento CLI (Projected)
 
 ```
 Binary Size:      20MB (static binary, all deps included)
@@ -293,27 +293,26 @@ Parallel Nodes:   True parallelism (goroutines, multi-core)
 
 ---
 
-## Project Structure (Planned)
+## Project Structure (Actual)
 
 ```
-bentobox/
+bento/
 ├── cmd/
-│   └── bentobox/
+│   └── bento/
 │       ├── main.go
-│       ├── commands/
-│       │   ├── run.go
-│       │   ├── validate.go
-│       │   ├── list.go
-│       │   └── create.go
-│       └── tui/          # Phase 7
-│           └── app.go
+│       ├── savor.go         # Execute command
+│       ├── sample.go         # Validate command
+│       ├── menu.go           # List command
+│       ├── box.go            # Create command
+│       ├── version.go
+│       ├── output.go
+│       └── main_test.go
 │
 ├── pkg/
-│   ├── nodes/
+│   ├── neta/               # "Ingredients" - Workflow nodes
 │   │   ├── definition.go
 │   │   ├── executable.go
-│   │   ├── registry.go
-│   │   ├── graph/
+│   │   ├── ports.go
 │   │   └── library/
 │   │       ├── editfields/
 │   │       ├── http/
@@ -326,38 +325,44 @@ bentobox/
 │   │       ├── spreadsheet/
 │   │       └── shellcommand/
 │   │
-│   ├── storage/
-│   │   ├── engine.go
-│   │   ├── filesystem.go
-│   │   ├── memory.go
-│   │   └── json.go
+│   ├── hangiri/            # "Wooden Rice Tub" - Storage
+│   │   ├── hangiri.go
+│   │   └── hangiri_test.go
 │   │
-│   ├── conductor/
-│   │   ├── conductor.go
-│   │   ├── execution/
-│   │   ├── events/
-│   │   ├── store/
-│   │   └── debug/
+│   ├── itamae/             # "Sushi Chef" - Orchestration
+│   │   ├── itamae.go
+│   │   ├── parallel.go
+│   │   ├── errors.go
+│   │   └── *_test.go
 │   │
-│   ├── logger/
-│   ├── validation/
-│   └── utils/
-│
-├── internal/
-│   └── testutil/
+│   ├── pantry/             # Registry of neta types
+│   │   ├── pantry.go
+│   │   └── pantry_test.go
+│   │
+│   ├── shoyu/              # "Soy Sauce" - Logging
+│   │   ├── shoyu.go
+│   │   └── shoyu_test.go
+│   │
+│   └── omakase/            # "Chef's Choice" - Validation
+│       ├── omakase.go
+│       └── omakase_test.go
 │
 ├── .claude/
 │   ├── README.md (this file)
 │   ├── ATOMITON_PACKAGE_AUDIT.md
+│   ├── BENTO_BOX_PRINCIPLE.md
 │   ├── COMPLETE_NODE_INVENTORY.md
-│   ├── JSON_MIGRATION_NOTES.md
-│   └── agents/
-│       ├── Karen.md
-│       └── Colossus.md
+│   ├── EMOJIS.md
+│   ├── PACKAGE_NAMING.md
+│   ├── STATUS_WORDS.md
+│   ├── agents/
+│   │   ├── Karen.md
+│   │   └── Colossus.md
+│   └── workflow/
+│       └── REVIEW_CHECKLIST.md
 │
 ├── go.mod
 ├── go.sum
-├── Makefile
 └── README.md
 ```
 
@@ -433,7 +438,7 @@ bentobox/
 - Karen (copied from Bento)
 - Colossus (copied from Bento)
 
-**Project Location:** `/Users/Ryan/Code/Bentobox`
+**Project Location:** `/Users/Ryan/Code/Bento`
 
 ---
 

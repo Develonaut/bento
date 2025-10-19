@@ -15,10 +15,10 @@ Bento is a complete rewrite of Atomiton's core execution engine, designed to be 
 ## Commands
 
 ```bash
-bento serve workflow.bento.json    # Execute a bento workflow
-bento inspect workflow.bento.json  # Validate a bento file
+bento savor workflow.bento.json    # Execute a bento workflow
+bento sample workflow.bento.json   # Validate a bento file
 bento menu                         # List available bentos
-bento new my-workflow              # Create a new bento
+bento box my-workflow              # Create a new bento
 ```
 
 ## Architecture
