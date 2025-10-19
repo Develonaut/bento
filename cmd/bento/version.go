@@ -8,9 +8,10 @@ import (
 )
 
 var versionCmd = &cobra.Command{
-	Use:   "version",
-	Short: "Show version information",
-	Long:  `Display the current version of the bento CLI.`,
+	Use:     "version",
+	Aliases: []string{"v"},
+	Short:   "Show version information",
+	Long:    `Display the current version of the bento CLI.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Printf("bento version %s\n", version)
 	},

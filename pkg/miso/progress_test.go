@@ -122,7 +122,7 @@ func TestProgress_BubbletaModel(t *testing.T) {
 	time.Sleep(time.Millisecond * 50)
 
 	// Quit the model
-	tm.Quit()
+	_ = tm.Quit()
 
 	// Verify the final model state rather than terminal output
 	finalModel := tm.FinalModel(t)

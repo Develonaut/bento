@@ -344,3 +344,80 @@ func TestBoxCommand_OverwriteProtection(t *testing.T) {
 		}
 	}
 }
+
+// Test: bento recipe command
+
+// TestRecipeCommand_ShowsHelp verifies recipe command help works.
+func TestRecipeCommand_ShowsHelp(t *testing.T) {
+	output := verifyCommandSuccess(t, exec.Command("bento", "recipe", "--help"), "View bento documentation")
+	if !strings.Contains(output, "readme") {
+		t.Error("Help should list available docs like 'readme'")
+	}
+}
+
+// TestRecipeCommand_InvalidDoc verifies recipe handles invalid doc names.
+func TestRecipeCommand_InvalidDoc(t *testing.T) {
+	cmd := exec.Command("bento", "recipe", "nonexistent-doc")
+	output, err := cmd.CombinedOutput()
+	if err == nil {
+		t.Fatal("Command should fail for invalid doc name")
+	}
+	outputStr := string(output)
+	if !strings.Contains(outputStr, "unknown doc") {
+		t.Errorf("Should mention 'unknown doc': %s", outputStr)
+	}
+}
+
+// TestRecipeCommand_GlowNotInstalledMessage verifies helpful error when glow missing.
+func TestRecipeCommand_GlowNotInstalledMessage(t *testing.T) {
+	// Only run if glow is NOT installed (common in CI)
+	if _, err := exec.LookPath("glow"); err == nil {
+		t.Skip("Skipping: glow is installed, can't test missing glow message")
+	}
+
+	cmd := exec.Command("bento", "recipe", "readme")
+	output, err := cmd.CombinedOutput()
+	if err == nil {
+		t.Fatal("Command should fail when glow is not installed")
+	}
+
+	outputStr := string(output)
+	if !strings.Contains(outputStr, "glow is not installed") {
+		t.Errorf("Should mention glow not installed: %s", outputStr)
+	}
+	if !strings.Contains(outputStr, "brew install glow") {
+		t.Error("Should provide installation instructions")
+	}
+}
+
+// Test: bento version command
+
+// TestVersionCommand_ShowsVersion verifies version command displays version.
+func TestVersionCommand_ShowsVersion(t *testing.T) {
+	output := verifyCommandSuccess(t, exec.Command("bento", "version"), "version")
+	// Should show either "dev" or a semantic version like "v1.0.0"
+	if !strings.Contains(output, "dev") && !strings.Contains(output, "v") {
+		t.Errorf("Should display version info: %s", output)
+	}
+}
+
+// TestVersionCommand_NoArguments verifies version works without arguments.
+func TestVersionCommand_NoArguments(t *testing.T) {
+	cmd := exec.Command("bento", "version")
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		t.Fatalf("version command should succeed: %v\nOutput: %s", err, string(output))
+	}
+	if len(output) == 0 {
+		t.Error("version output should not be empty")
+	}
+}
+
+// TestVersionCommand_Shorthand verifies -v alias works.
+func TestVersionCommand_Shorthand(t *testing.T) {
+	output := verifyCommandSuccess(t, exec.Command("bento", "v"), "version")
+	// Both 'bento version' and 'bento v' should produce identical output
+	if !strings.Contains(output, "dev") && !strings.Contains(output, "v") {
+		t.Errorf("Should display version info: %s", output)
+	}
+}

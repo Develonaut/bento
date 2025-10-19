@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 
 	"github.com/spf13/cobra"
 )
@@ -68,7 +69,7 @@ func runRecipe(cmd *cobra.Command, args []string) error {
 
 	// Check if glow is installed
 	if !isGlowInstalled() {
-		return fmt.Errorf("glow is not installed\n\nInstall with:\n  brew install glow\n\nOr visit: https://github.com/charmbracelet/glow")
+		return fmt.Errorf("%s", getGlowInstallMessage())
 	}
 
 	// Get absolute path to the doc
@@ -99,4 +100,28 @@ func viewWithGlow(path string) error {
 	glowCmd.Stdout = os.Stdout
 	glowCmd.Stderr = os.Stderr
 	return glowCmd.Run()
+}
+
+// getGlowInstallMessage returns OS-specific installation instructions for glow.
+func getGlowInstallMessage() string {
+	var installCmd string
+	switch runtime.GOOS {
+	case "darwin":
+		installCmd = "brew install glow"
+	case "linux":
+		installCmd = "sudo apt install glow  # Debian/Ubuntu\n  sudo yum install glow      # RedHat/CentOS\n  go install github.com/charmbracelet/glow@latest"
+	case "windows":
+		installCmd = "scoop install glow\n  choco install glow"
+	default:
+		installCmd = "go install github.com/charmbracelet/glow@latest"
+	}
+
+	return fmt.Sprintf(`glow is not installed
+
+Glow is required to view documentation in a beautiful format.
+
+Install with:
+  %s
+
+Or visit: https://github.com/charmbracelet/glow`, installCmd)
 }
