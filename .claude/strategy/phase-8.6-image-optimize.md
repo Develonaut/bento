@@ -207,7 +207,11 @@ This proves parallel neta works!
 ```
 Implement Phase 8.6: Image Optimization Bento using TDD.
 
-Read: .claude/strategy/phase-8.6-image-optimize.md
+Please read:
+- .claude/strategy/phase-8-real-world-bento.md (overall Phase 8 context)
+- .claude/BENTO_BOX_PRINCIPLE.md (coding standards)
+- .claude/strategy/phase-8.5-mock-render.md (PNGs from render phase)
+- .claude/strategy/phase-8.6-image-optimize.md (this phase)
 
 TDD Workflow:
 1. Write tests/integration/image_optimize_test.go (RED)

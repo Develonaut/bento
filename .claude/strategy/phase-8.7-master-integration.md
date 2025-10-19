@@ -432,9 +432,16 @@ Phase 8 proves the entire bento system works end-to-end!
 ```
 Implement Phase 8.7: Master Integration Bento - THE FINALE!
 
-Read:
-- .claude/strategy/phase-8.7-master-integration.md (this file)
-- All previous phase-8.X.md files (8.1-8.6)
+Please read:
+- .claude/strategy/phase-8-real-world-bento.md (overall Phase 8 context)
+- .claude/BENTO_BOX_PRINCIPLE.md (coding standards)
+- .claude/strategy/phase-8.1-test-infrastructure.md (test infrastructure)
+- .claude/strategy/phase-8.2-csv-reader.md (CSV reader)
+- .claude/strategy/phase-8.3-folder-setup.md (folder setup)
+- .claude/strategy/phase-8.4-api-fetch.md (API fetch)
+- .claude/strategy/phase-8.5-mock-render.md (mock render)
+- .claude/strategy/phase-8.6-image-optimize.md (image optimization)
+- .claude/strategy/phase-8.7-master-integration.md (this phase)
 
 TDD Workflow:
 

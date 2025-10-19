@@ -188,7 +188,11 @@ chmod +x tests/mocks/blender-mock.sh
 ```
 Implement Phase 8.5: Mock Render Bento using TDD.
 
-Read: .claude/strategy/phase-8.5-mock-render.md
+Please read:
+- .claude/strategy/phase-8-real-world-bento.md (overall Phase 8 context)
+- .claude/BENTO_BOX_PRINCIPLE.md (coding standards)
+- .claude/strategy/phase-8.1-test-infrastructure.md (mock Blender script)
+- .claude/strategy/phase-8.5-mock-render.md (this phase)
 
 TDD Workflow:
 1. Verify tests/mocks/blender-mock.sh is executable

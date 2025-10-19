@@ -286,8 +286,10 @@ Once Phase 8.2 is complete and code-reviewed:
 I need to implement Phase 8.2: CSV Reader Bento using TDD.
 
 Please read:
-- .claude/strategy/phase-8.2-csv-reader.md (this file)
+- .claude/strategy/phase-8-real-world-bento.md (overall Phase 8 context)
+- .claude/BENTO_BOX_PRINCIPLE.md (coding standards)
 - .claude/strategy/phase-8.1-test-infrastructure.md (test infrastructure)
+- .claude/strategy/phase-8.2-csv-reader.md (this phase)
 
 Then follow TDD workflow:
 

@@ -165,7 +165,11 @@ ls products/MOCK-001/overlay.png  # Should exist
 ```
 Implement Phase 8.4: API Fetch Bento using TDD.
 
-Read: .claude/strategy/phase-8.4-api-fetch.md
+Please read:
+- .claude/strategy/phase-8-real-world-bento.md (overall Phase 8 context)
+- .claude/BENTO_BOX_PRINCIPLE.md (coding standards)
+- .claude/strategy/phase-8.1-test-infrastructure.md (mock Figma server)
+- .claude/strategy/phase-8.4-api-fetch.md (this phase)
 
 TDD Workflow:
 1. Write tests/integration/api_fetch_test.go (RED)
