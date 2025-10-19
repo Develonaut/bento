@@ -11,7 +11,7 @@ func TestFigmaServer_ValidRequest(t *testing.T) {
 	server := NewFigmaServer()
 	defer server.Close()
 
-	req, err := http.NewRequest("GET", server.URL, nil)
+	req, err := http.NewRequest("GET", server.URL+"/v1/images/test-file", nil)
 	if err != nil {
 		t.Fatalf("Failed to create request: %v", err)
 	}
@@ -48,7 +48,7 @@ func TestFigmaServer_MissingToken(t *testing.T) {
 	server := NewFigmaServer()
 	defer server.Close()
 
-	resp, err := http.Get(server.URL)
+	resp, err := http.Get(server.URL + "/v1/images/test-file")
 	if err != nil {
 		t.Fatalf("Request failed: %v", err)
 	}
@@ -73,7 +73,7 @@ func TestFigmaServer_ResponseFormat(t *testing.T) {
 	server := NewFigmaServer()
 	defer server.Close()
 
-	req, err := http.NewRequest("GET", server.URL, nil)
+	req, err := http.NewRequest("GET", server.URL+"/v1/images/test-file", nil)
 	if err != nil {
 		t.Fatalf("Failed to create request: %v", err)
 	}
