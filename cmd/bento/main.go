@@ -33,7 +33,8 @@ Commands are playfully themed:
   • savor  - Execute a bento (savor every delicious bite!)
   • sample - Validate without executing (sample to check if it tastes right)
   • menu   - List available bentos (restaurant menu)
-  • box    - Create a new bento template (box up fresh ingredients)`,
+  • box    - Create a new bento template (box up fresh ingredients)
+  • recipe - View documentation (learn the recipe)`,
 }
 
 func main() {
@@ -47,5 +48,6 @@ func init() {
 	rootCmd.AddCommand(sampleCmd)
 	rootCmd.AddCommand(menuCmd)
 	rootCmd.AddCommand(boxCmd)
+	rootCmd.AddCommand(recipeCmd)
 	rootCmd.AddCommand(versionCmd)
 }

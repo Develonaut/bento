@@ -18,7 +18,7 @@ var templateType string
 
 var boxCmd = &cobra.Command{
 	Use:   "box [name]",
-	Short: "🍱 Create a new bento in a box",
+	Short: "🥡 Create a new bento in a box",
 	Long: `Create a new bento template file.
 
 Box up a fresh bento with a template you can customize!

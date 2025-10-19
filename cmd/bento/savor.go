@@ -38,7 +38,7 @@ var (
 
 var savorCmd = &cobra.Command{
 	Use:   "savor [file].bento.json",
-	Short: "🍱 Savor a bento (execute workflow)",
+	Short: "🍣 Savor a bento (execute workflow)",
 	Long: `Execute a bento workflow from start to finish.
 
 Savor your bento! This command executes all neta in the bento

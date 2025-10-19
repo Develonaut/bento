@@ -119,8 +119,8 @@ func TestSavorCommand_ValidBento(t *testing.T) {
 	cmd := exec.Command("bento", "savor", bentoFile)
 	output := verifyCommandSuccess(t, cmd, "Delicious")
 
-	if !strings.Contains(output, "🍱") {
-		t.Error("Output should contain bento emoji 🍱")
+	if !strings.Contains(output, "✓") {
+		t.Error("Output should contain success checkmark ✓")
 	}
 }
 

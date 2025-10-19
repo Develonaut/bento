@@ -19,6 +19,7 @@ bento savor workflow.bento.json    # Execute a bento workflow
 bento sample workflow.bento.json   # Validate a bento file
 bento menu                         # List available bentos
 bento box my-workflow              # Create a new bento
+bento recipe readme                # View docs with glow
 ```
 
 ## Architecture

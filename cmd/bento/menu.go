@@ -21,7 +21,7 @@ var (
 
 var menuCmd = &cobra.Command{
 	Use:   "menu [directory]",
-	Short: "🍱 List available bentos",
+	Short: "🍜 List available bentos",
 	Long: `List all available bentos in a directory.
 
 Like a restaurant menu, this shows you all the bentos you can taste.
@@ -63,7 +63,7 @@ func getDir(args []string) string {
 // displayBentos displays the list of found bentos.
 func displayBentos(bentos []bentoInfo) {
 	if len(bentos) == 0 {
-		fmt.Println("🍱 No bentos found")
+		fmt.Println("🍜 No bentos found")
 		return
 	}
 

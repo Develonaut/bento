@@ -34,19 +34,19 @@ func formatDuration(d time.Duration) string {
 	return fmt.Sprintf("%dh %dm", hours, mins)
 }
 
-// printSuccess prints a success message with bento emoji.
+// printSuccess prints a success message with checkmark.
 func printSuccess(message string) {
-	fmt.Printf("\n🍱 %s\n", message)
+	fmt.Printf("\n✓ %s\n", message)
 }
 
-// printError prints an error message with emoji.
+// printError prints an error message with X mark.
 func printError(message string) {
-	fmt.Printf("\n❌ %s\n", message)
+	fmt.Printf("\n✗ %s\n", message)
 }
 
-// printInfo prints an info message with bento emoji.
+// printInfo prints an info message with info emoji.
 func printInfo(message string) {
-	fmt.Printf("🍱 %s\n", message)
+	fmt.Printf("ℹ️  %s\n", message)
 }
 
 // printProgress prints a progress message with neta emoji.

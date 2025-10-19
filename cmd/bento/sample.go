@@ -18,7 +18,7 @@ var sampleVerboseFlag bool
 
 var sampleCmd = &cobra.Command{
 	Use:   "sample [file].bento.json",
-	Short: "🍱 Sample a bento (validate without executing)",
+	Short: "🥢 Sample a bento (validate without executing)",
 	Long: `Validate a bento without executing it.
 
 Sample your bento to check if it tastes right before serving!
