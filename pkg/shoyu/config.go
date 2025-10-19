@@ -62,6 +62,11 @@ type Config struct {
 	// Defaults to os.Stdout if not specified.
 	Output io.Writer
 
+	// UseCharm enables beautiful charm/log formatting.
+	// When true, uses charmbracelet/log instead of slog for pretty output.
+	// Default: false (uses slog)
+	UseCharm bool
+
 	// OnStream is called for streaming output (optional).
 	// Used for real-time output from long-running processes like Blender.
 	// Critical for Phase 8: shell-command neta streaming.
