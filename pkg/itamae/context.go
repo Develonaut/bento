@@ -3,6 +3,7 @@ package itamae
 import (
 	"bytes"
 	"fmt"
+	"os"
 	"strings"
 	"text/template"
 )
@@ -13,9 +14,22 @@ type executionContext struct {
 }
 
 // newExecutionContext creates a new execution context.
+// Initializes nodeData with environment variables so templates can access them.
 func newExecutionContext() *executionContext {
+	nodeData := make(map[string]interface{})
+
+	// Load all environment variables into context
+	// This allows templates like {{.FIGMA_API_URL}} to work
+	for _, env := range os.Environ() {
+		// Split on first '=' to handle values that contain '='
+		parts := strings.SplitN(env, "=", 2)
+		if len(parts) == 2 {
+			nodeData[parts[0]] = parts[1]
+		}
+	}
+
 	return &executionContext{
-		nodeData: make(map[string]interface{}),
+		nodeData: nodeData,
 	}
 }
 

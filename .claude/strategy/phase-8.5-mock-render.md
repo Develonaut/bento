@@ -1,8 +1,24 @@
 # Phase 8.5: Mock Render Bento
 
-**Duration:** 2 hours
+**Duration:** 2-3 hours
 **Goal:** TDD a bento that runs mock Blender script with streaming progress output
-**Dependencies:** Phase 8.1 (mock Blender script) complete
+**Dependencies:** Phase 8.1 (mock Blender script) and 8.4 complete
+
+---
+
+## IMPORTANT: Known Issues from Phase 8.4
+
+Before starting Phase 8.5, review `.claude/strategy/phase-8.4-known-issues.md`.
+
+**Critical Issue to Address:**
+- Missing environment variable validation (templates resolve to `"<no value>"`)
+- Recommended fix: Add validation in `pkg/itamae/context.go:resolveString()`
+
+**Optional for Phase 8.5:**
+- Consider adding `missingkey=error` to template execution
+- Add pre-flight check that validates all env vars before execution starts
+
+**If skipping validation fixes:** Document as known issue and update test expectations.
 
 ---
 
@@ -17,6 +33,7 @@ Uses mock Blender script from Phase 8.1 that outputs progress lines like real Bl
 ## Prerequisites
 
 - ✅ Phase 8.1 complete (`tests/mocks/blender-mock.sh` exists)
+- ✅ Phase 8.4 complete (environment variable support, file downloads)
 - ✅ Shell-command neta supports `stream: true`
 - ✅ Shoyu logger supports streaming callback
 

@@ -1,0 +1,59 @@
+{
+  "id": "api-fetch",
+  "type": "group",
+  "version": "1.0.0",
+  "name": "Figma API Fetch",
+  "metadata": {
+    "description": "Calls Figma API to get overlay image URL, then downloads it",
+    "tags": ["phase8", "http", "figma", "api"]
+  },
+  "nodes": [
+    {
+      "id": "call-figma-api",
+      "type": "http-request",
+      "version": "1.0.0",
+      "name": "Get Figma Image URL",
+      "parameters": {
+        "url": "{{.FIGMA_API_URL}}/v1/images/{{.FIGMA_FILE_ID}}",
+        "method": "GET",
+        "headers": {
+          "X-Figma-Token": "{{.FIGMA_API_TOKEN}}"
+        },
+        "queryParams": {
+          "ids": "{{.FIGMA_COMPONENT_ID}}",
+          "format": "png",
+          "scale": 2
+        },
+        "timeout": 30
+      },
+      "outputPorts": [{"id": "out-1", "name": "response"}],
+      "position": {"x": 100, "y": 100}
+    },
+    {
+      "id": "download-image",
+      "type": "http-request",
+      "version": "1.0.0",
+      "name": "Download Overlay Image",
+      "parameters": {
+        "url": "{{.call-figma-api.body.images.test-component}}",
+        "method": "GET",
+        "saveToFile": "products/{{.PRODUCT_SKU}}/overlay.png",
+        "timeout": 60
+      },
+      "inputPorts": [{"id": "in-1", "name": "imageUrl"}],
+      "position": {"x": 300, "y": 100}
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "source": "call-figma-api",
+      "sourcePort": "out-1",
+      "target": "download-image",
+      "targetPort": "in-1"
+    }
+  ],
+  "inputPorts": [],
+  "outputPorts": [],
+  "position": {"x": 0, "y": 0}
+}

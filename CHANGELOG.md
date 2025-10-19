@@ -8,6 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Phase 8.4: API Fetch Bento with HTTP request chaining and file downloads
+- `saveToFile` parameter for http-request neta (download responses to files)
+- `queryParams` parameter for http-request neta (URL query string support)
+- Environment variable loading in execution context (templates can access env vars)
+- Mock Figma server with actual PNG image serving
+- Integration tests for API workflows with race detector validation
 - Phase 8.3: Folder Setup Bento integration test with forEach loop
 - Loop neta nested node execution support
 - Enhanced template resolution for arrays and maps (not just strings)
@@ -24,6 +30,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Dependency management philosophy documentation
 
 ### Changed
+- Fixed race condition in mock Figma server using NewUnstartedServer pattern
+- Improved error handling in addQueryParams (now returns errors instead of silent failures)
+- Enhanced URL parameter handling with type validation
+- Renamed `url` variable to `urlStr` to avoid package shadowing
+- Fixed path concatenation in tests to use filepath.Join (cross-platform compatibility)
 - Refactored loop.go functions to comply with Bento Box Principle (<30 lines)
 - Enhanced executionContext to support exact template resolution ({{index . "key"}} returns actual value)
 - Added parameter template resolution in executor for nested nodes
