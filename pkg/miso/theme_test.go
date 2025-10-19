@@ -55,7 +55,7 @@ func TestBuildTheme_AllVariants(t *testing.T) {
 
 // TestThemeStructure verifies Theme struct has all required styles.
 func TestThemeStructure(t *testing.T) {
-	palette := GetPalette(VariantMaguro)
+	palette := GetPalette(VariantTonkotsu)
 	theme := BuildTheme(palette)
 
 	// Test that we can use each style (won't panic)

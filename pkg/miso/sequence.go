@@ -177,11 +177,11 @@ func getStepEmoji(stepName string) string {
 }
 
 // colorStatusWord colors the status word based on status.
-// Uses the default Maguro theme for now.
+// Uses the default Tonkotsu theme for now.
 // TODO: Accept theme as parameter when integrating with daemon-combo.
 func colorStatusWord(word string, status StepStatus) string {
 	// Build default theme for standalone sequence usage
-	theme := BuildTheme(GetPalette(VariantMaguro))
+	theme := BuildTheme(GetPalette(VariantTonkotsu))
 
 	switch status {
 	case StepRunning:

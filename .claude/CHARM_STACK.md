@@ -124,7 +124,7 @@ Users can choose from 7 beautiful themes (persisted to `~/.bento/theme`):
 | **Wasabi** | Green (#50FA7B) | Spicy green wasabi | |
 | **Toro** | Pink (#FF79C6) | 🐟 Fatty tuna | |
 | **Tamago** | Yellow (#F1FA8C) | 🥚 Egg sushi | |
-| **Maguro** | Red (#f87359) | 🐟 Tuna | **CLI default** |
+| **Tonkotsu** | Red (#f87359) | 🐟 Tuna | **CLI default** |
 | **Saba** | Cyan (#8BE9FD) | 🐟 Mackerel | |
 | **Ika** | White (#F8F8F2) | 🦑 Squid | |
 

@@ -22,7 +22,7 @@ func TestAllVariants(t *testing.T) {
 		VariantWasabi,
 		VariantToro,
 		VariantTamago,
-		VariantMaguro,
+		VariantTonkotsu,
 		VariantSaba,
 		VariantIka,
 	}
@@ -66,14 +66,14 @@ func TestGetPalette(t *testing.T) {
 	}
 }
 
-// TestGetPalette_DefaultVariant verifies invalid variant returns default (Maguro).
+// TestGetPalette_DefaultVariant verifies invalid variant returns default (Tonkotsu).
 func TestGetPalette_DefaultVariant(t *testing.T) {
 	invalid := Variant("invalid")
 	palette := GetPalette(invalid)
-	maguroPalette := GetPalette(VariantMaguro)
+	tonkotsuPalette := GetPalette(VariantTonkotsu)
 
-	if palette.Primary != maguroPalette.Primary {
-		t.Error("Invalid variant should return Maguro palette")
+	if palette.Primary != tonkotsuPalette.Primary {
+		t.Error("Invalid variant should return Tonkotsu palette")
 	}
 }
 
@@ -88,7 +88,7 @@ func TestVariantColors(t *testing.T) {
 		{VariantWasabi, "#50FA7B", "Green (wasabi)"},
 		{VariantToro, "#FF79C6", "Pink (fatty tuna)"},
 		{VariantTamago, "#F1FA8C", "Yellow (egg)"},
-		{VariantMaguro, "#f87359", "Red (tuna)"},
+		{VariantTonkotsu, "#f87359", "Red (pork bone broth)"},
 		{VariantSaba, "#8BE9FD", "Cyan (mackerel)"},
 		{VariantIka, "#F8F8F2", "White (squid)"},
 	}

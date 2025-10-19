@@ -29,16 +29,16 @@ func themeConfigPath() (string, error) {
 }
 
 // LoadSavedTheme loads the saved theme variant from disk.
-// Returns VariantMaguro (red) as default if no saved theme or on error.
+// Returns VariantTonkotsu (creamy white) as default if no saved theme or on error.
 func LoadSavedTheme() Variant {
 	path, err := themeConfigPath()
 	if err != nil {
-		return VariantMaguro
+		return VariantTonkotsu
 	}
 
 	data, err := os.ReadFile(path)
 	if err != nil {
-		return VariantMaguro
+		return VariantTonkotsu
 	}
 
 	variant := Variant(strings.TrimSpace(string(data)))
@@ -50,7 +50,7 @@ func LoadSavedTheme() Variant {
 		}
 	}
 
-	return VariantMaguro
+	return VariantTonkotsu
 }
 
 // SaveTheme saves the theme variant to disk.

@@ -83,12 +83,12 @@ func TestNextVariant(t *testing.T) {
 	variants := AllVariants()
 	expectedNext := []Variant{
 		VariantWasabi, // After Nasu
-		VariantToro,   // After Wasabi
-		VariantTamago, // After Toro
-		VariantMaguro, // After Tamago
-		VariantSaba,   // After Maguro
-		VariantIka,    // After Saba
-		VariantNasu,   // After Ika (wraps around)
+		VariantToro,     // After Wasabi
+		VariantTamago,   // After Toro
+		VariantTonkotsu, // After Tamago
+		VariantSaba,     // After Tonkotsu
+		VariantIka,      // After Saba
+		VariantNasu,     // After Ika (wraps around)
 	}
 
 	for i, expected := range expectedNext {

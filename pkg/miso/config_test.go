@@ -88,10 +88,10 @@ func TestLoadSavedTheme_NoFile(t *testing.T) {
 		configDir = originalConfigDir
 	})
 
-	// Should return Maguro default when no file exists
+	// Should return Tonkotsu default when no file exists
 	variant := LoadSavedTheme()
-	if variant != VariantMaguro {
-		t.Errorf("LoadSavedTheme() with no file = %s, want %s", variant, VariantMaguro)
+	if variant != VariantTonkotsu {
+		t.Errorf("LoadSavedTheme() with no file = %s, want %s", variant, VariantTonkotsu)
 	}
 }
 
@@ -113,10 +113,10 @@ func TestLoadSavedTheme_InvalidContent(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// Should return Maguro default
+	// Should return Tonkotsu default
 	variant := LoadSavedTheme()
-	if variant != VariantMaguro {
-		t.Errorf("LoadSavedTheme() with invalid content = %s, want %s", variant, VariantMaguro)
+	if variant != VariantTonkotsu {
+		t.Errorf("LoadSavedTheme() with invalid content = %s, want %s", variant, VariantTonkotsu)
 	}
 }
 

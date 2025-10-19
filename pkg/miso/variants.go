@@ -9,13 +9,13 @@ import "github.com/charmbracelet/lipgloss"
 type Variant string
 
 const (
-	VariantNasu   Variant = "Nasu"   // Purple (eggplant sushi) - TUI default
-	VariantWasabi Variant = "Wasabi" // Green (wasabi)
-	VariantToro   Variant = "Toro"   // Pink (fatty tuna)
-	VariantTamago Variant = "Tamago" // Yellow (egg sushi)
-	VariantMaguro Variant = "Maguro" // Red (tuna) - CLI default
-	VariantSaba   Variant = "Saba"   // Cyan (mackerel)
-	VariantIka    Variant = "Ika"    // White (squid)
+	VariantNasu     Variant = "Nasu"     // Purple (eggplant sushi) - TUI default
+	VariantWasabi   Variant = "Wasabi"   // Green (wasabi)
+	VariantToro     Variant = "Toro"     // Pink (fatty tuna)
+	VariantTamago   Variant = "Tamago"   // Yellow (egg sushi)
+	VariantTonkotsu Variant = "Tonkotsu" // Creamy white (pork bone broth) - CLI default
+	VariantSaba     Variant = "Saba"     // Cyan (mackerel)
+	VariantIka      Variant = "Ika"      // White (squid)
 )
 
 // AllVariants returns all available theme variants in order.
@@ -25,7 +25,7 @@ func AllVariants() []Variant {
 		VariantWasabi,
 		VariantToro,
 		VariantTamago,
-		VariantMaguro,
+		VariantTonkotsu,
 		VariantSaba,
 		VariantIka,
 	}
@@ -43,7 +43,7 @@ type Palette struct {
 }
 
 // GetPalette returns the color palette for a variant.
-// Returns Maguro (red) palette for invalid variants.
+// Returns Tonkotsu (creamy white) palette for invalid variants.
 func GetPalette(v Variant) Palette {
 	switch v {
 	case VariantNasu:
@@ -54,14 +54,14 @@ func GetPalette(v Variant) Palette {
 		return toroPalette()
 	case VariantTamago:
 		return tamagoPalette()
-	case VariantMaguro:
-		return maguroPalette()
+	case VariantTonkotsu:
+		return tonkotsuPalette()
 	case VariantSaba:
 		return sabaPalette()
 	case VariantIka:
 		return ikaPalette()
 	default:
-		return maguroPalette()
+		return tonkotsuPalette()
 	}
 }
 
@@ -117,10 +117,10 @@ func tamagoPalette() Palette {
 	}
 }
 
-// maguroPalette returns the Maguro (red) palette - CLI default.
-func maguroPalette() Palette {
+// tonkotsuPalette returns the Tonkotsu (pork bone broth) palette - CLI default.
+func tonkotsuPalette() Palette {
 	return Palette{
-		Primary:   lipgloss.Color("#f87359"), // Red
+		Primary:   lipgloss.Color("#f87359"), // Red (same as old Maguro)
 		Secondary: lipgloss.Color("#FFB86C"), // Pink
 		Success:   lipgloss.Color("#50FA7B"), // Green
 		Error:     lipgloss.Color("#f87359"), // Red
