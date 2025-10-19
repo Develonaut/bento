@@ -8,6 +8,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Wasabi Package**: Secure secrets management with OS-native keychain storage
+  - `bento wasabi set/get/list/delete` CLI commands
+  - `{{SECRETS.X}}` template namespace for secrets (separate from `{{.X}}` config)
+  - OS-native keychain integration (macOS Keychain, Windows Credential Manager, Linux Secret Service)
+  - Automatic secret resolution in itamae execution context
+  - File-based backend for isolated test storage
+  - Comprehensive test suite with 11 passing tests
+- Phase 8.5: Mock Render Bento with streaming output validation
+  - Real-time streaming output from long-running shell commands
+  - `_onOutput` callback injection in itamae executor
+  - `OnStream` logger callback for incremental output display
+  - Mock Blender script for fast integration testing
+  - Streaming progress validation tests (line-by-line output ordering)
 - Phase 8.4: API Fetch Bento with HTTP request chaining and file downloads
 - `saveToFile` parameter for http-request neta (download responses to files)
 - `queryParams` parameter for http-request neta (URL query string support)
@@ -30,6 +43,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Dependency management philosophy documentation
 
 ### Changed
+- Enhanced itamae context resolution to support secrets-first template resolution
+- Improved error visibility for missing secrets (stderr warnings instead of silent failures)
+- Optimized regex compilation in wasabi (compiled once at package level)
+- Removed Close() method from wasabi.Manager (YAGNI principle)
+- Updated examples to use `{{SECRETS.X}}` syntax for API tokens
 - Fixed race condition in mock Figma server using NewUnstartedServer pattern
 - Improved error handling in addQueryParams (now returns errors instead of silent failures)
 - Enhanced URL parameter handling with type validation

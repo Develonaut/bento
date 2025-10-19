@@ -17,7 +17,7 @@
         "url": "{{.FIGMA_API_URL}}/v1/images/{{.FIGMA_FILE_ID}}",
         "method": "GET",
         "headers": {
-          "X-Figma-Token": "{{.FIGMA_API_TOKEN}}"
+          "X-Figma-Token": "{{SECRETS.FIGMA_TOKEN}}"
         },
         "queryParams": {
           "ids": "{{.FIGMA_COMPONENT_ID}}",

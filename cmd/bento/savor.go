@@ -148,7 +148,7 @@ func createPantry() *pantry.Pantry {
 	return p
 }
 
-// createLogger creates a logger with appropriate level.
+// createLogger creates a logger with appropriate level and streaming callback.
 func createLogger() *shoyu.Logger {
 	level := shoyu.LevelInfo
 	if verboseFlag {
@@ -157,6 +157,11 @@ func createLogger() *shoyu.Logger {
 
 	return shoyu.New(shoyu.Config{
 		Level: level,
+		// Enable streaming output for long-running processes (Phase 8.5)
+		// This outputs lines from shell-command neta in real-time
+		OnStream: func(line string) {
+			fmt.Println(line)
+		},
 	})
 }
 

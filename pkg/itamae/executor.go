@@ -64,6 +64,12 @@ func (i *Itamae) executeSingle(
 	// Add execution context for template resolution (for neta that need it)
 	params["_context"] = execCtx.toMap()
 
+	// Add streaming callback for shell-command neta (Phase 8.5)
+	// This enables real-time output from long-running processes like Blender
+	params["_onOutput"] = func(line string) {
+		i.logger.Stream(line)
+	}
+
 	// Execute neta
 	output, err := netaImpl.Execute(ctx, params)
 	if err != nil {

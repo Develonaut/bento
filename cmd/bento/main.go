@@ -34,6 +34,7 @@ Commands are playfully themed:
   • sample - Validate without executing (sample to check if it tastes right)
   • menu   - List available bentos (restaurant menu)
   • box    - Create a new bento template (box up fresh ingredients)
+  • wasabi - Manage secrets (handle the spicy stuff 🟢)
   • recipe - View documentation (learn the recipe)`,
 }
 
@@ -50,4 +51,5 @@ func init() {
 	rootCmd.AddCommand(boxCmd)
 	rootCmd.AddCommand(recipeCmd)
 	rootCmd.AddCommand(versionCmd)
+	rootCmd.AddCommand(wasabiCmd)
 }

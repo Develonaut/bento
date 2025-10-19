@@ -6,11 +6,14 @@ import (
 	"os"
 	"strings"
 	"text/template"
+
+	"github.com/Develonaut/bento/pkg/wasabi"
 )
 
 // executionContext holds data passed between nodes during execution.
 type executionContext struct {
-	nodeData map[string]interface{} // Data from each executed node
+	nodeData       map[string]interface{} // Data from each executed node
+	secretsManager *wasabi.Manager        // Secrets manager for {{SECRETS.X}} resolution
 }
 
 // newExecutionContext creates a new execution context.
@@ -28,8 +31,18 @@ func newExecutionContext() *executionContext {
 		}
 	}
 
+	// Initialize secrets manager for {{SECRETS.X}} resolution
+	// If initialization fails, proceed without secrets (logged as warning)
+	secretsMgr, err := wasabi.NewManager()
+	if err != nil {
+		// Note: We don't fail here because secrets might not be needed
+		// The error will surface when trying to resolve {{SECRETS.X}} if used
+		secretsMgr = nil
+	}
+
 	return &executionContext{
-		nodeData: nodeData,
+		nodeData:       nodeData,
+		secretsManager: secretsMgr,
 	}
 }
 
@@ -53,32 +66,50 @@ func (ec *executionContext) resolveValue(value interface{}) interface{} {
 }
 
 // resolveString resolves template syntax in a string.
+// Secrets ({{SECRETS.X}}) are resolved FIRST, then regular templates ({{.X}}).
 // If the string is ONLY a template (no literal text), return the actual value.
 // Otherwise, return the string interpolation.
 func (ec *executionContext) resolveString(s string) interface{} {
-	// Check if string contains template syntax
-	if !containsTemplate(s) {
-		return s
+	// Step 1: Resolve {{SECRETS.X}} placeholders from keychain
+	// This happens BEFORE Go template resolution to prevent template errors
+	// and maintain strict separation of concerns
+	resolvedSecrets := s
+	if ec.secretsManager != nil && strings.Contains(s, "{{SECRETS.") {
+		var err error
+		resolvedSecrets, err = ec.secretsManager.ResolveTemplate(s)
+		if err != nil {
+			// SECRET RESOLUTION FAILED - This is a CRITICAL error
+			// Print to stderr so user sees it immediately (not buried in logs)
+			// Returning unresolved template will likely cause downstream errors
+			fmt.Fprintf(os.Stderr, "\n❌ ERROR: Failed to resolve secrets in template: %v\n", err)
+			fmt.Fprintf(os.Stderr, "   Template: %s\n", s)
+			fmt.Fprintf(os.Stderr, "   This will likely cause authentication failures!\n\n")
+			return s
+		}
 	}
 
-	// Special case: if the entire string is a single template expression,
-	// try to return the actual value instead of string representation.
-	// This allows passing arrays/maps through templates.
-	if isExactTemplate(s) {
-		if val := ec.resolveExactTemplate(s); val != nil {
+	// Step 2: Check if string contains Go template syntax ({{.X}})
+	if !containsTemplate(resolvedSecrets) {
+		return resolvedSecrets
+	}
+
+	// Step 3: Special case - if entire string is single template, return actual value
+	// This allows passing arrays/maps through templates
+	if isExactTemplate(resolvedSecrets) {
+		if val := ec.resolveExactTemplate(resolvedSecrets); val != nil {
 			return val
 		}
 	}
 
-	// Parse and execute template (returns string interpolation)
-	tmpl, err := template.New("param").Parse(s)
+	// Step 4: Parse and execute Go template (returns string interpolation)
+	tmpl, err := template.New("param").Parse(resolvedSecrets)
 	if err != nil {
-		return s // Return original if parse fails
+		return resolvedSecrets // Return secrets-resolved string if parse fails
 	}
 
 	var buf bytes.Buffer
 	if err := tmpl.Execute(&buf, ec.nodeData); err != nil {
-		return s // Return original if execute fails
+		return resolvedSecrets // Return secrets-resolved string if execute fails
 	}
 
 	return buf.String()
@@ -181,12 +212,14 @@ func containsTemplate(s string) bool {
 // Note: This performs a shallow copy - the nodeData map is copied,
 // but the values within the map are not deep-copied. This is intentional
 // for performance and works correctly because node outputs are immutable
-// after being set.
+// after being set. The secrets manager is shared across copies.
 func (ec *executionContext) copy() *executionContext {
 	newCtx := newExecutionContext()
 	for k, v := range ec.nodeData {
 		newCtx.nodeData[k] = v
 	}
+	// Share the same secrets manager (thread-safe)
+	newCtx.secretsManager = ec.secretsManager
 	return newCtx
 }
 
