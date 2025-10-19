@@ -1,0 +1,249 @@
+{
+  "id": "image-optimize",
+  "type": "group",
+  "version": "1.0.0",
+  "name": "Image Optimization",
+  "position": {
+    "x": 0,
+    "y": 0
+  },
+  "metadata": {
+    "description": "Converts 8 PNGs to WebP in parallel (4 concurrent), then deletes original PNGs. Demonstrates parallel neta for performance optimization.",
+    "usage": "export PRODUCT_SKU=MOCK-001 && bento savor image-optimize.bento.json",
+    "example": "Converts products/MOCK-001/render-{1-8}.png to WebP, then deletes PNGs",
+    "tags": ["phase8", "image", "webp", "parallel", "optimization", "performance"],
+    "phase": "8.6",
+    "demonstrates": ["parallel execution", "maxConcurrency", "image conversion", "file cleanup", "performance optimization"],
+    "performance": "Sequential: ~6s (750ms × 8) → Parallel (4 concurrent): ~1.5s = 4x speedup"
+  },
+  "parameters": {},
+  "inputPorts": [],
+  "outputPorts": [],
+  "nodes": [
+    {
+      "id": "optimize-parallel",
+      "type": "parallel",
+      "version": "1.0.0",
+      "name": "Convert to WebP (Parallel)",
+      "position": {
+        "x": 100,
+        "y": 100
+      },
+      "metadata": {
+        "description": "Executes 8 image conversions in parallel with maxConcurrency: 4. This means 4 images are processed simultaneously, providing ~4x speedup over sequential processing. Uses the image neta's 'convert' operation with WebP format and quality: 85."
+      },
+      "parameters": {
+        "maxConcurrency": 4
+      },
+      "inputPorts": [],
+      "outputPorts": [],
+      "nodes": [
+        {
+          "id": "optimize-1",
+          "type": "image",
+          "version": "1.0.0",
+          "name": "Optimize Render 1",
+          "position": {
+            "x": 50,
+            "y": 50
+          },
+          "metadata": {
+            "description": "Converts render-1.png to render-1.webp using govips. Quality: 85 provides good balance between file size and visual quality."
+          },
+          "parameters": {
+            "operation": "convert",
+            "input": "products/{{.PRODUCT_SKU}}/render-1.png",
+            "output": "products/{{.PRODUCT_SKU}}/render-1.webp",
+            "format": "webp",
+            "quality": 85
+          },
+          "inputPorts": [],
+          "outputPorts": []
+        },
+        {
+          "id": "optimize-2",
+          "type": "image",
+          "version": "1.0.0",
+          "name": "Optimize Render 2",
+          "position": {
+            "x": 50,
+            "y": 150
+          },
+          "metadata": {
+            "description": "Converts render-2.png to render-2.webp"
+          },
+          "parameters": {
+            "operation": "convert",
+            "input": "products/{{.PRODUCT_SKU}}/render-2.png",
+            "output": "products/{{.PRODUCT_SKU}}/render-2.webp",
+            "format": "webp",
+            "quality": 85
+          },
+          "inputPorts": [],
+          "outputPorts": []
+        },
+        {
+          "id": "optimize-3",
+          "type": "image",
+          "version": "1.0.0",
+          "name": "Optimize Render 3",
+          "position": {
+            "x": 50,
+            "y": 250
+          },
+          "metadata": {
+            "description": "Converts render-3.png to render-3.webp"
+          },
+          "parameters": {
+            "operation": "convert",
+            "input": "products/{{.PRODUCT_SKU}}/render-3.png",
+            "output": "products/{{.PRODUCT_SKU}}/render-3.webp",
+            "format": "webp",
+            "quality": 85
+          },
+          "inputPorts": [],
+          "outputPorts": []
+        },
+        {
+          "id": "optimize-4",
+          "type": "image",
+          "version": "1.0.0",
+          "name": "Optimize Render 4",
+          "position": {
+            "x": 50,
+            "y": 350
+          },
+          "metadata": {
+            "description": "Converts render-4.png to render-4.webp"
+          },
+          "parameters": {
+            "operation": "convert",
+            "input": "products/{{.PRODUCT_SKU}}/render-4.png",
+            "output": "products/{{.PRODUCT_SKU}}/render-4.webp",
+            "format": "webp",
+            "quality": 85
+          },
+          "inputPorts": [],
+          "outputPorts": []
+        },
+        {
+          "id": "optimize-5",
+          "type": "image",
+          "version": "1.0.0",
+          "name": "Optimize Render 5",
+          "position": {
+            "x": 50,
+            "y": 450
+          },
+          "metadata": {
+            "description": "Converts render-5.png to render-5.webp"
+          },
+          "parameters": {
+            "operation": "convert",
+            "input": "products/{{.PRODUCT_SKU}}/render-5.png",
+            "output": "products/{{.PRODUCT_SKU}}/render-5.webp",
+            "format": "webp",
+            "quality": 85
+          },
+          "inputPorts": [],
+          "outputPorts": []
+        },
+        {
+          "id": "optimize-6",
+          "type": "image",
+          "version": "1.0.0",
+          "name": "Optimize Render 6",
+          "position": {
+            "x": 50,
+            "y": 550
+          },
+          "metadata": {
+            "description": "Converts render-6.png to render-6.webp"
+          },
+          "parameters": {
+            "operation": "convert",
+            "input": "products/{{.PRODUCT_SKU}}/render-6.png",
+            "output": "products/{{.PRODUCT_SKU}}/render-6.webp",
+            "format": "webp",
+            "quality": 85
+          },
+          "inputPorts": [],
+          "outputPorts": []
+        },
+        {
+          "id": "optimize-7",
+          "type": "image",
+          "version": "1.0.0",
+          "name": "Optimize Render 7",
+          "position": {
+            "x": 50,
+            "y": 650
+          },
+          "metadata": {
+            "description": "Converts render-7.png to render-7.webp"
+          },
+          "parameters": {
+            "operation": "convert",
+            "input": "products/{{.PRODUCT_SKU}}/render-7.png",
+            "output": "products/{{.PRODUCT_SKU}}/render-7.webp",
+            "format": "webp",
+            "quality": 85
+          },
+          "inputPorts": [],
+          "outputPorts": []
+        },
+        {
+          "id": "optimize-8",
+          "type": "image",
+          "version": "1.0.0",
+          "name": "Optimize Render 8",
+          "position": {
+            "x": 50,
+            "y": 750
+          },
+          "metadata": {
+            "description": "Converts render-8.png to render-8.webp"
+          },
+          "parameters": {
+            "operation": "convert",
+            "input": "products/{{.PRODUCT_SKU}}/render-8.png",
+            "output": "products/{{.PRODUCT_SKU}}/render-8.webp",
+            "format": "webp",
+            "quality": 85
+          },
+          "inputPorts": [],
+          "outputPorts": []
+        }
+      ],
+      "edges": []
+    },
+    {
+      "id": "cleanup-pngs",
+      "type": "file-system",
+      "version": "1.0.0",
+      "name": "Delete Original PNGs",
+      "position": {
+        "x": 300,
+        "y": 100
+      },
+      "metadata": {
+        "description": "Deletes all original PNG files after successful WebP conversion. Uses glob pattern 'render-*.png' to match all 8 files. This operation only executes after the parallel conversion completes."
+      },
+      "parameters": {
+        "operation": "delete",
+        "path": "products/{{.PRODUCT_SKU}}/render-*.png"
+      },
+      "inputPorts": [],
+      "outputPorts": []
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "source": "optimize-parallel",
+      "target": "cleanup-pngs",
+      "sourcePort": "",
+      "targetPort": ""
+    }
+  ]
+}

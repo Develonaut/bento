@@ -42,6 +42,12 @@ vendor/
 /test-data/
 /.claude/strategy/archive/
 
+# Test outputs - generated during test runs
+/products/
+/tests/output/
+*.webp
+render-*.png
+
 # Environment
 .env
 .env.local

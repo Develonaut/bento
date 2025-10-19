@@ -8,6 +8,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Phase 8.6: Image Optimization Bento with parallel WebP conversion
+  - Integration tests for parallel image conversion (8 PNGs to WebP)
+  - Glob pattern support for filesystem delete operation (`render-*.png`)
+  - File-level documentation for filesystem package modules
+  - Performance validation tests (~100ms for 8 images with 4-way concurrency)
+  - `validateTransferParams()` helper for DRY parameter validation
+  - Complete test coverage (9 filesystem tests + 3 integration tests)
 - **Wasabi Package**: Secure secrets management with OS-native keychain storage
   - `bento wasabi set/get/list/delete` CLI commands
   - `{{SECRETS.X}}` template namespace for secrets (separate from `{{.X}}` config)
@@ -43,6 +50,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Dependency management philosophy documentation
 
 ### Changed
+- Refactored filesystem package into focused modules (operations.go, transfer.go, glob.go)
+  - Split 277-line filesystem.go into 4 files (all <100 lines)
+  - Added file-level documentation to all filesystem modules
+  - Extracted `validateTransferParams()` helper for code reuse
+  - Reduced `copy()` function from 37 to 29 lines (Bento Box compliance)
+  - Removed redundant comments from transfer operations
 - Enhanced itamae context resolution to support secrets-first template resolution
 - Improved error visibility for missing secrets (stderr warnings instead of silent failures)
 - Optimized regex compilation in wasabi (compiled once at package level)
@@ -62,6 +75,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Enhanced package documentation for integration tests
 
 ### Fixed
+- Race condition in parallel execution (removed concurrent map write to shared execCtx)
+  - Removed unsafe `execCtx.set()` call from parallel goroutines (pkg/itamae/parallel.go:84)
+  - Outputs now only written to mutex-protected `result.NodeOutputs`
+  - Validated with race detector (`go test -race`)
+- Enhanced filesystem delete operation to support glob patterns
+  - Added wildcard detection using `strings.ContainsAny(path, "*?")`
+  - Implemented `deleteGlobPattern()` using `filepath.Glob()`
+  - Supports patterns like `"render-*.png"` and `"products/*/output.txt"`
 - Template resolution in loop iteration context ({{.item.field}} now works in nested nodes)
 - Loop body execution for forEach mode (nested nodes now execute properly)
 - Shallow copy documentation added to executionContext

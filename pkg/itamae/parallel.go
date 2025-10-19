@@ -81,7 +81,6 @@ func (i *Itamae) executeParallel(
 			// Merge child outputs
 			if err == nil {
 				for k, v := range childResult.NodeOutputs {
-					execCtx.set(k, v)
 					result.NodeOutputs[k] = v
 				}
 				result.NodesExecuted += childResult.NodesExecuted

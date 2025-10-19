@@ -8,8 +8,21 @@
 # This mock:
 # - Parses arguments the same way as real Blender Python script
 # - Outputs progress matching real Blender format
-# - Creates 8 PNG files (render-1.png through render-8.png)
+# - Creates 8 PNG files (render-1.png through render-8.png) using test fixture
+# - Uses tests/fixtures/images/Product_Render.png as base template (600x600)
+# - Creates variations by rotating/annotating the base image
 # - Completes in ~2 seconds instead of 5+ minutes
+
+# Find the directory where this script is located
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+BASE_IMAGE="$SCRIPT_DIR/../fixtures/images/Product_Render.png"
+
+# Verify base image exists
+if [[ ! -f "$BASE_IMAGE" ]]; then
+    echo "Error: Base image not found: $BASE_IMAGE"
+    echo "Please ensure tests/fixtures/images/Product_Render.png exists"
+    exit 1
+fi
 
 SKU=""
 OVERLAY=""
@@ -55,9 +68,23 @@ for i in {1..8}; do
     # Output progress like real Blender
     echo "Fra:$i Mem:12.00M (Peak 12.00M) | Rendering $i/8"
 
-    # Create mock PNG file (minimal valid PNG - 1x1 pixel)
-    # PNG signature + minimal IHDR chunk + IEND chunk
-    printf "\x89\x50\x4e\x47\x0d\x0a\x1a\x0a\x00\x00\x00\x0d\x49\x48\x44\x52\x00\x00\x00\x01\x00\x00\x00\x01\x08\x02\x00\x00\x00\x90\x77\x53\xde\x00\x00\x00\x0c\x49\x44\x41\x54\x08\x99\x63\xf8\xcf\xc0\x00\x00\x00\x03\x00\x01\x00\x18\xdd\x8d\xb4\x00\x00\x00\x00\x49\x45\x4e\x44\xae\x42\x60\x82" > "${OUTPUT}-${i}.png"
+    # Create render by rotating/annotating the base Product_Render.png
+    # Each angle gets a small rotation and annotation to show variation
+    ROTATION=$(( (i - 1) * 45 ))  # 0°, 45°, 90°, 135°, 180°, 225°, 270°, 315°
+
+    # Use ImageMagick to create variation from base image
+    # - Rotate the image to simulate different camera angle
+    # - Add text annotation showing SKU and angle number
+    # - Maintain original quality and alpha channel
+    magick "$BASE_IMAGE" \
+        -rotate $ROTATION \
+        -gravity southeast \
+        -pointsize 60 \
+        -fill white \
+        -stroke black \
+        -strokewidth 2 \
+        -annotate +20+20 "$SKU\nAngle $i" \
+        "${OUTPUT}-${i}.png"
 
     # Simulate render time
     sleep 0.2

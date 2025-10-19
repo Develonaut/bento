@@ -230,4 +230,3 @@ func (m *Manager) resolveValue(value interface{}) (interface{}, error) {
 		return value, nil
 	}
 }
-

@@ -75,9 +75,14 @@ Fra:2 Mem:12.00M (Peak 12.00M) | Rendering 2/8
 
 **Differences from Real Blender:**
 - Completes in ~2 seconds instead of 5+ minutes
-- Creates minimal valid PNG files (1x1 pixel) instead of full renders
-- Doesn't actually process the overlay image
-- No GPU/CPU rendering, just file creation
+- Creates test images by rotating and annotating a 600x600 PNG fixture instead of 3D rendering
+- Uses the realistic `tests/fixtures/images/Product_Render.png` as base template (600x600)
+- Rotates the base image to 8 different angles (0°, 45°, 90°, 135°, 180°, 225°, 270°, 315°)
+- Adds text annotation showing SKU and angle number to each render
+- Uses ImageMagick `magick` command (requires ImageMagick installation)
+- Doesn't actually process the overlay image or do 3D rendering
+- No GPU/CPU 3D rendering, just image rotation and annotation
+- Produces realistic 600x600 PNG files (~400-500KB each) suitable for testing
 
 ## Testing the Mocks
 
@@ -100,12 +105,16 @@ PASS
 
 ### Test Blender Mock
 
+**Prerequisites:**
+- ImageMagick must be installed (`brew install imagemagick` on macOS)
+- Base image fixture must exist: `tests/fixtures/images/Product_Render.png`
+
 ```bash
 ./tests/mocks/blender-mock.sh -- --sku TEST --overlay test.png --output /tmp/render
-ls /tmp/render-*.png
+ls -lh /tmp/render-*.png
 ```
 
-Should create 8 PNG files in `/tmp/`.
+Should create 8 PNG files in `/tmp/` (each ~400-500KB, 600x600 pixels).
 
 ## Using Mocks in Integration Tests
 
