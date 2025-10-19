@@ -15,7 +15,7 @@ You MUST read these documents before starting:
 - `.claude/workflow/REVIEW_CHECKLIST.md` - Comprehensive review criteria
 
 ### Detailed Review Process
-- `.claude/tools/code-review.md` - Complete review process and format
+- `.claude/commands/code-review.md` - Complete review process and format
 
 ## Review Process
 
@@ -26,7 +26,7 @@ Coordinate three specialized agents in parallel:
 
 Each agent must:
 - Read all required documents listed above
-- Follow the detailed process in `.claude/tools/code-review.md`
+- Follow the detailed process in `.claude/commands/code-review.md`
 - Provide their specific report format
 - Give APPROVED or CHANGES REQUIRED verdict
 
