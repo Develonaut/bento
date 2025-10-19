@@ -117,46 +117,54 @@ func (s *Sequence) View() string {
 
 // formatStep renders a single step with status and timing.
 func (s *Sequence) formatStep(step Step) string {
+	prefix := buildStepPrefix(step)
+	status := buildStepStatus(step)
+	suffix := buildStepSuffix(step)
+
+	parts := []string{prefix, status, step.Name + "…"}
+	if suffix != "" {
+		parts = append(parts, suffix)
+	}
+
+	return strings.Join(parts, " ")
+}
+
+// buildStepPrefix creates the indent/emoji/icon prefix for a step.
+func buildStepPrefix(step Step) string {
 	indent := strings.Repeat("  ", step.Depth)
 	icon := getStepIcon(step.Status)
+	emoji := ""
 
-	// Get emoji (only for completed, not failed)
-	var emoji string
 	if step.Status == StepCompleted {
 		emoji = getStepEmoji(step.Name)
 	}
 
-	// Get colored status word
-	statusWord := getStatusLabel(step.Status, step.Name)
-	coloredStatus := colorStatusWord(statusWord, step.Status)
-
-	// Build parts
-	var parts []string
-
-	// Add indent and emoji (if present)
 	if emoji != "" {
-		parts = append(parts, indent+emoji)
 		if icon != "" {
-			parts = append(parts, icon)
+			return indent + emoji + " " + icon
 		}
-	} else {
-		if icon != "" {
-			parts = append(parts, indent+icon)
-		} else {
-			parts = append(parts, indent)
-		}
+		return indent + emoji
 	}
 
-	// Add colored status and name
-	parts = append(parts, coloredStatus, step.Name+"…")
+	if icon != "" {
+		return indent + icon
+	}
 
-	// Add duration only for completed or failed steps
+	return indent
+}
+
+// buildStepStatus creates the colored status word.
+func buildStepStatus(step Step) string {
+	statusWord := getStatusLabel(step.Status, step.Name)
+	return colorStatusWord(statusWord, step.Status)
+}
+
+// buildStepSuffix creates the duration suffix if applicable.
+func buildStepSuffix(step Step) string {
 	if (step.Status == StepCompleted || step.Status == StepFailed) && step.Duration > 0 {
-		durationStr := step.Duration.Round(time.Millisecond).String()
-		parts = append(parts, fmt.Sprintf("(%s)", durationStr))
+		return fmt.Sprintf("(%s)", step.Duration.Round(time.Millisecond).String())
 	}
-
-	return strings.Join(parts, " ")
+	return ""
 }
 
 // getStepEmoji returns a deterministic sushi emoji based on step name.
