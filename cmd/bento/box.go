@@ -5,11 +5,13 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"os"
 	"strings"
 
+	"github.com/Develonaut/bento/pkg/hangiri"
 	"github.com/Develonaut/bento/pkg/neta"
 	"github.com/spf13/cobra"
 )
@@ -17,6 +19,7 @@ import (
 var (
 	templateType  string
 	boxDryRunFlag bool
+	boxLocalFlag  bool
 )
 
 var boxCmd = &cobra.Command{
@@ -25,10 +28,12 @@ var boxCmd = &cobra.Command{
 	Long: `Create a new bento template file.
 
 Box up a fresh bento with a template you can customize!
+By default, bentos are saved to ~/.bento/bentos/
 
 Examples:
-  bento box my-workflow
-  bento box my-workflow --type simple`,
+  bento box my-workflow                    # Creates ~/.bento/bentos/my-workflow.bento.json
+  bento box my-workflow --local            # Creates ./my-workflow.bento.json
+  bento box my-workflow --type simple      # Specify template type`,
 	Args: cobra.ExactArgs(1),
 	RunE: runBox,
 }
@@ -36,59 +41,88 @@ Examples:
 func init() {
 	boxCmd.Flags().StringVar(&templateType, "type", "simple", "Template type (simple, loop, parallel)")
 	boxCmd.Flags().BoolVar(&boxDryRunFlag, "dry-run", false, "Show what would be created without creating files")
+	boxCmd.Flags().BoolVar(&boxLocalFlag, "local", false, "Create bento in current directory instead of ~/.bento/bentos/")
 }
 
 // runBox executes the box command logic.
 func runBox(cmd *cobra.Command, args []string) error {
 	name := args[0]
-	fileName := name + ".bento.json"
-
-	if err := checkFileExists(fileName); err != nil {
-		return err
-	}
 
 	// If dry run, show what would be created and exit
 	if boxDryRunFlag {
-		return showBoxDryRun(name, fileName)
+		return showBoxDryRun(name)
 	}
 
-	if err := createBentoFile(name, fileName); err != nil {
+	// Create bento template
+	template := createTemplate(name)
+
+	// Save to storage or local file based on flag
+	if boxLocalFlag {
+		return createLocalBento(name, template)
+	}
+
+	return createStorageBento(name, template)
+}
+
+// createStorageBento creates a bento in ~/.bento/bentos/ using hangiri storage.
+func createStorageBento(name string, template *neta.Definition) error {
+	printInfo(fmt.Sprintf("Boxing new bento: %s", name))
+
+	storage := hangiri.NewDefaultStorage()
+	ctx := context.Background()
+
+	// Check if bento already exists
+	if storage.BentoExists(ctx, name) {
+		printError(fmt.Sprintf("Bento '%s' already exists in ~/.bento/bentos/", name))
+		return fmt.Errorf("bento already exists: %s", name)
+	}
+
+	// Save to storage
+	if err := storage.SaveBento(ctx, name, template); err != nil {
+		printError(fmt.Sprintf("Failed to create bento: %v", err))
 		return err
 	}
 
-	showNextSteps(fileName)
+	printSuccess(fmt.Sprintf("Created: ~/.bento/bentos/%s.bento.json", name))
+	showNextSteps(name, false)
 	return nil
 }
 
-// checkFileExists checks if file already exists.
-func checkFileExists(fileName string) error {
+// createLocalBento creates a bento in the current directory.
+func createLocalBento(name string, template *neta.Definition) error {
+	fileName := name + ".bento.json"
+
+	printInfo(fmt.Sprintf("Boxing new bento: %s", name))
+
+	// Check if file already exists
 	if _, err := os.Stat(fileName); err == nil {
 		printError(fmt.Sprintf("File '%s' already exists", fileName))
 		return fmt.Errorf("file already exists: %s", fileName)
 	}
-	return nil
-}
 
-// createBentoFile creates a new bento template file.
-func createBentoFile(name, fileName string) error {
-	printInfo(fmt.Sprintf("Boxing new bento: %s", name))
-
-	template := createTemplate(name)
+	// Write template to local file
 	if err := writeTemplate(fileName, template); err != nil {
 		printError(fmt.Sprintf("Failed to create bento: %v", err))
 		return err
 	}
 
 	printSuccess(fmt.Sprintf("Created: %s", fileName))
+	showNextSteps(fileName, true)
 	return nil
 }
 
 // showNextSteps displays next steps after creating bento.
-func showNextSteps(fileName string) {
+func showNextSteps(nameOrPath string, isLocal bool) {
 	fmt.Println("\nNext steps:")
-	fmt.Printf("  1. Edit %s\n", fileName)
-	fmt.Printf("  2. Run: bento sample %s\n", fileName)
-	fmt.Printf("  3. Run: bento savor %s\n", fileName)
+	if isLocal {
+		fmt.Printf("  1. Edit %s\n", nameOrPath)
+		fmt.Printf("  2. Run: bento sample %s\n", nameOrPath)
+		fmt.Printf("  3. Run: bento savor %s\n", nameOrPath)
+	} else {
+		fmt.Printf("  1. Edit ~/.bento/bentos/%s.bento.json\n", nameOrPath)
+		fmt.Printf("  2. Run: bento sample %s\n", nameOrPath)
+		fmt.Printf("  3. Run: bento savor %s\n", nameOrPath)
+	}
 }
 
 // createTemplate creates a template bento definition.
@@ -158,9 +192,14 @@ func writeTemplate(fileName string, template *neta.Definition) error {
 }
 
 // showBoxDryRun displays what would be created without creating files.
-func showBoxDryRun(name, fileName string) error {
+func showBoxDryRun(name string) error {
 	printInfo("🧪 DRY RUN MODE - No files will be created")
-	fmt.Printf("\nWould create file: %s\n", fileName)
+
+	location := "~/.bento/bentos/" + name + ".bento.json"
+	if boxLocalFlag {
+		location = "./" + name + ".bento.json"
+	}
+	fmt.Printf("\nWould create file: %s\n", location)
 
 	template := createTemplate(name)
 	data, err := json.MarshalIndent(template, "", "  ")
@@ -172,9 +211,7 @@ func showBoxDryRun(name, fileName string) error {
 	fmt.Println(string(data))
 
 	fmt.Println("\nNext steps (after running without --dry-run):")
-	fmt.Printf("  1. Edit %s\n", fileName)
-	fmt.Printf("  2. Run: bento sample %s\n", fileName)
-	fmt.Printf("  3. Run: bento savor %s\n", fileName)
+	showNextSteps(name, boxLocalFlag)
 
 	printSuccess("Dry run complete. Use 'bento box' without --dry-run to create the file.")
 	return nil

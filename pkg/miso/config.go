@@ -1,6 +1,6 @@
 // Package miso provides terminal output "seasoning" - themed styling and progress display.
 //
-// Theme configuration persistence to ~/.bento/theme.
+// Theme configuration persistence to ~/.bento/config/theme.
 package miso
 
 import (
@@ -16,7 +16,8 @@ var configDir = func() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return filepath.Join(home, ".bento"), nil
+	// Store config in ~/.bento/config/ subdirectory for consistency with hangiri storage structure
+	return filepath.Join(home, ".bento", "config"), nil
 }
 
 // themeConfigPath returns the path to the theme config file.

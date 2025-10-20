@@ -10,8 +10,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"strings"
 	"time"
 
+	"github.com/Develonaut/bento/pkg/hangiri"
 	"github.com/Develonaut/bento/pkg/itamae"
 	"github.com/Develonaut/bento/pkg/neta"
 	"github.com/Develonaut/bento/pkg/omakase"
@@ -122,8 +124,33 @@ func executeBento(chef *itamae.Itamae, def *neta.Definition) error {
 	return nil
 }
 
-// loadBento loads a bento definition from a JSON file.
+// loadBento loads a bento definition from a file path or from storage.
+//
+// If the path is a valid file, it loads from that file.
+// If the path doesn't exist as a file, it tries to load from ~/.bento/bentos/
+// This allows users to run: bento savor my-workflow
+// instead of: bento savor ~/.bento/bentos/my-workflow.bento.json
 func loadBento(path string) (*neta.Definition, error) {
+	// First, try to load as a direct file path
+	if isValidFilePath(path) {
+		return loadBentoFromFile(path)
+	}
+
+	// If not a valid file path, try loading from hangiri storage
+	return loadBentoFromStorage(path)
+}
+
+// isValidFilePath checks if the path exists as a file.
+func isValidFilePath(path string) bool {
+	info, err := os.Stat(path)
+	if err != nil {
+		return false
+	}
+	return !info.IsDir()
+}
+
+// loadBentoFromFile loads a bento from a specific file path.
+func loadBentoFromFile(path string) (*neta.Definition, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read file: %w", err)
@@ -135,6 +162,22 @@ func loadBento(path string) (*neta.Definition, error) {
 	}
 
 	return &def, nil
+}
+
+// loadBentoFromStorage loads a bento from hangiri storage by name.
+func loadBentoFromStorage(name string) (*neta.Definition, error) {
+	// Strip .bento.json extension if provided
+	name = strings.TrimSuffix(name, ".bento.json")
+
+	storage := hangiri.NewDefaultStorage()
+	ctx := context.Background()
+
+	def, err := storage.LoadBento(ctx, name)
+	if err != nil {
+		return nil, fmt.Errorf("failed to load bento from storage: %w", err)
+	}
+
+	return def, nil
 }
 
 // createPantry creates and populates the pantry with all neta types.

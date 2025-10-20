@@ -1,28 +1,38 @@
-// Package hangiri provides persistent storage for bento workflow definitions.
+// Package hangiri provides persistent storage for bento data.
 //
-// "Hangiri" (半切り - wooden tub for sushi rice) stores workflow definitions
-// on disk as JSON files, allowing bentos to be saved, loaded, and reused.
+// "Hangiri" (半切り - wooden tub for sushi rice) stores bento-related data
+// on disk as JSON files, allowing bentos, secrets, and other data to be saved,
+// loaded, and reused.
 //
-// Storage location: ~/.bento/workflows/
-// File format: <name>.json
+// Storage structure:
+//
+//	~/.bento/
+//	  bentos/     - User-created workflow definitions
+//	  secrets/    - API keys, credentials, etc. (managed by wasabi)
+//	  templates/  - Reusable workflow templates
+//	  config/     - Configuration files (themes, preferences)
+//	  cache/      - Temporary/cached data
+//
+// File format: <name>.bento.json (for bentos), <name>.json (for others)
 //
 // # Usage
 //
-//	storage := hangiri.New("~/.bento/workflows")
+//	// Create a storage instance
+//	storage := hangiri.NewDefaultStorage()
 //
-//	// Save a workflow
-//	err := storage.Save(ctx, "my-workflow", definition)
+//	// Save a bento
+//	err := storage.SaveBento(ctx, "my-workflow", definition)
 //
-//	// Load a workflow
-//	def, err := storage.Load(ctx, "my-workflow")
+//	// Load a bento by name
+//	def, err := storage.LoadBento(ctx, "my-workflow")
 //
-//	// List all workflows
-//	names, err := storage.List(ctx)
+//	// List all bentos
+//	names, err := storage.ListBentos(ctx)
 //
-//	// Delete a workflow
-//	err := storage.Delete(ctx, "my-workflow")
+//	// Delete a bento
+//	err := storage.DeleteBento(ctx, "my-workflow")
 //
-// Security: Workflow names are validated to prevent directory traversal attacks.
+// Security: All names are validated to prevent directory traversal attacks.
 package hangiri
 
 import (
@@ -31,28 +41,82 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/Develonaut/bento/pkg/neta"
 )
 
-// Storage manages persistent storage of bento definitions.
+// StorageType represents different types of storage subdirectories.
+type StorageType string
+
+const (
+	StorageTypeBentos    StorageType = "bentos"
+	StorageTypeSecrets   StorageType = "secrets"
+	StorageTypeTemplates StorageType = "templates"
+	StorageTypeConfig    StorageType = "config"
+	StorageTypeCache     StorageType = "cache"
+)
+
+// Storage manages persistent storage of bento-related data.
 type Storage struct {
 	baseDir string
 }
 
-// New creates a new Storage instance.
+// New creates a new Storage instance with a custom base directory.
 //
-// baseDir is the directory where workflows will be stored.
-// Typically ~/.bento/workflows/
+// baseDir is the root directory (typically ~/.bento/)
 func New(baseDir string) *Storage {
-	return &Storage{baseDir: baseDir}
+	return &Storage{baseDir: expandHome(baseDir)}
 }
 
-// Save saves a bento definition to disk.
+// NewDefaultStorage creates a Storage instance using the default ~/.bento/ directory.
+func NewDefaultStorage() *Storage {
+	return New("~/.bento")
+}
+
+// expandHome expands ~ to the user's home directory.
+func expandHome(path string) string {
+	if strings.HasPrefix(path, "~/") {
+		home, err := os.UserHomeDir()
+		if err == nil {
+			return filepath.Join(home, path[2:])
+		}
+	}
+	return path
+}
+
+// getStorageDir returns the full path to a storage subdirectory.
+func (s *Storage) getStorageDir(storageType StorageType) string {
+	return filepath.Join(s.baseDir, string(storageType))
+}
+
+// ensureStorageDir creates a storage subdirectory if it doesn't exist.
+func (s *Storage) ensureStorageDir(storageType StorageType) error {
+	dir := s.getStorageDir(storageType)
+	return os.MkdirAll(dir, 0755)
+}
+
+// getBentoPath returns the full file path for a bento name.
+func (s *Storage) getBentoPath(name string) string {
+	// Strip .bento.json extension if present
+	name = strings.TrimSuffix(name, ".bento.json")
+	return filepath.Join(s.getStorageDir(StorageTypeBentos), name+".bento.json")
+}
+
+// getGenericPath returns the full file path for a generic JSON file.
+// Reserved for future storage types (templates, cache, etc.).
+// Currently unused but kept for consistency with storage architecture.
+func (s *Storage) getGenericPath(storageType StorageType, name string) string {
+	// Strip .json extension if present
+	name = strings.TrimSuffix(name, ".json")
+	return filepath.Join(s.getStorageDir(storageType), name+".json")
+}
+
+// SaveBento saves a bento definition to ~/.bento/bentos/
 //
-// The workflow is saved as <name>.json in the storage directory.
+// The bento is saved as <name>.bento.json in the bentos directory.
 // Returns an error if the name is invalid or if writing fails.
-func (s *Storage) Save(ctx context.Context, name string, def *neta.Definition) error {
+func (s *Storage) SaveBento(ctx context.Context, name string, def *neta.Definition) error {
 	if ctx.Err() != nil {
 		return ctx.Err()
 	}
@@ -61,31 +125,27 @@ func (s *Storage) Save(ctx context.Context, name string, def *neta.Definition) e
 		return err
 	}
 
-	if err := s.ensureDir(); err != nil {
+	if err := s.ensureStorageDir(StorageTypeBentos); err != nil {
 		return err
 	}
 
-	return s.saveToFile(name, def)
-}
-
-// saveToFile serializes and writes definition to file.
-func (s *Storage) saveToFile(name string, def *neta.Definition) error {
 	data, err := s.marshal(def)
 	if err != nil {
-		return fmt.Errorf("failed to serialize workflow '%s': %w", name, err)
+		return fmt.Errorf("failed to serialize bento '%s': %w", name, err)
 	}
 
-	if err := s.writeFile(name, data); err != nil {
-		return fmt.Errorf("failed to write workflow '%s': %w", name, err)
+	path := s.getBentoPath(name)
+	if err := os.WriteFile(path, data, 0644); err != nil {
+		return fmt.Errorf("failed to write bento '%s': %w", name, err)
 	}
 
 	return nil
 }
 
-// Load loads a bento definition from disk.
+// LoadBento loads a bento definition from ~/.bento/bentos/
 //
-// Returns an error if the workflow doesn't exist or cannot be parsed.
-func (s *Storage) Load(ctx context.Context, name string) (*neta.Definition, error) {
+// Returns an error if the bento doesn't exist or cannot be parsed.
+func (s *Storage) LoadBento(ctx context.Context, name string) (*neta.Definition, error) {
 	if ctx.Err() != nil {
 		return nil, ctx.Err()
 	}
@@ -94,45 +154,51 @@ func (s *Storage) Load(ctx context.Context, name string) (*neta.Definition, erro
 		return nil, err
 	}
 
-	return s.loadFromFile(name)
-}
-
-// loadFromFile reads and deserializes definition from file.
-func (s *Storage) loadFromFile(name string) (*neta.Definition, error) {
-	data, err := s.readFile(name)
+	path := s.getBentoPath(name)
+	data, err := os.ReadFile(path)
 	if err != nil {
-		return nil, err
+		if os.IsNotExist(err) {
+			return nil, fmt.Errorf("bento '%s' not found", name)
+		}
+		return nil, fmt.Errorf("failed to read bento '%s': %w", name, err)
 	}
 
 	def, err := s.unmarshal(data)
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse workflow '%s': %w", name, err)
+		return nil, fmt.Errorf("failed to parse bento '%s': %w", name, err)
 	}
 
 	return def, nil
 }
 
-// List returns all saved workflow names.
-func (s *Storage) List(ctx context.Context) ([]string, error) {
+// ListBentos returns all saved bento names from ~/.bento/bentos/
+func (s *Storage) ListBentos(ctx context.Context) ([]string, error) {
 	if ctx.Err() != nil {
 		return nil, ctx.Err()
 	}
 
-	if err := s.ensureDir(); err != nil {
+	if err := s.ensureStorageDir(StorageTypeBentos); err != nil {
 		return nil, err
 	}
 
-	entries, err := os.ReadDir(s.baseDir)
+	dir := s.getStorageDir(StorageTypeBentos)
+	entries, err := os.ReadDir(dir)
 	if err != nil {
-		return nil, fmt.Errorf("failed to list workflows: %w", err)
+		return nil, fmt.Errorf("failed to list bentos: %w", err)
 	}
 
-	names := s.extractNames(entries)
+	var names []string
+	for _, entry := range entries {
+		if !entry.IsDir() && strings.HasSuffix(entry.Name(), ".bento.json") {
+			name := strings.TrimSuffix(entry.Name(), ".bento.json")
+			names = append(names, name)
+		}
+	}
 	return names, nil
 }
 
-// Delete removes a workflow from disk.
-func (s *Storage) Delete(ctx context.Context, name string) error {
+// DeleteBento removes a bento from ~/.bento/bentos/
+func (s *Storage) DeleteBento(ctx context.Context, name string) error {
 	if ctx.Err() != nil {
 		return ctx.Err()
 	}
@@ -141,25 +207,52 @@ func (s *Storage) Delete(ctx context.Context, name string) error {
 		return err
 	}
 
-	path := s.getPath(name)
+	path := s.getBentoPath(name)
 	if err := os.Remove(path); err != nil {
 		if os.IsNotExist(err) {
-			return fmt.Errorf("workflow '%s' not found", name)
+			return fmt.Errorf("bento '%s' not found", name)
 		}
-		return fmt.Errorf("failed to delete workflow '%s': %w", name, err)
+		return fmt.Errorf("failed to delete bento '%s': %w", name, err)
 	}
 
 	return nil
 }
 
-// ensureDir creates the storage directory if it doesn't exist.
-func (s *Storage) ensureDir() error {
-	return os.MkdirAll(s.baseDir, 0755)
+// BentoExists checks if a bento exists in storage.
+func (s *Storage) BentoExists(ctx context.Context, name string) bool {
+	if err := validateName(name); err != nil {
+		return false
+	}
+	path := s.getBentoPath(name)
+	_, err := os.Stat(path)
+	return err == nil
 }
 
-// getPath returns the full file path for a workflow name.
-func (s *Storage) getPath(name string) string {
-	return filepath.Join(s.baseDir, name+".json")
+// Legacy methods for backward compatibility
+// These maintain the old API but delegate to the new bento-specific methods.
+
+// Save saves a bento definition using the legacy API.
+// Deprecated: Use SaveBento instead.
+func (s *Storage) Save(ctx context.Context, name string, def *neta.Definition) error {
+	return s.SaveBento(ctx, name, def)
+}
+
+// Load loads a bento definition using the legacy API.
+// Deprecated: Use LoadBento instead.
+func (s *Storage) Load(ctx context.Context, name string) (*neta.Definition, error) {
+	return s.LoadBento(ctx, name)
+}
+
+// List returns all saved bento names using the legacy API.
+// Deprecated: Use ListBentos instead.
+func (s *Storage) List(ctx context.Context) ([]string, error) {
+	return s.ListBentos(ctx)
+}
+
+// Delete removes a bento using the legacy API.
+// Deprecated: Use DeleteBento instead.
+func (s *Storage) Delete(ctx context.Context, name string) error {
+	return s.DeleteBento(ctx, name)
 }
 
 // marshal serializes a definition to JSON with indentation.
@@ -174,35 +267,4 @@ func (s *Storage) unmarshal(data []byte) (*neta.Definition, error) {
 		return nil, err
 	}
 	return &def, nil
-}
-
-// readFile reads a workflow file from disk.
-func (s *Storage) readFile(name string) ([]byte, error) {
-	path := s.getPath(name)
-	data, err := os.ReadFile(path)
-	if err != nil {
-		if os.IsNotExist(err) {
-			return nil, fmt.Errorf("workflow '%s' not found", name)
-		}
-		return nil, fmt.Errorf("failed to read workflow '%s': %w", name, err)
-	}
-	return data, nil
-}
-
-// writeFile writes data to a workflow file.
-func (s *Storage) writeFile(name string, data []byte) error {
-	path := s.getPath(name)
-	return os.WriteFile(path, data, 0644)
-}
-
-// extractNames extracts workflow names from directory entries.
-func (s *Storage) extractNames(entries []os.DirEntry) []string {
-	var names []string
-	for _, entry := range entries {
-		if !entry.IsDir() && filepath.Ext(entry.Name()) == ".json" {
-			name := entry.Name()[:len(entry.Name())-5]
-			names = append(names, name)
-		}
-	}
-	return names
 }

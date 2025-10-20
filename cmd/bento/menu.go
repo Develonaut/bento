@@ -5,11 +5,13 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 
+	"github.com/Develonaut/bento/pkg/hangiri"
 	"github.com/Develonaut/bento/pkg/neta"
 	"github.com/spf13/cobra"
 )
@@ -22,13 +24,14 @@ var (
 var menuCmd = &cobra.Command{
 	Use:   "menu [directory]",
 	Short: "🍜 List available bentos",
-	Long: `List all available bentos in a directory.
+	Long: `List all available bentos.
 
 Like a restaurant menu, this shows you all the bentos you can taste.
+By default, lists bentos from ~/.bento/bentos/
 
 Examples:
-  bento menu
-  bento menu ~/workflows
+  bento menu                       # List bentos from ~/.bento/bentos/
+  bento menu ~/workflows           # List bentos from specific directory
   bento menu ~/workflows --recursive`,
 	Args: cobra.MaximumNArgs(1),
 	RunE: runMenu,
@@ -41,7 +44,55 @@ func init() {
 
 // runMenu executes the menu command logic.
 func runMenu(cmd *cobra.Command, args []string) error {
-	dir := getDir(args)
+	// If a directory is specified, use the legacy directory scanning
+	if len(args) > 0 {
+		return runMenuFromDirectory(args[0])
+	}
+
+	// Otherwise, use hangiri storage
+	return runMenuFromStorage()
+}
+
+// runMenuFromStorage lists bentos from ~/.bento/bentos/ using hangiri.
+func runMenuFromStorage() error {
+	storage := hangiri.NewDefaultStorage()
+	ctx := context.Background()
+
+	names, err := storage.ListBentos(ctx)
+	if err != nil {
+		printError(fmt.Sprintf("Failed to list bentos: %v", err))
+		return err
+	}
+
+	if len(names) == 0 {
+		fmt.Println("🍜 No bentos found in ~/.bento/bentos/")
+		fmt.Println("\nCreate your first bento with: bento box my-workflow")
+		return nil
+	}
+
+	printInfo("Available Bentos (from ~/.bento/bentos/):\n")
+	for _, name := range names {
+		// Try to load each bento to get its full name and node count
+		def, err := storage.LoadBento(ctx, name)
+		if err != nil {
+			fmt.Printf("  %s.bento.json\n", name)
+			fmt.Printf("    (unable to load: %v)\n\n", err)
+			continue
+		}
+
+		fmt.Printf("  %s.bento.json\n", name)
+		if def.Name != "" {
+			fmt.Printf("    %s\n", def.Name)
+			fmt.Printf("    %d neta\n", len(def.Nodes))
+		}
+		fmt.Println()
+	}
+	fmt.Printf("\n%d bentos found\n", len(names))
+	return nil
+}
+
+// runMenuFromDirectory lists bentos from a specific directory (legacy behavior).
+func runMenuFromDirectory(dir string) error {
 	bentos, err := findBentos(dir)
 	if err != nil {
 		printError(fmt.Sprintf("Failed to scan directory: %v", err))
@@ -50,14 +101,6 @@ func runMenu(cmd *cobra.Command, args []string) error {
 
 	displayBentos(bentos)
 	return nil
-}
-
-// getDir returns the directory to scan (default: current).
-func getDir(args []string) string {
-	if len(args) > 0 {
-		return args[0]
-	}
-	return "."
 }
 
 // displayBentos displays the list of found bentos.

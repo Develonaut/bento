@@ -248,7 +248,7 @@ func TestMenuCommand_EmptyDirectory(t *testing.T) {
 
 // Test: bento box command
 
-// runBoxInDir runs box command in specified directory.
+// runBoxInDir runs box command in specified directory with --local flag.
 func runBoxInDir(t *testing.T, dir, name string) {
 	t.Helper()
 	oldDir, err := os.Getwd()
@@ -264,7 +264,8 @@ func runBoxInDir(t *testing.T, dir, name string) {
 		}
 	}()
 
-	verifyCommandSuccess(t, exec.Command("bento", "box", name), "Created")
+	// Use --local flag to create bento in current directory instead of ~/.bento/bentos/
+	verifyCommandSuccess(t, exec.Command("bento", "box", name, "--local"), "Created")
 }
 
 // verifyBentoJSONValid checks if bento file is valid JSON with correct ID.

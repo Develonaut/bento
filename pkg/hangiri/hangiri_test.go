@@ -269,8 +269,8 @@ func TestStorage_PrettyPrint(t *testing.T) {
 		t.Fatalf("Save failed: %v", err)
 	}
 
-	// Read file directly
-	path := filepath.Join(tempDir, "pretty-test.json")
+	// Read file directly - now in bentos/ subdirectory with .bento.json extension
+	path := filepath.Join(tempDir, "bentos", "pretty-test.bento.json")
 	content, err := os.ReadFile(path)
 	if err != nil {
 		t.Fatalf("Failed to read file: %v", err)
