@@ -34,6 +34,7 @@ import (
 var (
 	verboseFlag bool
 	timeoutFlag time.Duration
+	dryRunFlag  bool
 )
 
 var savorCmd = &cobra.Command{
@@ -55,6 +56,7 @@ Examples:
 func init() {
 	savorCmd.Flags().BoolVarP(&verboseFlag, "verbose", "v", false, "Verbose output")
 	savorCmd.Flags().DurationVar(&timeoutFlag, "timeout", 10*time.Minute, "Execution timeout")
+	savorCmd.Flags().BoolVar(&dryRunFlag, "dry-run", false, "Show what would be executed without running")
 }
 
 // runSavor executes the savor command logic.
@@ -62,6 +64,11 @@ func runSavor(cmd *cobra.Command, args []string) error {
 	def, err := loadAndValidate(args[0])
 	if err != nil {
 		return err
+	}
+
+	// If dry run, show what would be executed and exit
+	if dryRunFlag {
+		return showDryRun(def)
 	}
 
 	chef := setupChef()
@@ -183,4 +190,22 @@ func validateBento(def *neta.Definition) error {
 	validator := omakase.New()
 	ctx := context.Background()
 	return validator.Validate(ctx, def)
+}
+
+// showDryRun displays what would be executed without running.
+func showDryRun(def *neta.Definition) error {
+	printInfo("🧪 DRY RUN MODE - No execution will occur")
+	fmt.Printf("\nWould execute bento: %s\n", def.Name)
+	fmt.Printf("Total neta to execute: %d\n\n", len(def.Nodes))
+
+	if verboseFlag {
+		printInfo("Neta that would be executed:")
+		for i, node := range def.Nodes {
+			fmt.Printf("  %d. [%s] %s (type: %s)\n", i+1, node.ID, node.Name, node.Type)
+		}
+	}
+
+	fmt.Println("\nValidation: ✓ Passed")
+	printSuccess("Dry run complete. Use 'bento savor' without --dry-run to execute.")
+	return nil
 }

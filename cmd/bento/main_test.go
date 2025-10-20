@@ -421,3 +421,71 @@ func TestVersionCommand_Shorthand(t *testing.T) {
 		t.Errorf("Should display version info: %s", output)
 	}
 }
+
+// Test: bento savor --dry-run
+
+// TestSavorCommand_DryRun verifies dry run flag prevents execution.
+func TestSavorCommand_DryRun(t *testing.T) {
+	bentoFile := createTestBento(t, "test.bento.json", simpleValidBento(""))
+	defer os.Remove(bentoFile)
+
+	output := verifyCommandSuccess(t, exec.Command("bento", "savor", bentoFile, "--dry-run"), "DRY RUN")
+
+	// Should NOT actually execute
+	if strings.Contains(output, "Delicious! Bento savored successfully") {
+		t.Error("Dry run should NOT execute the bento")
+	}
+
+	// Should show what WOULD be executed
+	if !strings.Contains(output, "Would execute") {
+		t.Error("Dry run should show what would be executed")
+	}
+}
+
+// TestSavorCommand_DryRunVerbose verifies dry run with verbose shows details.
+func TestSavorCommand_DryRunVerbose(t *testing.T) {
+	bentoFile := createTestBento(t, "test.bento.json", simpleValidBento(""))
+	defer os.Remove(bentoFile)
+
+	output := verifyCommandSuccess(t, exec.Command("bento", "savor", bentoFile, "--dry-run", "--verbose"), "DRY RUN")
+
+	// Should show node details in verbose mode
+	if !strings.Contains(output, "node-1") {
+		t.Error("Verbose dry run should show node IDs")
+	}
+}
+
+// Test: bento box --dry-run
+
+// TestBoxCommand_DryRun verifies dry run flag prevents file creation.
+func TestBoxCommand_DryRun(t *testing.T) {
+	tmpDir := t.TempDir()
+	changeToDir(t, tmpDir)
+
+	bentoPath := filepath.Join(tmpDir, "my-workflow.bento.json")
+
+	output := verifyCommandSuccess(t, exec.Command("bento", "box", "my-workflow", "--dry-run"), "DRY RUN")
+
+	// Should NOT create the file
+	if _, err := os.Stat(bentoPath); !os.IsNotExist(err) {
+		t.Error("Dry run should NOT create the bento file")
+	}
+
+	// Should show what WOULD be created
+	if !strings.Contains(output, "Would create") {
+		t.Error("Dry run should show what would be created")
+	}
+}
+
+// TestBoxCommand_DryRunShowsTemplate verifies dry run shows template preview.
+func TestBoxCommand_DryRunShowsTemplate(t *testing.T) {
+	tmpDir := t.TempDir()
+	changeToDir(t, tmpDir)
+
+	output := verifyCommandSuccess(t, exec.Command("bento", "box", "my-workflow", "--dry-run"), "DRY RUN")
+
+	// Should show template preview
+	if !strings.Contains(output, "my-workflow.bento.json") {
+		t.Error("Dry run should show the filename that would be created")
+	}
+}
