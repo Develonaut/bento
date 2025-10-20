@@ -126,6 +126,32 @@ func validateTransform(def *neta.Definition) error {
 	return nil
 }
 
+// validateTemplate validates template neta parameters.
+func validateTemplate(def *neta.Definition) error {
+	operation, hasOperation := def.Parameters["operation"].(string)
+	if !hasOperation {
+		return fmt.Errorf("template neta '%s' missing required parameter 'operation'", def.ID)
+	}
+
+	if operation != "replace" {
+		return fmt.Errorf("template neta '%s' has invalid operation '%s' (only 'replace' is supported)", def.ID, operation)
+	}
+
+	if def.Parameters["input"] == nil {
+		return fmt.Errorf("template neta '%s' missing required parameter 'input'", def.ID)
+	}
+
+	if def.Parameters["output"] == nil {
+		return fmt.Errorf("template neta '%s' missing required parameter 'output'", def.ID)
+	}
+
+	if def.Parameters["replacements"] == nil {
+		return fmt.Errorf("template neta '%s' missing required parameter 'replacements'", def.ID)
+	}
+
+	return nil
+}
+
 // isValidHTTPMethod checks if the HTTP method is valid.
 func isValidHTTPMethod(method string) bool {
 	validMethods := map[string]bool{

@@ -59,6 +59,7 @@ func New() *Validator {
 	v.validators["parallel"] = validateParallel
 	v.validators["spreadsheet"] = validateSpreadsheet
 	v.validators["image"] = validateImage
+	v.validators["template"] = validateTemplate
 	v.validators["transform"] = validateTransform
 
 	return v

@@ -51,3 +51,6 @@ render-*.png
 # Environment
 .env
 .env.local
+
+# User's personal bento workspace
+.bento/

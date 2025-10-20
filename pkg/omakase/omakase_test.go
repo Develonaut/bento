@@ -549,6 +549,180 @@ func TestValidator_InvalidChildNode(t *testing.T) {
 	}
 }
 
+func TestValidator_TemplateMissingOperation(t *testing.T) {
+	validator := omakase.New()
+	ctx := context.Background()
+
+	def := &neta.Definition{
+		ID:      "template-1",
+		Type:    "template",
+		Version: "1.0.0",
+		Name:    "Generate Config",
+		Parameters: map[string]interface{}{
+			"input":  "template.xml",
+			"output": "config.xml",
+			"replacements": map[string]interface{}{
+				"name": "value",
+			},
+		},
+	}
+
+	err := validator.Validate(ctx, def)
+	if err == nil {
+		t.Fatal("Expected validation error for missing operation")
+	}
+
+	errMsg := err.Error()
+	if !contains(errMsg, "operation") {
+		t.Errorf("Error should mention missing 'operation': %s", errMsg)
+	}
+	if !contains(errMsg, "template-1") {
+		t.Errorf("Error should mention node ID: %s", errMsg)
+	}
+}
+
+func TestValidator_TemplateInvalidOperation(t *testing.T) {
+	validator := omakase.New()
+	ctx := context.Background()
+
+	def := &neta.Definition{
+		ID:      "template-1",
+		Type:    "template",
+		Version: "1.0.0",
+		Name:    "Generate Config",
+		Parameters: map[string]interface{}{
+			"operation": "invalid",
+			"input":     "template.xml",
+			"output":    "config.xml",
+			"replacements": map[string]interface{}{
+				"name": "value",
+			},
+		},
+	}
+
+	err := validator.Validate(ctx, def)
+	if err == nil {
+		t.Fatal("Expected validation error for invalid operation")
+	}
+
+	errMsg := err.Error()
+	if !contains(errMsg, "invalid") && !contains(errMsg, "operation") {
+		t.Errorf("Error should mention invalid operation: %s", errMsg)
+	}
+}
+
+func TestValidator_TemplateMissingInput(t *testing.T) {
+	validator := omakase.New()
+	ctx := context.Background()
+
+	def := &neta.Definition{
+		ID:      "template-1",
+		Type:    "template",
+		Version: "1.0.0",
+		Name:    "Generate Config",
+		Parameters: map[string]interface{}{
+			"operation": "replace",
+			"output":    "config.xml",
+			"replacements": map[string]interface{}{
+				"name": "value",
+			},
+		},
+	}
+
+	err := validator.Validate(ctx, def)
+	if err == nil {
+		t.Fatal("Expected validation error for missing input")
+	}
+
+	errMsg := err.Error()
+	if !contains(errMsg, "input") {
+		t.Errorf("Error should mention missing 'input': %s", errMsg)
+	}
+}
+
+func TestValidator_TemplateMissingOutput(t *testing.T) {
+	validator := omakase.New()
+	ctx := context.Background()
+
+	def := &neta.Definition{
+		ID:      "template-1",
+		Type:    "template",
+		Version: "1.0.0",
+		Name:    "Generate Config",
+		Parameters: map[string]interface{}{
+			"operation": "replace",
+			"input":     "template.xml",
+			"replacements": map[string]interface{}{
+				"name": "value",
+			},
+		},
+	}
+
+	err := validator.Validate(ctx, def)
+	if err == nil {
+		t.Fatal("Expected validation error for missing output")
+	}
+
+	errMsg := err.Error()
+	if !contains(errMsg, "output") {
+		t.Errorf("Error should mention missing 'output': %s", errMsg)
+	}
+}
+
+func TestValidator_TemplateMissingReplacements(t *testing.T) {
+	validator := omakase.New()
+	ctx := context.Background()
+
+	def := &neta.Definition{
+		ID:      "template-1",
+		Type:    "template",
+		Version: "1.0.0",
+		Name:    "Generate Config",
+		Parameters: map[string]interface{}{
+			"operation": "replace",
+			"input":     "template.xml",
+			"output":    "config.xml",
+		},
+	}
+
+	err := validator.Validate(ctx, def)
+	if err == nil {
+		t.Fatal("Expected validation error for missing replacements")
+	}
+
+	errMsg := err.Error()
+	if !contains(errMsg, "replacements") {
+		t.Errorf("Error should mention missing 'replacements': %s", errMsg)
+	}
+}
+
+func TestValidator_TemplateValidConfiguration(t *testing.T) {
+	validator := omakase.New()
+	ctx := context.Background()
+
+	def := &neta.Definition{
+		ID:      "template-1",
+		Type:    "template",
+		Version: "1.0.0",
+		Name:    "Generate Config",
+		Parameters: map[string]interface{}{
+			"operation": "replace",
+			"input":     "template.xml",
+			"output":    "config.xml",
+			"replacements": map[string]interface{}{
+				"name":  "value",
+				"scale": "32mm",
+			},
+			"mode": "id",
+		},
+	}
+
+	err := validator.Validate(ctx, def)
+	if err != nil {
+		t.Fatalf("Expected validation to pass, but got error: %v", err)
+	}
+}
+
 // Helper function
 func contains(s, substr string) bool {
 	return strings.Contains(strings.ToLower(s), strings.ToLower(substr))

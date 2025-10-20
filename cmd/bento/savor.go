@@ -28,6 +28,7 @@ import (
 	parallel "github.com/Develonaut/bento/pkg/neta/library/parallel"
 	shellcommand "github.com/Develonaut/bento/pkg/neta/library/shellcommand"
 	spreadsheet "github.com/Develonaut/bento/pkg/neta/library/spreadsheet"
+	template "github.com/Develonaut/bento/pkg/neta/library/template"
 	transform "github.com/Develonaut/bento/pkg/neta/library/transform"
 )
 
@@ -150,6 +151,7 @@ func createPantry() *pantry.Pantry {
 	p.RegisterFactory("parallel", func() neta.Executable { return parallel.New() })
 	p.RegisterFactory("shell-command", func() neta.Executable { return shellcommand.New() })
 	p.RegisterFactory("spreadsheet", func() neta.Executable { return spreadsheet.New() })
+	p.RegisterFactory("template", func() neta.Executable { return template.New() })
 	p.RegisterFactory("transform", func() neta.Executable { return transform.New() })
 
 	return p
