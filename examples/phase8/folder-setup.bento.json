@@ -9,8 +9,8 @@
   },
   "metadata": {
     "description": "Creates folder structure for each product from CSV. Demonstrates loop neta with forEach mode and context passing from CSV reader to file-system operations.",
-    "usage": "bento savor folder-setup.bento.json",
-    "example": "Reads tests/fixtures/products-test.csv and creates products/MOCK-001/, products/MOCK-002/, products/MOCK-003/",
+    "usage": "bento run folder-setup.bento.json",
+    "example": "Reads tests/fixtures/products-test.csv and creates products/Combat Dog (Supplies)/, products/Combat Dog (Gas Mask)/, products/Combat Dog (Attack)/",
     "tags": ["phase8", "folders", "loop", "filesystem", "csv"],
     "phase": "8.3",
     "demonstrates": ["forEach loop", "template resolution", "context passing", "nested node execution"]
@@ -55,7 +55,7 @@
         "y": 100
       },
       "metadata": {
-        "description": "Loops through each product row and creates its folder. Uses {{index . \"read-csv\" \"rows\"}} to access the CSV data from the previous node. Inside the loop, {{.item.sku}} accesses the current row's SKU field."
+        "description": "Loops through each product row and creates its folder. Uses {{index . \"read-csv\" \"rows\"}} to access the CSV data from the previous node. Inside the loop, {{.item.name}} accesses the current row's name field."
       },
       "parameters": {
         "mode": "forEach",
@@ -80,11 +80,11 @@
             "y": 100
           },
           "metadata": {
-            "description": "Creates products/[SKU]/ directory for the current product. The {{.item.sku}} template resolves to the SKU value from the current CSV row (e.g., MOCK-001). The 'recursive: true' parameter ensures parent directories are created if needed."
+            "description": "Creates products/[product name]/ directory for the current product. The {{.item.name}} template resolves to the SKU value from the current CSV row (e.g., MOCK-001). The 'recursive: true' parameter ensures parent directories are created if needed."
           },
           "parameters": {
             "operation": "mkdir",
-            "path": "products/{{.item.sku}}",
+            "path": "products/{{.item.name}}",
             "recursive": true
           },
           "inputPorts": [],

@@ -5,33 +5,29 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/Develonaut/bento/tests/mocks"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 // TestProductAutomation_EndToEnd validates the complete product automation workflow.
-// Tests CSV reading → folder creation → Figma API → Blender render → WebP optimization
+// Tests CSV reading → folder creation → copy overlays → Blender render → WebP optimization
 func TestProductAutomation_EndToEnd(t *testing.T) {
 	projectRoot := "../../"
 	defer CleanupTestDir(t, projectRoot+"products")
 	CleanupTestDir(t, projectRoot+"products")
 
-	figmaServer := mocks.NewFigmaServer()
-	defer figmaServer.Close()
-
-	envVars := setupTestEnvironment(t, projectRoot, figmaServer.URL)
+	envVars := setupTestEnvironment(t, projectRoot)
 	output, err := RunBento(t, "examples/phase8/product-automation.bento.json", envVars)
 
 	require.NoError(t, err, "Product automation should complete successfully\nOutput: %s", output)
 	verifyBentoSuccess(t, output)
-	verifyAllProductsProcessed(t, output, []string{"MOCK-001", "MOCK-002", "MOCK-003"})
-	verifyProductOutputs(t, projectRoot, []string{"MOCK-001", "MOCK-002", "MOCK-003"})
+	verifyAllProductsProcessed(t, output, []string{"Combat Dog (Supplies)", "Combat Dog (Gas Mask)", "Combat Dog (Attack)"})
+	verifyProductOutputs(t, projectRoot, []string{"Combat Dog (Supplies)", "Combat Dog (Gas Mask)", "Combat Dog (Attack)"})
 	verifyStreamingOutput(t, output)
 }
 
 // setupTestEnvironment creates environment variables for the test
-func setupTestEnvironment(t *testing.T, projectRoot, figmaURL string) map[string]string {
+func setupTestEnvironment(t *testing.T, projectRoot string) map[string]string {
 	t.Helper()
 
 	testCSV := "tests/fixtures/products-test.csv"
@@ -39,8 +35,6 @@ func setupTestEnvironment(t *testing.T, projectRoot, figmaURL string) map[string
 
 	return map[string]string{
 		"INPUT_CSV":           testCSV,
-		"FIGMA_API_URL":       figmaURL,
-		"FIGMA_API_TOKEN":     "test-token",
 		"BLENDER_MOCK_SCRIPT": blenderScript,
 	}
 }

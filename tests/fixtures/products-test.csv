@@ -1,4 +1,4 @@
-sku,name,description,category
-MOCK-001,Test Widget A,High-quality test widget,Widgets
-MOCK-002,Test Gadget B,Premium test gadget,Gadgets
-MOCK-003,Test Tool C,Essential test tool,Tools
+name,scale,studio,title,description,tags
+Combat Dog (Supplies),32mm - Heroic,Test Studio,Combat Dog (Supplies) Miniature,Test product for bento workflow testing,"test, miniatures, combat dog"
+Combat Dog (Gas Mask),32mm - Heroic,Test Studio,Combat Dog (Gas Mask) Miniature,Test product for bento workflow testing,"test, miniatures, combat dog"
+Combat Dog (Attack),32mm - Heroic,Test Studio,Combat Dog (Attack) Miniature,Test product for bento workflow testing,"test, miniatures, combat dog"

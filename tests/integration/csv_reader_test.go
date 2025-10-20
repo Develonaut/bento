@@ -26,9 +26,9 @@ func TestCSVReader_Integration(t *testing.T) {
 		t.Errorf("Expected success message in output. Got: %s", output)
 	}
 
-	// Verify the bento executed at least 1 neta (the CSV reader)
-	if !strings.Contains(output, "1 neta executed") {
-		t.Errorf("Expected '1 neta executed' in output. Got: %s", output)
+	// Verify the bento executed at least 1 node (the CSV reader)
+	if !strings.Contains(output, "1 nodes executed") {
+		t.Errorf("Expected '1 nodes executed' in output. Got: %s", output)
 	}
 
 	// Verify the CSV reader neta was executed

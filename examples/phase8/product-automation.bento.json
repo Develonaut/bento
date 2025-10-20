@@ -8,18 +8,17 @@
     "y": 0
   },
   "metadata": {
-    "description": "Complete workflow: CSV → Folders → Figma → Blender → WebP. Processes multiple products end-to-end with parallel image optimization.",
-    "usage": "export INPUT_CSV=tests/fixtures/products-test.csv FIGMA_API_URL=http://localhost:9999 FIGMA_API_TOKEN=test-token BLENDER_MOCK_SCRIPT=tests/mocks/blender-mock.sh && bento savor product-automation.bento.json",
-    "example": "Reads 3 products from CSV, creates folder structure, fetches Figma overlays, runs mock Blender, optimizes to WebP",
+    "description": "Complete workflow: CSV → Folders → Copy Overlays → Blender → WebP. Processes multiple products end-to-end with parallel image optimization.",
+    "usage": "export INPUT_CSV=tests/fixtures/products-test.csv BLENDER_MOCK_SCRIPT=tests/mocks/blender-mock.sh && bento run product-automation.bento.json",
+    "example": "Reads 3 products from CSV, creates folder structure, copies overlay images, runs mock Blender, optimizes to WebP",
     "tags": ["phase8", "integration", "production", "automation", "end-to-end"],
     "phase": "8.7",
     "demonstrates": [
       "CSV reading (spreadsheet neta)",
-      "Loop with forEach mode",
-      "HTTP requests (Figma API)",
+      "Loop with forEach mode and index access",
+      "File operations (mkdir, copy, delete)",
       "Shell command execution (Blender)",
       "Parallel image optimization",
-      "File operations (mkdir, delete)",
       "Context passing between neta",
       "Streaming progress output",
       "Complete end-to-end workflow"
@@ -66,7 +65,7 @@
         "y": 100
       },
       "metadata": {
-        "description": "Loops through each product row and processes it end-to-end: folder creation → Figma API → download overlay → Blender render → WebP optimization → cleanup"
+        "description": "Loops through each product row and processes it end-to-end: folder creation → copy overlay → Blender render → WebP optimization → cleanup"
       },
       "parameters": {
         "mode": "forEach",
@@ -91,66 +90,34 @@
             "y": 50
           },
           "metadata": {
-            "description": "Creates products/[SKU]/ directory for the current product"
+            "description": "Creates products/[product name]/ directory for the current product"
           },
           "parameters": {
             "operation": "mkdir",
-            "path": "products/{{.item.sku}}",
+            "path": "products/{{.item.name}}",
             "recursive": true
           },
           "inputPorts": [],
           "outputPorts": []
         },
         {
-          "id": "call-figma",
-          "type": "http-request",
+          "id": "copy-overlay",
+          "type": "file-system",
           "version": "1.0.0",
-          "name": "Get Figma Overlay URL",
+          "name": "Copy Overlay Image",
           "position": {
             "x": 50,
             "y": 150
           },
           "metadata": {
-            "description": "Calls Figma API to get the overlay image URL. In tests, this uses a mock server."
+            "description": "Copies the indexed overlay PNG from overlays/{index}.png to the product folder"
           },
           "parameters": {
-            "url": "{{.FIGMA_API_URL}}/v1/images/test-file",
-            "method": "GET",
-            "headers": {
-              "X-Figma-Token": "{{.FIGMA_API_TOKEN}}"
-            }
+            "operation": "copy",
+            "source": "tests/fixtures/overlays/{{.index}}.png",
+            "dest": "products/{{.item.name}}/overlay.png"
           },
           "inputPorts": [],
-          "outputPorts": [
-            {
-              "id": "out-1",
-              "name": "response"
-            }
-          ]
-        },
-        {
-          "id": "download-overlay",
-          "type": "http-request",
-          "version": "1.0.0",
-          "name": "Download Overlay Image",
-          "position": {
-            "x": 50,
-            "y": 250
-          },
-          "metadata": {
-            "description": "Downloads the overlay PNG from the URL returned by Figma API"
-          },
-          "parameters": {
-            "url": "{{.call-figma.body.images.test-component}}",
-            "method": "GET",
-            "saveToFile": "products/{{.item.sku}}/overlay.png"
-          },
-          "inputPorts": [
-            {
-              "id": "in-1",
-              "name": "imageUrl"
-            }
-          ],
           "outputPorts": []
         },
         {
@@ -170,11 +137,11 @@
             "args": [
               "--",
               "--sku",
-              "{{.item.sku}}",
+              "{{.item.name}}",
               "--overlay",
-              "products/{{.item.sku}}/overlay.png",
+              "products/{{.item.name}}/overlay.png",
               "--output",
-              "products/{{.item.sku}}/render"
+              "products/{{.item.name}}/render"
             ],
             "timeout": 60,
             "stream": true
@@ -211,8 +178,8 @@
               },
               "parameters": {
                 "operation": "convert",
-                "input": "products/{{.item.sku}}/render-1.png",
-                "output": "products/{{.item.sku}}/render-1.webp",
+                "input": "products/{{.item.name}}/render-1.png",
+                "output": "products/{{.item.name}}/render-1.webp",
                 "format": "webp",
                 "quality": 85
               },
@@ -230,8 +197,8 @@
               },
               "parameters": {
                 "operation": "convert",
-                "input": "products/{{.item.sku}}/render-2.png",
-                "output": "products/{{.item.sku}}/render-2.webp",
+                "input": "products/{{.item.name}}/render-2.png",
+                "output": "products/{{.item.name}}/render-2.webp",
                 "format": "webp",
                 "quality": 85
               },
@@ -249,8 +216,8 @@
               },
               "parameters": {
                 "operation": "convert",
-                "input": "products/{{.item.sku}}/render-3.png",
-                "output": "products/{{.item.sku}}/render-3.webp",
+                "input": "products/{{.item.name}}/render-3.png",
+                "output": "products/{{.item.name}}/render-3.webp",
                 "format": "webp",
                 "quality": 85
               },
@@ -268,8 +235,8 @@
               },
               "parameters": {
                 "operation": "convert",
-                "input": "products/{{.item.sku}}/render-4.png",
-                "output": "products/{{.item.sku}}/render-4.webp",
+                "input": "products/{{.item.name}}/render-4.png",
+                "output": "products/{{.item.name}}/render-4.webp",
                 "format": "webp",
                 "quality": 85
               },
@@ -287,8 +254,8 @@
               },
               "parameters": {
                 "operation": "convert",
-                "input": "products/{{.item.sku}}/render-5.png",
-                "output": "products/{{.item.sku}}/render-5.webp",
+                "input": "products/{{.item.name}}/render-5.png",
+                "output": "products/{{.item.name}}/render-5.webp",
                 "format": "webp",
                 "quality": 85
               },
@@ -306,8 +273,8 @@
               },
               "parameters": {
                 "operation": "convert",
-                "input": "products/{{.item.sku}}/render-6.png",
-                "output": "products/{{.item.sku}}/render-6.webp",
+                "input": "products/{{.item.name}}/render-6.png",
+                "output": "products/{{.item.name}}/render-6.webp",
                 "format": "webp",
                 "quality": 85
               },
@@ -325,8 +292,8 @@
               },
               "parameters": {
                 "operation": "convert",
-                "input": "products/{{.item.sku}}/render-7.png",
-                "output": "products/{{.item.sku}}/render-7.webp",
+                "input": "products/{{.item.name}}/render-7.png",
+                "output": "products/{{.item.name}}/render-7.webp",
                 "format": "webp",
                 "quality": 85
               },
@@ -344,8 +311,8 @@
               },
               "parameters": {
                 "operation": "convert",
-                "input": "products/{{.item.sku}}/render-8.png",
-                "output": "products/{{.item.sku}}/render-8.webp",
+                "input": "products/{{.item.name}}/render-8.png",
+                "output": "products/{{.item.name}}/render-8.webp",
                 "format": "webp",
                 "quality": 85
               },
@@ -369,7 +336,7 @@
           },
           "parameters": {
             "operation": "delete",
-            "path": "products/{{.item.sku}}/render-*.png"
+            "path": "products/{{.item.name}}/render-*.png"
           },
           "inputPorts": [],
           "outputPorts": []
@@ -379,27 +346,20 @@
         {
           "id": "e1",
           "source": "create-folder",
-          "target": "call-figma"
+          "target": "copy-overlay"
         },
         {
           "id": "e2",
-          "source": "call-figma",
-          "sourcePort": "out-1",
-          "target": "download-overlay",
-          "targetPort": "in-1"
-        },
-        {
-          "id": "e3",
-          "source": "download-overlay",
+          "source": "copy-overlay",
           "target": "render"
         },
         {
-          "id": "e4",
+          "id": "e3",
           "source": "render",
           "target": "optimize"
         },
         {
-          "id": "e5",
+          "id": "e4",
           "source": "optimize",
           "target": "cleanup"
         }

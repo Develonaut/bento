@@ -30,22 +30,22 @@ func TestFolderSetup_CreateProductFolders(t *testing.T) {
 
 	// Verify folders were created (relative to project root)
 	// RunBento runs from project root, so products/ is created there
-	VerifyFileExists(t, projectRoot+"products/MOCK-001")
-	VerifyFileExists(t, projectRoot+"products/MOCK-002")
-	VerifyFileExists(t, projectRoot+"products/MOCK-003")
+	VerifyFileExists(t, projectRoot+"products/Combat Dog (Supplies)")
+	VerifyFileExists(t, projectRoot+"products/Combat Dog (Gas Mask)")
+	VerifyFileExists(t, projectRoot+"products/Combat Dog (Attack)")
 
 	// Verify they are directories
-	info, err := os.Stat(projectRoot + "products/MOCK-001")
-	require.NoError(t, err, "products/MOCK-001 should exist")
-	assert.True(t, info.IsDir(), "products/MOCK-001 should be a directory")
+	info, err := os.Stat(projectRoot + "products/Combat Dog (Supplies)")
+	require.NoError(t, err, "products/Combat Dog (Supplies) should exist")
+	assert.True(t, info.IsDir(), "products/Combat Dog (Supplies) should be a directory")
 
-	info, err = os.Stat(projectRoot + "products/MOCK-002")
-	require.NoError(t, err, "products/MOCK-002 should exist")
-	assert.True(t, info.IsDir(), "products/MOCK-002 should be a directory")
+	info, err = os.Stat(projectRoot + "products/Combat Dog (Gas Mask)")
+	require.NoError(t, err, "products/Combat Dog (Gas Mask) should exist")
+	assert.True(t, info.IsDir(), "products/Combat Dog (Gas Mask) should be a directory")
 
-	info, err = os.Stat(projectRoot + "products/MOCK-003")
-	require.NoError(t, err, "products/MOCK-003 should exist")
-	assert.True(t, info.IsDir(), "products/MOCK-003 should be a directory")
+	info, err = os.Stat(projectRoot + "products/Combat Dog (Attack)")
+	require.NoError(t, err, "products/Combat Dog (Attack) should exist")
+	assert.True(t, info.IsDir(), "products/Combat Dog (Attack) should be a directory")
 
 	t.Log("✓ Successfully created folders for 3 products")
 	t.Log("✓ Validated loop neta with forEach mode")
@@ -62,7 +62,7 @@ func TestFolderSetup_AlreadyExists(t *testing.T) {
 	CleanupTestDir(t, projectRoot+"products")
 
 	// Pre-create one folder to test idempotency
-	err := os.MkdirAll(projectRoot+"products/MOCK-001", 0755)
+	err := os.MkdirAll(projectRoot+"products/Combat Dog (Supplies)", 0755)
 	require.NoError(t, err, "Should pre-create folder")
 
 	// Execute bento (runs from project root)
@@ -73,9 +73,9 @@ func TestFolderSetup_AlreadyExists(t *testing.T) {
 	require.NoError(t, err, "Should succeed even if folder exists\nOutput: %s", string(output))
 
 	// All folders should exist
-	VerifyFileExists(t, projectRoot+"products/MOCK-001")
-	VerifyFileExists(t, projectRoot+"products/MOCK-002")
-	VerifyFileExists(t, projectRoot+"products/MOCK-003")
+	VerifyFileExists(t, projectRoot+"products/Combat Dog (Supplies)")
+	VerifyFileExists(t, projectRoot+"products/Combat Dog (Gas Mask)")
+	VerifyFileExists(t, projectRoot+"products/Combat Dog (Attack)")
 
 	t.Log("✓ Idempotent: Successfully ran with pre-existing folder")
 }
