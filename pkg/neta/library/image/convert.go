@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/davidbyttow/govips/v2/vips"
+	"github.com/disintegration/imaging"
 )
 
 // convert converts image format.
@@ -25,20 +25,16 @@ func (i *Image) convert(ctx context.Context, params map[string]interface{}) (int
 		return nil, fmt.Errorf("format parameter is required (webp, jpeg, png)")
 	}
 
-	// Load image
-	img, err := vips.NewImageFromFile(input)
+	img, err := imaging.Open(input)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load image: %w", err)
 	}
-	defer img.Close()
 
-	// Export in target format
 	params["_targetFormat"] = format
 	if err := i.exportImage(img, output, params); err != nil {
 		return nil, err
 	}
 
-	// Get file size
 	fileInfo, _ := os.Stat(output)
 	var size int64
 	if fileInfo != nil {

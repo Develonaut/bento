@@ -3,9 +3,10 @@ package image
 import (
 	"context"
 	"fmt"
+	stdimage "image"
 	"os"
 
-	"github.com/davidbyttow/govips/v2/vips"
+	"github.com/disintegration/imaging"
 )
 
 // resize resizes an image.
@@ -28,27 +29,28 @@ func (i *Image) resize(ctx context.Context, params map[string]interface{}) (inte
 		return nil, fmt.Errorf("either width or height must be specified")
 	}
 
-	// Load image
-	img, err := vips.NewImageFromFile(input)
+	img, err := imaging.Open(input)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load image: %w", err)
 	}
-	defer img.Close()
 
-	// Calculate scale factor
-	scale := calculateScale(img, width, height, maintainAspect)
-
-	// Resize
-	if err := img.Resize(scale, vips.KernelLanczos3); err != nil {
-		return nil, fmt.Errorf("failed to resize image: %w", err)
+	var resized stdimage.Image
+	if maintainAspect {
+		resized = imaging.Resize(img, width, height, imaging.Lanczos)
+	} else {
+		if width == 0 {
+			width = img.Bounds().Dx()
+		}
+		if height == 0 {
+			height = img.Bounds().Dy()
+		}
+		resized = imaging.Resize(img, width, height, imaging.Lanczos)
 	}
 
-	// Export
-	if err := i.exportImage(img, output, params); err != nil {
+	if err := i.exportImage(resized, output, params); err != nil {
 		return nil, err
 	}
 
-	// Get file size
 	fileInfo, _ := os.Stat(output)
 	var size int64
 	if fileInfo != nil {
@@ -59,34 +61,8 @@ func (i *Image) resize(ctx context.Context, params map[string]interface{}) (inte
 		"path": output,
 		"size": size,
 		"dimensions": map[string]int{
-			"width":  img.Width(),
-			"height": img.Height(),
+			"width":  resized.Bounds().Dx(),
+			"height": resized.Bounds().Dy(),
 		},
 	}, nil
-}
-
-// calculateScale determines the scale factor for resizing.
-func calculateScale(img *vips.ImageRef, width, height int, maintainAspect bool) float64 {
-	if maintainAspect {
-		if width > 0 && height == 0 {
-			// Scale by width, height will adjust automatically
-			return float64(width) / float64(img.Width())
-		} else if height > 0 && width == 0 {
-			// Scale by height, width will adjust automatically
-			return float64(height) / float64(img.Height())
-		}
-		// Both specified, use smaller scale to fit within bounds
-		scaleW := float64(width) / float64(img.Width())
-		scaleH := float64(height) / float64(img.Height())
-		if scaleW < scaleH {
-			return scaleW
-		}
-		return scaleH
-	}
-
-	// No aspect ratio preservation, use width scale
-	if width > 0 {
-		return float64(width) / float64(img.Width())
-	}
-	return 1.0 // No scaling
 }

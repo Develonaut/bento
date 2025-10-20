@@ -1,16 +1,20 @@
 package image
 
 import (
+	"bytes"
 	"fmt"
+	stdimage "image"
+	"image/jpeg"
+	"image/png"
 	"os"
 	"path/filepath"
 	"strings"
 
-	"github.com/davidbyttow/govips/v2/vips"
+	"github.com/gen2brain/webp"
 )
 
 // exportImage exports image to file in the specified format.
-func (i *Image) exportImage(img *vips.ImageRef, output string, params map[string]interface{}) error {
+func (i *Image) exportImage(img stdimage.Image, output string, params map[string]interface{}) error {
 	quality := getIntParam(params, "quality", 80)
 	format := determineFormat(output, params)
 
@@ -19,7 +23,6 @@ func (i *Image) exportImage(img *vips.ImageRef, output string, params map[string
 		return err
 	}
 
-	// Write to file
 	if err := os.WriteFile(output, data, 0644); err != nil {
 		return fmt.Errorf("failed to write output file: %w", err)
 	}
@@ -43,22 +46,22 @@ func determineFormat(output string, params map[string]interface{}) string {
 	case ".png":
 		return "png"
 	default:
-		return "webp" // Default to webp
+		return "webp"
 	}
 }
 
 // encodeImage encodes image in the specified format.
-func encodeImage(img *vips.ImageRef, format string, quality int) ([]byte, error) {
-	var data []byte
+func encodeImage(img stdimage.Image, format string, quality int) ([]byte, error) {
+	var buf bytes.Buffer
 	var err error
 
 	switch format {
 	case "webp":
-		data, err = exportWebp(img, quality)
+		err = exportWebp(&buf, img, quality)
 	case "jpeg":
-		data, err = exportJpeg(img, quality)
+		err = exportJpeg(&buf, img, quality)
 	case "png":
-		data, err = exportPng(img)
+		err = exportPng(&buf, img)
 	default:
 		return nil, fmt.Errorf("unsupported format: %s", format)
 	}
@@ -67,31 +70,30 @@ func encodeImage(img *vips.ImageRef, format string, quality int) ([]byte, error)
 		return nil, fmt.Errorf("failed to export image: %w", err)
 	}
 
-	return data, nil
+	return buf.Bytes(), nil
 }
 
-// exportWebp exports image as WebP.
-func exportWebp(img *vips.ImageRef, quality int) ([]byte, error) {
-	exportParams := vips.NewWebpExportParams()
-	exportParams.Quality = quality
-	exportParams.StripMetadata = true
-	data, _, err := img.ExportWebp(exportParams)
-	return data, err
+// exportWebp exports image as WebP using gen2brain/webp.
+func exportWebp(buf *bytes.Buffer, img stdimage.Image, quality int) error {
+	options := webp.Options{
+		Lossless: false,
+		Quality:  quality,
+	}
+	return webp.Encode(buf, img, options)
 }
 
-// exportJpeg exports image as JPEG.
-func exportJpeg(img *vips.ImageRef, quality int) ([]byte, error) {
-	exportParams := vips.NewJpegExportParams()
-	exportParams.Quality = quality
-	exportParams.StripMetadata = true
-	data, _, err := img.ExportJpeg(exportParams)
-	return data, err
+// exportJpeg exports image as JPEG using standard library.
+func exportJpeg(buf *bytes.Buffer, img stdimage.Image, quality int) error {
+	options := &jpeg.Options{
+		Quality: quality,
+	}
+	return jpeg.Encode(buf, img, options)
 }
 
-// exportPng exports image as PNG.
-func exportPng(img *vips.ImageRef) ([]byte, error) {
-	exportParams := vips.NewPngExportParams()
-	exportParams.StripMetadata = true
-	data, _, err := img.ExportPng(exportParams)
-	return data, err
+// exportPng exports image as PNG using standard library.
+func exportPng(buf *bytes.Buffer, img stdimage.Image) error {
+	encoder := &png.Encoder{
+		CompressionLevel: png.DefaultCompression,
+	}
+	return encoder.Encode(buf, img)
 }
