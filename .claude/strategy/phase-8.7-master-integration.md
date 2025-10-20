@@ -288,7 +288,7 @@ export FIGMA_API_TOKEN=test-token
 export BLENDER_MOCK_SCRIPT=tests/mocks/blender-mock.sh
 
 # Run the master bento!
-bento savor examples/phase8/product-automation.bento.json
+bento run examples/phase8/product-automation.bento.json
 
 # Watch the magic happen:
 # - Reads CSV
@@ -462,7 +462,7 @@ TDD Workflow:
 
 3. Verify manually:
    - Set all environment variables
-   - Run: bento savor examples/phase8/product-automation.bento.json
+   - Run: bento run examples/phase8/product-automation.bento.json
    - Watch streaming output
    - Verify: tree products/ shows correct structure
    - Verify: 24 WebP files exist

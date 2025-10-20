@@ -1,13 +1,14 @@
 // Package main implements the bento CLI.
 //
 // Bento is a high-performance workflow automation CLI written in Go.
-// It uses playful sushi-themed commands to make automation fun.
 //
 // Commands:
-//   - savor: Execute a bento workflow
-//   - sample: Validate a bento without executing
-//   - menu: List available bentos
-//   - box: Create a new bento template
+//   - run: Execute a bento workflow
+//   - validate: Validate a bento without executing
+//   - list: List available bentos
+//   - new: Create a new bento template
+//   - docs: View documentation
+//   - secrets: Manage secrets
 //
 // Learn more: https://github.com/Develonaut/bento
 package main
@@ -22,20 +23,20 @@ var version = "dev" // Set by build process
 
 var rootCmd = &cobra.Command{
 	Use:   "bento",
-	Short: "🍱 High-performance workflow automation",
-	Long: `Bento - Workflow automation with a taste of sushi 🍱
+	Short: "High-performance workflow automation",
+	Long: `Bento - High-performance workflow automation
 
 Bento lets you build powerful automation workflows using composable
-"neta" (ingredients) that can be connected together like a carefully
-crafted bento box.
+nodes that can be connected together.
 
-Commands are playfully themed:
-  • savor  - Execute a bento (savor every delicious bite!)
-  • sample - Validate without executing (sample to check if it tastes right)
-  • menu   - List available bentos (restaurant menu)
-  • box    - Create a new bento template (box up fresh ingredients)
-  • wasabi - Manage secrets (handle the spicy stuff 🟢)
-  • recipe - View documentation (learn the recipe)`,
+Available Commands:
+  • run      - Execute a bento workflow
+  • validate - Validate a workflow without executing
+  • list     - List available bento workflows
+  • new      - Create a new bento workflow template
+  • docs     - View documentation
+  • secrets  - Manage secrets securely
+  • version  - Show version information`,
 }
 
 func main() {
@@ -45,11 +46,11 @@ func main() {
 }
 
 func init() {
-	rootCmd.AddCommand(savorCmd)
-	rootCmd.AddCommand(sampleCmd)
-	rootCmd.AddCommand(menuCmd)
-	rootCmd.AddCommand(boxCmd)
-	rootCmd.AddCommand(recipeCmd)
+	rootCmd.AddCommand(runCmd)
+	rootCmd.AddCommand(validateCmd)
+	rootCmd.AddCommand(listCmd)
+	rootCmd.AddCommand(newCmd)
+	rootCmd.AddCommand(docsCmd)
 	rootCmd.AddCommand(versionCmd)
-	rootCmd.AddCommand(wasabiCmd)
+	rootCmd.AddCommand(secretsCmd)
 }

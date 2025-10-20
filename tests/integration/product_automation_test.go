@@ -48,7 +48,7 @@ func setupTestEnvironment(t *testing.T, projectRoot, figmaURL string) map[string
 // verifyBentoSuccess checks that bento execution succeeded
 func verifyBentoSuccess(t *testing.T, output string) {
 	t.Helper()
-	assert.Contains(t, output, "Delicious! Bento savored successfully", "Should show success message")
+	assert.Contains(t, output, "Delicious! Bento executed successfully", "Should show success message")
 }
 
 // verifyAllProductsProcessed checks that all expected products appear in output

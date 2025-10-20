@@ -103,15 +103,6 @@ func (s *Storage) getBentoPath(name string) string {
 	return filepath.Join(s.getStorageDir(StorageTypeBentos), name+".bento.json")
 }
 
-// getGenericPath returns the full file path for a generic JSON file.
-// Reserved for future storage types (templates, cache, etc.).
-// Currently unused but kept for consistency with storage architecture.
-func (s *Storage) getGenericPath(storageType StorageType, name string) string {
-	// Strip .json extension if present
-	name = strings.TrimSuffix(name, ".json")
-	return filepath.Join(s.getStorageDir(storageType), name+".json")
-}
-
 // SaveBento saves a bento definition to ~/.bento/bentos/
 //
 // The bento is saved as <name>.bento.json in the bentos directory.

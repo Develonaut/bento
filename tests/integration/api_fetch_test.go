@@ -53,7 +53,7 @@ func TestAPIFetch_DownloadOverlay(t *testing.T) {
 	require.NoError(t, err, "API fetch bento should execute successfully\nOutput: %s", string(output))
 
 	// Verify output shows success
-	assert.Contains(t, output, "Delicious! Bento savored successfully", "Should show success message")
+	assert.Contains(t, output, "Delicious! Bento executed successfully", "Should show success message")
 
 	// Verify overlay downloaded to correct location
 	overlayPath := filepath.Join(projectRoot, "products", "MOCK-001", "overlay.png")

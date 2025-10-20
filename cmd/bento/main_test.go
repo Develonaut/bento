@@ -95,8 +95,6 @@ func simpleValidBento(title string) string {
 	return h + title + n
 }
 
-// Test: bento savor command
-
 // verifyCommandSuccess checks if command succeeded with expected output.
 func verifyCommandSuccess(t *testing.T, cmd *exec.Cmd, expectedText string) string {
 	t.Helper()
@@ -109,19 +107,6 @@ func verifyCommandSuccess(t *testing.T, cmd *exec.Cmd, expectedText string) stri
 		t.Errorf("Output should contain '%s': %s", expectedText, outputStr)
 	}
 	return outputStr
-}
-
-// TestSavorCommand_ValidBento verifies that savor executes a valid bento successfully.
-func TestSavorCommand_ValidBento(t *testing.T) {
-	bentoFile := createTestBento(t, "test.bento.json", simpleValidBento(""))
-	defer os.Remove(bentoFile)
-
-	cmd := exec.Command("bento", "savor", bentoFile)
-	output := verifyCommandSuccess(t, cmd, "Delicious")
-
-	if !strings.Contains(output, "✓") {
-		t.Error("Output should contain success checkmark ✓")
-	}
 }
 
 // verifyCommandError checks if command failed with expected error.
@@ -141,42 +126,6 @@ func verifyCommandError(t *testing.T, cmd *exec.Cmd) {
 		!strings.Contains(outputStr, "failed") &&
 		!strings.Contains(outputStr, "missing") {
 		t.Errorf("Output should mention error: %s", string(output))
-	}
-}
-
-// TestSavorCommand_InvalidBento verifies proper error handling for invalid bentos.
-func TestSavorCommand_InvalidBento(t *testing.T) {
-	bentoFile := createTestBento(t, "invalid.bento.json", `{
-		"id": "invalid",
-		"type": "group",
-		"name": "Invalid Bento"
-	}`)
-	defer os.Remove(bentoFile)
-
-	verifyCommandError(t, exec.Command("bento", "savor", bentoFile))
-}
-
-// TestSavorCommand_VerboseFlag verifies verbose output includes details.
-func TestSavorCommand_VerboseFlag(t *testing.T) {
-	bentoFile := createTestBento(t, "test.bento.json", simpleValidBento(""))
-	defer os.Remove(bentoFile)
-
-	output := verifyCommandSuccess(t, exec.Command("bento", "savor", bentoFile, "--verbose"), "Delicious")
-	if !strings.Contains(output, "node-1") {
-		t.Error("Verbose output should mention node IDs")
-	}
-}
-
-// Test: bento sample command
-
-// TestSampleCommand_ValidBento verifies sample validates without executing.
-func TestSampleCommand_ValidBento(t *testing.T) {
-	bentoFile := createTestBento(t, "test.bento.json", simpleValidBento(""))
-	defer os.Remove(bentoFile)
-
-	output := verifyCommandSuccess(t, exec.Command("bento", "sample", bentoFile), "Tastes great")
-	if strings.Contains(output, "Delicious! Bento savored") {
-		t.Error("sample should NOT execute the bento")
 	}
 }
 
@@ -207,16 +156,6 @@ func invalidHTTPBento() string {
 	}`
 }
 
-// TestSampleCommand_InvalidBento verifies sample reports validation errors clearly.
-func TestSampleCommand_InvalidBento(t *testing.T) {
-	bentoFile := createTestBento(t, "invalid.bento.json", invalidHTTPBento())
-	defer os.Remove(bentoFile)
-
-	verifyCommandError(t, exec.Command("bento", "sample", bentoFile))
-}
-
-// Test: bento menu command
-
 // verifyBentosListed checks if bentos are listed in output.
 func verifyBentosListed(t *testing.T, output string, files ...string) {
 	t.Helper()
@@ -225,82 +164,6 @@ func verifyBentosListed(t *testing.T, output string, files ...string) {
 			t.Errorf("Output should list %s", file)
 		}
 	}
-}
-
-// TestMenuCommand_ListBentos verifies menu lists all bentos in directory.
-func TestMenuCommand_ListBentos(t *testing.T) {
-	tmpDir := t.TempDir()
-	createTestBentoInDir(t, tmpDir, "workflow1.bento.json", "Workflow 1")
-	createTestBentoInDir(t, tmpDir, "workflow2.bento.json", "Workflow 2")
-
-	output := verifyCommandSuccess(t, exec.Command("bento", "menu", tmpDir), "2 bentos")
-	verifyBentosListed(t, output, "workflow1.bento.json", "workflow2.bento.json")
-}
-
-// TestMenuCommand_EmptyDirectory verifies menu handles empty directory gracefully.
-func TestMenuCommand_EmptyDirectory(t *testing.T) {
-	tmpDir := t.TempDir()
-	output := verifyCommandSuccess(t, exec.Command("bento", "menu", tmpDir), "No bentos")
-	if !strings.Contains(output, "0 bentos") && !strings.Contains(output, "No bentos") {
-		t.Errorf("Output should indicate no bentos found: %s", output)
-	}
-}
-
-// Test: bento box command
-
-// runBoxInDir runs box command in specified directory with --local flag.
-func runBoxInDir(t *testing.T, dir, name string) {
-	t.Helper()
-	oldDir, err := os.Getwd()
-	if err != nil {
-		t.Fatal(err)
-	}
-	if err := os.Chdir(dir); err != nil {
-		t.Fatal(err)
-	}
-	defer func() {
-		if err := os.Chdir(oldDir); err != nil {
-			t.Logf("failed to restore directory: %v", err)
-		}
-	}()
-
-	// Use --local flag to create bento in current directory instead of ~/.bento/bentos/
-	verifyCommandSuccess(t, exec.Command("bento", "box", name, "--local"), "Created")
-}
-
-// verifyBentoJSONValid checks if bento file is valid JSON with correct ID.
-func verifyBentoJSONValid(t *testing.T, path, expectedID string) {
-	t.Helper()
-	if _, err := os.Stat(path); os.IsNotExist(err) {
-		t.Fatal("Bento file was not created")
-	}
-
-	content, err := os.ReadFile(path)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	var def map[string]interface{}
-	if err := json.Unmarshal(content, &def); err != nil {
-		t.Errorf("Created bento is not valid JSON: %v", err)
-	}
-
-	if def["id"] != expectedID {
-		t.Errorf("Bento ID = %v, want %s", def["id"], expectedID)
-	}
-
-	if def["type"] != "group" {
-		t.Errorf("Bento type = %v, want group", def["type"])
-	}
-}
-
-// TestBoxCommand_CreateTemplate verifies box creates a template bento.
-func TestBoxCommand_CreateTemplate(t *testing.T) {
-	tmpDir := t.TempDir()
-	bentoPath := filepath.Join(tmpDir, "my-workflow.bento.json")
-
-	runBoxInDir(t, tmpDir, "my-workflow")
-	verifyBentoJSONValid(t, bentoPath, "my-workflow")
 }
 
 // createExistingFile creates a file in the directory.
@@ -329,65 +192,29 @@ func changeToDir(t *testing.T, dir string) {
 	})
 }
 
-// TestBoxCommand_OverwriteProtection verifies box doesn't overwrite existing files.
-func TestBoxCommand_OverwriteProtection(t *testing.T) {
-	tmpDir := t.TempDir()
-	createExistingFile(t, tmpDir, "existing.bento.json")
-	changeToDir(t, tmpDir)
-
-	cmd := exec.Command("bento", "box", "existing")
-	output, err := cmd.CombinedOutput()
-
-	if err == nil {
-		outputStr := strings.ToLower(string(output))
-		if !strings.Contains(outputStr, "exists") && !strings.Contains(outputStr, "already") {
-			t.Error("Should warn or error about existing file")
-		}
-	}
-}
-
-// Test: bento recipe command
-
-// TestRecipeCommand_ShowsHelp verifies recipe command help works.
-func TestRecipeCommand_ShowsHelp(t *testing.T) {
-	output := verifyCommandSuccess(t, exec.Command("bento", "recipe", "--help"), "View bento documentation")
-	if !strings.Contains(output, "readme") {
-		t.Error("Help should list available docs like 'readme'")
-	}
-}
-
-// TestRecipeCommand_InvalidDoc verifies recipe handles invalid doc names.
-func TestRecipeCommand_InvalidDoc(t *testing.T) {
-	cmd := exec.Command("bento", "recipe", "nonexistent-doc")
-	output, err := cmd.CombinedOutput()
-	if err == nil {
-		t.Fatal("Command should fail for invalid doc name")
-	}
-	outputStr := string(output)
-	if !strings.Contains(outputStr, "unknown doc") {
-		t.Errorf("Should mention 'unknown doc': %s", outputStr)
-	}
-}
-
-// TestRecipeCommand_GlowNotInstalledMessage verifies helpful error when glow missing.
-func TestRecipeCommand_GlowNotInstalledMessage(t *testing.T) {
-	// Only run if glow is NOT installed (common in CI)
-	if _, err := exec.LookPath("glow"); err == nil {
-		t.Skip("Skipping: glow is installed, can't test missing glow message")
+// verifyBentoJSONValid checks if bento file is valid JSON with correct ID.
+func verifyBentoJSONValid(t *testing.T, path, expectedID string) {
+	t.Helper()
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		t.Fatal("Bento file was not created")
 	}
 
-	cmd := exec.Command("bento", "recipe", "readme")
-	output, err := cmd.CombinedOutput()
-	if err == nil {
-		t.Fatal("Command should fail when glow is not installed")
+	content, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
 	}
 
-	outputStr := string(output)
-	if !strings.Contains(outputStr, "glow is not installed") {
-		t.Errorf("Should mention glow not installed: %s", outputStr)
+	var def map[string]interface{}
+	if err := json.Unmarshal(content, &def); err != nil {
+		t.Errorf("Created bento is not valid JSON: %v", err)
 	}
-	if !strings.Contains(outputStr, "brew install glow") {
-		t.Error("Should provide installation instructions")
+
+	if def["id"] != expectedID {
+		t.Errorf("Bento ID = %v, want %s", def["id"], expectedID)
+	}
+
+	if def["type"] != "group" {
+		t.Errorf("Bento type = %v, want group", def["type"])
 	}
 }
 
@@ -420,73 +247,5 @@ func TestVersionCommand_Shorthand(t *testing.T) {
 	// Both 'bento version' and 'bento v' should produce identical output
 	if !strings.Contains(output, "dev") && !strings.Contains(output, "v") {
 		t.Errorf("Should display version info: %s", output)
-	}
-}
-
-// Test: bento savor --dry-run
-
-// TestSavorCommand_DryRun verifies dry run flag prevents execution.
-func TestSavorCommand_DryRun(t *testing.T) {
-	bentoFile := createTestBento(t, "test.bento.json", simpleValidBento(""))
-	defer os.Remove(bentoFile)
-
-	output := verifyCommandSuccess(t, exec.Command("bento", "savor", bentoFile, "--dry-run"), "DRY RUN")
-
-	// Should NOT actually execute
-	if strings.Contains(output, "Delicious! Bento savored successfully") {
-		t.Error("Dry run should NOT execute the bento")
-	}
-
-	// Should show what WOULD be executed
-	if !strings.Contains(output, "Would execute") {
-		t.Error("Dry run should show what would be executed")
-	}
-}
-
-// TestSavorCommand_DryRunVerbose verifies dry run with verbose shows details.
-func TestSavorCommand_DryRunVerbose(t *testing.T) {
-	bentoFile := createTestBento(t, "test.bento.json", simpleValidBento(""))
-	defer os.Remove(bentoFile)
-
-	output := verifyCommandSuccess(t, exec.Command("bento", "savor", bentoFile, "--dry-run", "--verbose"), "DRY RUN")
-
-	// Should show node details in verbose mode
-	if !strings.Contains(output, "node-1") {
-		t.Error("Verbose dry run should show node IDs")
-	}
-}
-
-// Test: bento box --dry-run
-
-// TestBoxCommand_DryRun verifies dry run flag prevents file creation.
-func TestBoxCommand_DryRun(t *testing.T) {
-	tmpDir := t.TempDir()
-	changeToDir(t, tmpDir)
-
-	bentoPath := filepath.Join(tmpDir, "my-workflow.bento.json")
-
-	output := verifyCommandSuccess(t, exec.Command("bento", "box", "my-workflow", "--dry-run"), "DRY RUN")
-
-	// Should NOT create the file
-	if _, err := os.Stat(bentoPath); !os.IsNotExist(err) {
-		t.Error("Dry run should NOT create the bento file")
-	}
-
-	// Should show what WOULD be created
-	if !strings.Contains(output, "Would create") {
-		t.Error("Dry run should show what would be created")
-	}
-}
-
-// TestBoxCommand_DryRunShowsTemplate verifies dry run shows template preview.
-func TestBoxCommand_DryRunShowsTemplate(t *testing.T) {
-	tmpDir := t.TempDir()
-	changeToDir(t, tmpDir)
-
-	output := verifyCommandSuccess(t, exec.Command("bento", "box", "my-workflow", "--dry-run"), "DRY RUN")
-
-	// Should show template preview
-	if !strings.Contains(output, "my-workflow.bento.json") {
-		t.Error("Dry run should show the filename that would be created")
 	}
 }

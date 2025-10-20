@@ -64,7 +64,7 @@ func TestImageOptimize_ConvertsToWebP(t *testing.T) {
 	require.NoError(t, err, "Image optimization bento should execute successfully\nOutput: %s", output)
 
 	// Verify output shows success
-	assert.Contains(t, output, "Delicious! Bento savored successfully", "Should show success message")
+	assert.Contains(t, output, "Delicious! Bento executed successfully", "Should show success message")
 
 	// Verify 8 WebP files created
 	t.Log("Verifying 8 WebP files were created...")

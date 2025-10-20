@@ -22,7 +22,7 @@ func TestCSVReader_Integration(t *testing.T) {
 	}
 
 	// Verify successful execution by checking output contains success messages
-	if !strings.Contains(output, "Delicious! Bento savored successfully") {
+	if !strings.Contains(output, "Delicious! Bento executed successfully") {
 		t.Errorf("Expected success message in output. Got: %s", output)
 	}
 

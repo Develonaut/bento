@@ -1,6 +1,6 @@
-// Package main implements the recipe command for viewing bento documentation.
+// Package main implements the docs command for viewing bento documentation.
 //
-// The recipe command uses charm glow to render markdown documentation
+// The docs command uses charm glow to render markdown documentation
 // in a beautiful, readable format directly in the terminal.
 package main
 
@@ -14,9 +14,9 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var recipeCmd = &cobra.Command{
-	Use:   "recipe [doc-name]",
-	Short: "📖 View bento documentation",
+var docsCmd = &cobra.Command{
+	Use:   "docs [doc-name]",
+	Short: "View bento documentation",
 	Long: `View bento documentation in beautiful markdown format.
 
 Uses charm glow to render documentation files in the terminal.
@@ -33,11 +33,11 @@ Available docs:
   status-words    - Status word guidelines
 
 Examples:
-  bento recipe readme
-  bento recipe principles
-  bento recipe nodes`,
+  bento docs readme
+  bento docs principles
+  bento docs nodes`,
 	Args: cobra.MaximumNArgs(1),
-	RunE: runRecipe,
+	RunE: runDocs,
 }
 
 // docMap maps friendly names to file paths.
@@ -53,8 +53,8 @@ var docMap = map[string]string{
 	"status-words": ".claude/STATUS_WORDS.md",
 }
 
-// runRecipe executes the recipe command logic.
-func runRecipe(cmd *cobra.Command, args []string) error {
+// runDocs executes the docs command logic.
+func runDocs(cmd *cobra.Command, args []string) error {
 	// Default to README if no doc specified
 	docName := "readme"
 	if len(args) > 0 {
@@ -64,7 +64,7 @@ func runRecipe(cmd *cobra.Command, args []string) error {
 	// Look up the file path
 	filePath, ok := docMap[docName]
 	if !ok {
-		return fmt.Errorf("unknown doc: %s\nRun 'bento recipe --help' to see available docs", docName)
+		return fmt.Errorf("unknown doc: %s\nRun 'bento docs --help' to see available docs", docName)
 	}
 
 	// Check if glow is installed

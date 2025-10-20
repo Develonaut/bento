@@ -15,11 +15,12 @@ Bento is a complete rewrite of Atomiton's core execution engine, designed to be 
 ## Commands
 
 ```bash
-bento savor workflow.bento.json    # Execute a bento workflow
-bento sample workflow.bento.json   # Validate a bento file
-bento menu                         # List available bentos
-bento box my-workflow              # Create a new bento
-bento recipe readme                # View docs with glow
+bento run workflow.bento.json      # Execute a bento workflow
+bento validate workflow.bento.json # Validate a bento file
+bento list                         # List available bentos
+bento new my-workflow              # Create a new bento
+bento docs readme                  # View docs with glow
+bento secrets set KEY VALUE        # Manage secrets securely
 ```
 
 ## Architecture

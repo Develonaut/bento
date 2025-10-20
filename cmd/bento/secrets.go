@@ -1,6 +1,6 @@
-// Package main implements the wasabi command for secrets management.
+// Package main implements the secrets command for secrets management.
 //
-// The wasabi command provides secure storage and retrieval of sensitive data
+// The secrets command provides secure storage and retrieval of sensitive data
 // like API tokens, passwords, and credentials using OS-native keychain systems.
 package main
 
@@ -12,12 +12,12 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var wasabiCmd = &cobra.Command{
-	Use:   "wasabi",
-	Short: "🟢 Manage secrets (handle the spicy stuff)",
+var secretsCmd = &cobra.Command{
+	Use:   "secrets",
+	Short: "Manage secrets securely",
 	Long: `Manage secrets securely using OS-native keychain.
 
-Wasabi stores sensitive data like API tokens and passwords in your
+Secrets stores sensitive data like API tokens and passwords in your
 system's keychain (macOS Keychain, Windows Credential Manager, or
 Linux Secret Service) so they never appear in bento files or git history.
 
@@ -31,7 +31,7 @@ Commands:
   delete - Remove a secret`,
 }
 
-var wasabiSetCmd = &cobra.Command{
+var secretsSetCmd = &cobra.Command{
 	Use:   "set KEY VALUE",
 	Short: "Store a secret in the keychain",
 	Long: `Store a secret securely in the OS keychain.
@@ -41,13 +41,13 @@ native keychain service. It can then be used in bentos via
 the {{SECRETS.KEY}} syntax.
 
 Examples:
-  bento wasabi set FIGMA_TOKEN figd_abc123xyz
-  bento wasabi set API_KEY sk-1234567890abcdef`,
+  bento secrets set FIGMA_TOKEN figd_abc123xyz
+  bento secrets set API_KEY sk-1234567890abcdef`,
 	Args: cobra.ExactArgs(2),
-	RunE: runWasabiSet,
+	RunE: runSecretsSet,
 }
 
-var wasabiGetCmd = &cobra.Command{
+var secretsGetCmd = &cobra.Command{
 	Use:   "get KEY",
 	Short: "Retrieve a secret from the keychain",
 	Long: `Retrieve a secret from the OS keychain.
@@ -57,49 +57,49 @@ Only use this for debugging - secrets are automatically
 resolved in bentos without needing to print them.
 
 Examples:
-  bento wasabi get FIGMA_TOKEN`,
+  bento secrets get FIGMA_TOKEN`,
 	Args: cobra.ExactArgs(1),
-	RunE: runWasabiGet,
+	RunE: runSecretsGet,
 }
 
-var wasabiListCmd = &cobra.Command{
+var secretsListCmd = &cobra.Command{
 	Use:   "list",
 	Short: "List all secret keys (not values)",
 	Long: `List all secret keys stored in the keychain.
 
 This shows only the KEY names, not the secret values.
-Use 'bento wasabi get KEY' to retrieve a specific secret.
+Use 'bento secrets get KEY' to retrieve a specific secret.
 
 Example:
-  bento wasabi list`,
+  bento secrets list`,
 	Args: cobra.NoArgs,
-	RunE: runWasabiList,
+	RunE: runSecretsList,
 }
 
-var wasabiDeleteCmd = &cobra.Command{
+var secretsDeleteCmd = &cobra.Command{
 	Use:   "delete KEY",
 	Short: "Remove a secret from the keychain",
 	Long: `Delete a secret from the OS keychain.
 
 This permanently removes the secret. You'll need to
-use 'bento wasabi set' to store it again.
+use 'bento secrets set' to store it again.
 
 Examples:
-  bento wasabi delete FIGMA_TOKEN
-  bento wasabi delete OLD_API_KEY`,
+  bento secrets delete FIGMA_TOKEN
+  bento secrets delete OLD_API_KEY`,
 	Args: cobra.ExactArgs(1),
-	RunE: runWasabiDelete,
+	RunE: runSecretsDelete,
 }
 
 func init() {
-	wasabiCmd.AddCommand(wasabiSetCmd)
-	wasabiCmd.AddCommand(wasabiGetCmd)
-	wasabiCmd.AddCommand(wasabiListCmd)
-	wasabiCmd.AddCommand(wasabiDeleteCmd)
+	secretsCmd.AddCommand(secretsSetCmd)
+	secretsCmd.AddCommand(secretsGetCmd)
+	secretsCmd.AddCommand(secretsListCmd)
+	secretsCmd.AddCommand(secretsDeleteCmd)
 }
 
-// runWasabiSet stores a secret in the keychain.
-func runWasabiSet(cmd *cobra.Command, args []string) error {
+// runSecretsSet stores a secret in the keychain.
+func runSecretsSet(cmd *cobra.Command, args []string) error {
 	key := args[0]
 	value := args[1]
 
@@ -126,8 +126,8 @@ func runWasabiSet(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-// runWasabiGet retrieves a secret from the keychain.
-func runWasabiGet(cmd *cobra.Command, args []string) error {
+// runSecretsGet retrieves a secret from the keychain.
+func runSecretsGet(cmd *cobra.Command, args []string) error {
 	key := args[0]
 
 	mgr, err := wasabi.NewManager()
@@ -143,13 +143,13 @@ func runWasabiGet(cmd *cobra.Command, args []string) error {
 	}
 
 	// Print warning about security
-	printWarning("⚠️  Security Warning: Printing secret to stdout!")
+	printWarning("Security Warning: Printing secret to stdout!")
 	fmt.Println(value)
 	return nil
 }
 
-// runWasabiList lists all secret keys.
-func runWasabiList(cmd *cobra.Command, args []string) error {
+// runSecretsList lists all secret keys.
+func runSecretsList(cmd *cobra.Command, args []string) error {
 	mgr, err := wasabi.NewManager()
 	if err != nil {
 		printError(fmt.Sprintf("Failed to initialize secrets manager: %v", err))
@@ -164,7 +164,7 @@ func runWasabiList(cmd *cobra.Command, args []string) error {
 
 	if len(keys) == 0 {
 		printInfo("No secrets stored yet")
-		printInfo("Use 'bento wasabi set KEY VALUE' to store a secret")
+		printInfo("Use 'bento secrets set KEY VALUE' to store a secret")
 		return nil
 	}
 
@@ -176,8 +176,8 @@ func runWasabiList(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-// runWasabiDelete removes a secret from the keychain.
-func runWasabiDelete(cmd *cobra.Command, args []string) error {
+// runSecretsDelete removes a secret from the keychain.
+func runSecretsDelete(cmd *cobra.Command, args []string) error {
 	key := args[0]
 
 	mgr, err := wasabi.NewManager()
@@ -219,5 +219,5 @@ func isValidSecretKey(key string) bool {
 
 // printWarning prints a warning message.
 func printWarning(msg string) {
-	fmt.Fprintf(os.Stderr, "⚠️  %s\n", msg)
+	fmt.Fprintf(os.Stderr, "%s\n", msg)
 }

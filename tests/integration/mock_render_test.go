@@ -53,7 +53,7 @@ func TestMockRender_CreatesPNGs(t *testing.T) {
 	require.NoError(t, err, "Mock render bento should execute successfully\nOutput: %s", output)
 
 	// Verify output shows success
-	assert.Contains(t, output, "Delicious! Bento savored successfully", "Should show success message")
+	assert.Contains(t, output, "Delicious! Bento executed successfully", "Should show success message")
 
 	// Verify streaming output appeared - should see progress lines
 	assert.Contains(t, output, "Rendering 1/8", "Should show progress line 1")

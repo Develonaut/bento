@@ -26,7 +26,7 @@ func TestFolderSetup_CreateProductFolders(t *testing.T) {
 	require.NoError(t, err, "Folder setup bento should execute successfully\nOutput: %s", string(output))
 
 	// Verify output shows success
-	assert.Contains(t, output, "Delicious! Bento savored successfully", "Should show success message")
+	assert.Contains(t, output, "Delicious! Bento executed successfully", "Should show success message")
 
 	// Verify folders were created (relative to project root)
 	// RunBento runs from project root, so products/ is created there

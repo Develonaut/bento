@@ -15,7 +15,7 @@ import (
 func RunBento(t *testing.T, bentoPath string, envVars map[string]string) (string, error) {
 	t.Helper()
 
-	cmd := exec.Command("bento", "savor", bentoPath)
+	cmd := exec.Command("bento", "run", bentoPath)
 
 	// Set working directory to project root (two levels up from tests/integration)
 	wd, err := os.Getwd()

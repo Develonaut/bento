@@ -1,6 +1,6 @@
-// Package main implements the menu command for listing bentos.
+// Package main implements the list command for listing bentos.
 //
-// The menu command scans a directory for .bento.json files and displays
+// The list command scans a directory for .bento.json files and displays
 // them in a user-friendly format with names and metadata.
 package main
 
@@ -21,40 +21,40 @@ var (
 	jsonFlag      bool
 )
 
-var menuCmd = &cobra.Command{
-	Use:   "menu [directory]",
-	Short: "🍜 List available bentos",
-	Long: `List all available bentos.
+var listCmd = &cobra.Command{
+	Use:   "list [directory]",
+	Short: "List available bento workflows",
+	Long: `List all available bento workflows.
 
-Like a restaurant menu, this shows you all the bentos you can taste.
+This command shows you all the bentos in the specified location.
 By default, lists bentos from ~/.bento/bentos/
 
 Examples:
-  bento menu                       # List bentos from ~/.bento/bentos/
-  bento menu ~/workflows           # List bentos from specific directory
-  bento menu ~/workflows --recursive`,
+  bento list                       # List bentos from ~/.bento/bentos/
+  bento list ~/workflows           # List bentos from specific directory
+  bento list ~/workflows --recursive`,
 	Args: cobra.MaximumNArgs(1),
-	RunE: runMenu,
+	RunE: runList,
 }
 
 func init() {
-	menuCmd.Flags().BoolVarP(&recursiveFlag, "recursive", "r", false, "Search subdirectories")
-	menuCmd.Flags().BoolVar(&jsonFlag, "json", false, "Output as JSON")
+	listCmd.Flags().BoolVarP(&recursiveFlag, "recursive", "r", false, "Search subdirectories")
+	listCmd.Flags().BoolVar(&jsonFlag, "json", false, "Output as JSON")
 }
 
-// runMenu executes the menu command logic.
-func runMenu(cmd *cobra.Command, args []string) error {
+// runList executes the list command logic.
+func runList(cmd *cobra.Command, args []string) error {
 	// If a directory is specified, use the legacy directory scanning
 	if len(args) > 0 {
-		return runMenuFromDirectory(args[0])
+		return runListFromDirectory(args[0])
 	}
 
 	// Otherwise, use hangiri storage
-	return runMenuFromStorage()
+	return runListFromStorage()
 }
 
-// runMenuFromStorage lists bentos from ~/.bento/bentos/ using hangiri.
-func runMenuFromStorage() error {
+// runListFromStorage lists bentos from ~/.bento/bentos/ using hangiri.
+func runListFromStorage() error {
 	storage := hangiri.NewDefaultStorage()
 	ctx := context.Background()
 
@@ -65,8 +65,8 @@ func runMenuFromStorage() error {
 	}
 
 	if len(names) == 0 {
-		fmt.Println("🍜 No bentos found in ~/.bento/bentos/")
-		fmt.Println("\nCreate your first bento with: bento box my-workflow")
+		fmt.Println("No bentos found in ~/.bento/bentos/")
+		fmt.Println("\nCreate your first bento with: bento new my-workflow")
 		return nil
 	}
 
@@ -83,7 +83,7 @@ func runMenuFromStorage() error {
 		fmt.Printf("  %s.bento.json\n", name)
 		if def.Name != "" {
 			fmt.Printf("    %s\n", def.Name)
-			fmt.Printf("    %d neta\n", len(def.Nodes))
+			fmt.Printf("    %d nodes\n", len(def.Nodes))
 		}
 		fmt.Println()
 	}
@@ -91,8 +91,8 @@ func runMenuFromStorage() error {
 	return nil
 }
 
-// runMenuFromDirectory lists bentos from a specific directory (legacy behavior).
-func runMenuFromDirectory(dir string) error {
+// runListFromDirectory lists bentos from a specific directory (legacy behavior).
+func runListFromDirectory(dir string) error {
 	bentos, err := findBentos(dir)
 	if err != nil {
 		printError(fmt.Sprintf("Failed to scan directory: %v", err))
@@ -106,7 +106,7 @@ func runMenuFromDirectory(dir string) error {
 // displayBentos displays the list of found bentos.
 func displayBentos(bentos []bentoInfo) {
 	if len(bentos) == 0 {
-		fmt.Println("🍜 No bentos found")
+		fmt.Println("No bentos found")
 		return
 	}
 
@@ -185,7 +185,7 @@ func printBento(b bentoInfo) {
 	fmt.Printf("  %s\n", b.FileName)
 	if b.Name != "" {
 		fmt.Printf("    %s\n", b.Name)
-		fmt.Printf("    %d neta\n", b.NumNodes)
+		fmt.Printf("    %d nodes\n", b.NumNodes)
 	}
 	fmt.Println()
 }

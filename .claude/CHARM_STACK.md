@@ -104,10 +104,10 @@ logger := shoyu.New(shoyu.Config{
 - Future: `bento theme` for switching color variants
 
 **Commands Using Progress Display:**
-1. **`bento savor`** - Shows neta execution steps with status words
-2. **`bento sample`** - Shows validation steps
-3. **`bento box`** - Shows template creation progress
-4. **`bento menu`** - Shows directory scanning
+1. **`bento run`** - Shows node execution steps with status words
+2. **`bento validate`** - Shows validation steps
+3. **`bento new`** - Shows template creation progress
+4. **`bento list`** - Shows directory scanning
 5. **`bento pour`** - Tails logs with charm/log formatting
 
 ---
@@ -329,13 +329,13 @@ bento tui workflow.bento.json  # Edit existing workflow
 ### Example Flow
 
 ```
-User runs: bento savor workflow.bento.json
+User runs: bento run workflow.bento.json
 
 Terminal (miso):           File ~/.bento/logs/bento.log (shoyu+charm/log):
 ┌─────────────────┐       ┌──────────────────────────────────────┐
-│ 🍱 Savoring...  │       │ time=2025-10-19T10:30:00.000         │
+│ Running...      │       │ time=2025-10-19T10:30:00.000         │
 │                 │       │ level=INFO                           │
-│ 🍙 Savoring     │       │ msg="Starting bento execution"       │
+│ Executing       │       │ msg="Starting bento execution"       │
 │    Load CSV...  │       │ bento_id=workflow                    │
 │                 │       │                                      │
 │ ✓ Devoured      │       │ time=2025-10-19T10:30:01.234         │
