@@ -19,7 +19,7 @@ func TestFolderSetup_CreateProductFolders(t *testing.T) {
 	CleanupTestDir(t, projectRoot+"products")
 
 	// Execute bento (runs from project root, CSV path is relative to project root)
-	bentoPath := "examples/phase8/folder-setup.bento.json"
+	bentoPath := "examples/folder-setup.bento.json"
 	output, err := RunBento(t, bentoPath, nil)
 
 	// Verify execution succeeded
@@ -66,7 +66,7 @@ func TestFolderSetup_AlreadyExists(t *testing.T) {
 	require.NoError(t, err, "Should pre-create folder")
 
 	// Execute bento (runs from project root)
-	bentoPath := "examples/phase8/folder-setup.bento.json"
+	bentoPath := "examples/folder-setup.bento.json"
 	output, err := RunBento(t, bentoPath, nil)
 
 	// Should still succeed (idempotent)

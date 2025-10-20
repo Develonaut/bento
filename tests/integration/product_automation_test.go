@@ -17,7 +17,7 @@ func TestProductAutomation_EndToEnd(t *testing.T) {
 	CleanupTestDir(t, projectRoot+"products")
 
 	envVars := setupTestEnvironment(t, projectRoot)
-	output, err := RunBento(t, "examples/phase8/product-automation.bento.json", envVars)
+	output, err := RunBento(t, "examples/product-automation.bento.json", envVars)
 
 	require.NoError(t, err, "Product automation should complete successfully\nOutput: %s", output)
 	verifyBentoSuccess(t, output)

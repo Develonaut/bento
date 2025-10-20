@@ -43,7 +43,7 @@ func TestMockRender_CreatesPNGs(t *testing.T) {
 	}
 
 	// Execute bento
-	bentoPath := "examples/phase8/mock-render.bento.json"
+	bentoPath := "examples/mock-render.bento.json"
 	output, err := RunBento(t, bentoPath, envVars)
 
 	// Log output for debugging
@@ -117,7 +117,7 @@ func TestMockRender_StreamingProgress(t *testing.T) {
 	}
 
 	// Execute bento
-	bentoPath := "examples/phase8/mock-render.bento.json"
+	bentoPath := "examples/mock-render.bento.json"
 	output, err := RunBento(t, bentoPath, envVars)
 
 	require.NoError(t, err, "Should execute successfully")
@@ -182,7 +182,7 @@ func TestMockRender_MissingScript(t *testing.T) {
 		"PRODUCT_SKU":         "ERROR-TEST",
 	}
 
-	bentoPath := "examples/phase8/mock-render.bento.json"
+	bentoPath := "examples/mock-render.bento.json"
 	output, err := RunBento(t, bentoPath, envVars)
 
 	// Should fail
@@ -223,7 +223,7 @@ func TestMockRender_MissingOverlay(t *testing.T) {
 		"PRODUCT_SKU":         "NO-OVERLAY",
 	}
 
-	bentoPath := "examples/phase8/mock-render.bento.json"
+	bentoPath := "examples/mock-render.bento.json"
 	output, err := RunBento(t, bentoPath, envVars)
 
 	// Mock script succeeds even without overlay (simplified mock behavior)

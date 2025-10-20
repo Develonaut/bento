@@ -50,7 +50,7 @@ func TestImageOptimize_ConvertsToWebP(t *testing.T) {
 	}
 
 	// Execute bento and measure time
-	bentoPath := "examples/phase8/image-optimize.bento.json"
+	bentoPath := "examples/image-optimize.bento.json"
 	t.Log("Executing image optimization bento...")
 	startTime := time.Now()
 	output, err := RunBento(t, bentoPath, envVars)
@@ -134,7 +134,7 @@ func TestImageOptimize_ParallelPerformance(t *testing.T) {
 	}
 
 	// Execute bento and measure time
-	bentoPath := "examples/phase8/image-optimize.bento.json"
+	bentoPath := "examples/image-optimize.bento.json"
 	t.Log("Running parallel optimization (maxConcurrency: 4)...")
 	startTime := time.Now()
 	output, err := RunBento(t, bentoPath, envVars)
@@ -181,7 +181,7 @@ func TestImageOptimize_MissingSourceFiles(t *testing.T) {
 		"PRODUCT_SKU": "MISSING-TEST",
 	}
 
-	bentoPath := "examples/phase8/image-optimize.bento.json"
+	bentoPath := "examples/image-optimize.bento.json"
 	output, err := RunBento(t, bentoPath, envVars)
 
 	// Should fail when source files don't exist
