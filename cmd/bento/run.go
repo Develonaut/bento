@@ -13,12 +13,12 @@ import (
 	"strings"
 	"time"
 
+	"github.com/mattn/go-isatty"
+
 	"github.com/Develonaut/bento/pkg/hangiri"
-	"github.com/Develonaut/bento/pkg/itamae"
 	"github.com/Develonaut/bento/pkg/neta"
 	"github.com/Develonaut/bento/pkg/omakase"
 	"github.com/Develonaut/bento/pkg/pantry"
-	"github.com/Develonaut/bento/pkg/shoyu"
 	"github.com/spf13/cobra"
 
 	editfields "github.com/Develonaut/bento/pkg/neta/library/editfields"
@@ -56,9 +56,10 @@ Examples:
 }
 
 func init() {
-	runCmd.Flags().BoolVarP(&verboseFlag, "verbose", "v", false, "Verbose output")
-	runCmd.Flags().DurationVar(&timeoutFlag, "timeout", 10*time.Minute, "Execution timeout")
-	runCmd.Flags().BoolVar(&dryRunFlag, "dry-run", false, "Show what would be executed without running")
+	// Flags are now defined as persistent flags on root command
+	// This allows them to work with both:
+	// - bento [file] --verbose
+	// - bento run [file] --verbose
 }
 
 // runRun executes the run command logic.
@@ -73,8 +74,11 @@ func runRun(cmd *cobra.Command, args []string) error {
 		return showDryRun(def)
 	}
 
-	chef := setupChef()
-	return executeBento(chef, def)
+	// Detect TTY mode
+	if isTTY() {
+		return executeTUI(def)
+	}
+	return executeSimple(def)
 }
 
 // loadAndValidate loads and validates a bento.
@@ -86,6 +90,7 @@ func loadAndValidate(bentoPath string) (*neta.Definition, error) {
 	}
 
 	printInfo(fmt.Sprintf("Running bento: %s", def.Name))
+	fmt.Println() // Add newline for better spacing
 
 	if err := validateBento(def); err != nil {
 		printError(fmt.Sprintf("Validation failed: %v", err))
@@ -95,47 +100,38 @@ func loadAndValidate(bentoPath string) (*neta.Definition, error) {
 	return def, nil
 }
 
-// setupChef creates and configures the itamae.
-func setupChef() *itamae.Itamae {
-	p := createPantry()
-	logger := createLogger()
-	chef := itamae.New(p, logger)
-	setupProgress(chef)
-	return chef
-}
-
-// executeBento executes the bento and reports results.
-func executeBento(chef *itamae.Itamae, def *neta.Definition) error {
-	ctx, cancel := context.WithTimeout(context.Background(), timeoutFlag)
-	defer cancel()
-
-	start := time.Now()
-	result, err := chef.Serve(ctx, def)
-	duration := time.Since(start)
-
-	if err != nil {
-		printError(fmt.Sprintf("Execution failed: %v", err))
-		return err
-	}
-
-	printSuccess(fmt.Sprintf("Delicious! Bento executed successfully in %s", formatDuration(duration)))
-	fmt.Printf("   %d nodes executed\n", result.NodesExecuted)
-	return nil
+// isTTY detects if running in an interactive terminal.
+func isTTY() bool {
+	return isatty.IsTerminal(os.Stdout.Fd())
 }
 
 // loadBento loads a bento definition from a file path or from storage.
 //
-// If the path is a valid file, it loads from that file.
-// If the path doesn't exist as a file, it tries to load from ~/.bento/bentos/
-// This allows users to run: bento run my-workflow
-// instead of: bento run ~/.bento/bentos/my-workflow.bento.json
+// It tries multiple strategies in order:
+// 1. Load from path as-is (e.g., examples/workflow.bento.json)
+// 2. Load from path with .bento.json added (e.g., examples/workflow → examples/workflow.bento.json)
+// 3. Load from hangiri storage by name (e.g., my-workflow → ~/.bento/bentos/my-workflow.bento.json)
+//
+// This allows flexible usage:
+//
+//	bento examples/workflow.bento.json
+//	bento examples/workflow
+//	bento my-workflow
 func loadBento(path string) (*neta.Definition, error) {
-	// First, try to load as a direct file path
+	// Strategy 1: Try path as-is
 	if isValidFilePath(path) {
 		return loadBentoFromFile(path)
 	}
 
-	// If not a valid file path, try loading from hangiri storage
+	// Strategy 2: Try adding .bento.json extension
+	if !strings.HasSuffix(path, ".bento.json") {
+		pathWithExt := path + ".bento.json"
+		if isValidFilePath(pathWithExt) {
+			return loadBentoFromFile(pathWithExt)
+		}
+	}
+
+	// Strategy 3: Try loading from hangiri storage
 	return loadBentoFromStorage(path)
 }
 
@@ -196,36 +192,6 @@ func createPantry() *pantry.Pantry {
 	p.RegisterFactory("transform", func() neta.Executable { return transform.New() })
 
 	return p
-}
-
-// createLogger creates a logger with appropriate level and streaming callback.
-func createLogger() *shoyu.Logger {
-	level := shoyu.LevelInfo
-	if verboseFlag {
-		level = shoyu.LevelDebug
-	}
-
-	return shoyu.New(shoyu.Config{
-		Level: level,
-		// Enable streaming output for long-running processes
-		// This outputs lines from shell-command neta in real-time
-		OnStream: func(line string) {
-			fmt.Println(line)
-		},
-	})
-}
-
-// setupProgress configures progress callbacks for the itamae.
-func setupProgress(chef *itamae.Itamae) {
-	chef.OnProgress(func(nodeID, status string) {
-		if verboseFlag {
-			if status == "starting" {
-				printProgress(fmt.Sprintf("Executing node '%s'...", nodeID))
-			} else if status == "completed" {
-				printCheck("Complete")
-			}
-		}
-	})
 }
 
 // validateBento validates the bento definition before execution.

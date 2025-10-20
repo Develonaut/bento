@@ -16,7 +16,7 @@ Use these sushi-themed emojis consistently across:
 var Sushi = []string{
     "🍣", // sushi
     "🍙", // onigiri
-    "🍙", // chopsticks
+    "🥢", // chopsticks
     "🍥", // fish cake
     "🍱", // bento box - PRIMARY ICON
     "🍜", // ramen

@@ -32,7 +32,7 @@ Examples:
 }
 
 func init() {
-	validateCmd.Flags().BoolVarP(&validateVerboseFlag, "verbose", "v", false, "Show detailed validation results")
+	validateCmd.Flags().BoolVar(&validateVerboseFlag, "verbose", false, "Show detailed validation results")
 }
 
 // runValidate executes the validate command logic.

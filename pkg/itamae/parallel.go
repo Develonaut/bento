@@ -3,6 +3,7 @@ package itamae
 import (
 	"context"
 	"sync"
+	"time"
 
 	"github.com/Develonaut/bento/pkg/neta"
 )
@@ -17,18 +18,32 @@ func (i *Itamae) executeParallel(
 ) error {
 	i.notifyProgress(def.ID, "starting")
 
+	// Send messenger event: node started
+	if i.messenger != nil {
+		i.messenger.SendNodeStarted(def.ID, def.Name, def.Type)
+	}
+
 	childCount := len(def.Nodes)
 
-	i.logger.Info("⚡ Starting parallel execution",
-		"parallel_id", def.ID,
-		"child_count", childCount)
+	if i.logger != nil {
+		i.logger.Info("⚡ Starting parallel execution",
+			"parallel_id", def.ID,
+			"child_count", childCount)
+	}
 
 	// Handle empty parallel
 	if childCount == 0 {
 		i.notifyProgress(def.ID, "completed")
+		// Send messenger event: node completed
+		if i.messenger != nil {
+			i.messenger.SendNodeCompleted(def.ID, 0, nil)
+		}
 		result.NodesExecuted++
 		return nil
 	}
+
+	// Track execution time for messenger
+	start := time.Now()
 
 	// Get max concurrency (default: no limit)
 	maxConcurrency := 0
@@ -92,16 +107,30 @@ func (i *Itamae) executeParallel(
 	// Wait for all goroutines to complete
 	wg.Wait()
 
+	duration := time.Since(start)
+
 	if firstErr != nil {
-		return newNodeError(def.ID, "parallel", "execute", firstErr)
+		err := newNodeError(def.ID, "parallel", "execute", firstErr)
+		// Send messenger event: node completed with error
+		if i.messenger != nil {
+			i.messenger.SendNodeCompleted(def.ID, duration, err)
+		}
+		return err
 	}
 
 	i.notifyProgress(def.ID, "completed")
 	result.NodesExecuted++
 
-	i.logger.Info("✓ Parallel execution completed",
-		"parallel_id", def.ID,
-		"child_count", childCount)
+	// Send messenger event: node completed
+	if i.messenger != nil {
+		i.messenger.SendNodeCompleted(def.ID, duration, nil)
+	}
+
+	if i.logger != nil {
+		i.logger.Info("✓ Parallel execution completed",
+			"parallel_id", def.ID,
+			"child_count", childCount)
+	}
 
 	return nil
 }

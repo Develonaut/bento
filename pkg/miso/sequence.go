@@ -10,24 +10,7 @@ import (
 	"time"
 )
 
-// Approved sushi emojis (from EMOJIS.md)
-var sushiEmojis = []string{"🍣", "🍙", "🥢", "🍥"}
-
-// Approved status words (from STATUS_WORDS.md)
-var runningWords = []string{
-	"Tasting", "Sampling", "Trying", "Enjoying",
-	"Devouring", "Nibbling", "Savoring", "Testing",
-}
-
-var completedWords = []string{
-	"Savored", "Devoured", "Enjoyed", "Relished",
-	"Finished", "Consumed", "Completed", "Perfected",
-}
-
-var failedWords = []string{
-	"Spoiled", "Burnt", "Dropped", "Ruined",
-	"Failed", "Overcooked", "Undercooked",
-}
+// Note: Sushi emojis and status words are centralized in sushi.go
 
 // StepStatus represents the execution status of a step.
 type StepStatus int
@@ -50,14 +33,32 @@ type Step struct {
 
 // Sequence displays a list of execution steps with status indicators.
 type Sequence struct {
-	steps []Step
+	theme   *Theme
+	palette Palette
+	spinner Spinner
+	steps   []Step
 }
 
 // NewSequence creates a new sequence display.
 func NewSequence() *Sequence {
+	// Use default Tonkotsu theme for standalone usage
+	manager := NewManager()
+	return NewSequenceWithTheme(manager.GetTheme(), manager.GetPalette())
+}
+
+// NewSequenceWithTheme creates a new sequence display with custom theme.
+func NewSequenceWithTheme(theme *Theme, palette Palette) *Sequence {
 	return &Sequence{
-		steps: []Step{},
+		theme:   theme,
+		palette: palette,
+		spinner: NewSpinner(palette),
+		steps:   []Step{},
 	}
+}
+
+// SetSteps replaces all steps (used for Bubbletea integration).
+func (s *Sequence) SetSteps(steps []Step) {
+	s.steps = steps
 }
 
 // AddStep adds a step with depth 0.
@@ -117,8 +118,8 @@ func (s *Sequence) View() string {
 
 // formatStep renders a single step with status and timing.
 func (s *Sequence) formatStep(step Step) string {
-	prefix := buildStepPrefix(step)
-	status := buildStepStatus(step)
+	prefix := s.buildStepPrefix(step)
+	status := s.buildStepStatus(step)
 	suffix := buildStepSuffix(step)
 
 	parts := []string{prefix, status, step.Name + "…"}
@@ -130,9 +131,9 @@ func (s *Sequence) formatStep(step Step) string {
 }
 
 // buildStepPrefix creates the indent/emoji/icon prefix for a step.
-func buildStepPrefix(step Step) string {
+func (s *Sequence) buildStepPrefix(step Step) string {
 	indent := strings.Repeat("  ", step.Depth)
-	icon := getStepIcon(step.Status)
+	icon := s.getStepIcon(step.Status)
 	emoji := ""
 
 	if step.Status == StepCompleted {
@@ -154,9 +155,9 @@ func buildStepPrefix(step Step) string {
 }
 
 // buildStepStatus creates the colored status word.
-func buildStepStatus(step Step) string {
+func (s *Sequence) buildStepStatus(step Step) string {
 	statusWord := getStatusLabel(step.Status, step.Name)
-	return colorStatusWord(statusWord, step.Status)
+	return s.colorStatusWord(statusWord, step.Status)
 }
 
 // buildStepSuffix creates the duration suffix if applicable.
@@ -173,25 +174,21 @@ func getStepEmoji(stepName string) string {
 	h := fnv.New32a()
 	h.Write([]byte(stepName))
 	hash := h.Sum32()
-	return sushiEmojis[hash%uint32(len(sushiEmojis))]
+	return SushiSpinner[hash%uint32(len(SushiSpinner))]
 }
 
-// colorStatusWord colors the status word based on status.
-// Uses the default Tonkotsu theme for now.
-// TODO: Accept theme as parameter when integrating with daemon-combo.
-func colorStatusWord(word string, status StepStatus) string {
-	// Build default theme for standalone sequence usage
-	theme := BuildTheme(GetPalette(VariantTonkotsu))
-
+// colorStatusWord colors the status word based on status using the sequence's theme.
+func (s *Sequence) colorStatusWord(word string, status StepStatus) string {
 	switch status {
 	case StepRunning:
-		return theme.Title.Render(word) // Primary color
+		// Use Primary color (bold) for running status
+		return s.theme.Title.Render(word)
 	case StepCompleted:
-		return theme.Success.Render(word)
+		return s.theme.Success.Render(word)
 	case StepFailed:
-		return theme.Error.Render(word)
+		return s.theme.Error.Render(word)
 	default:
-		return theme.Subtle.Render(word)
+		return s.theme.Subtle.Render(word)
 	}
 }
 
@@ -204,23 +201,23 @@ func getStatusLabel(status StepStatus, stepName string) string {
 
 	switch status {
 	case StepPending:
-		return "Preparing"
+		return StatusWordPending
 	case StepRunning:
-		return runningWords[hash%uint32(len(runningWords))]
+		return StatusWordsRunning[hash%uint32(len(StatusWordsRunning))]
 	case StepCompleted:
-		return completedWords[hash%uint32(len(completedWords))]
+		return StatusWordsCompleted[hash%uint32(len(StatusWordsCompleted))]
 	case StepFailed:
-		return failedWords[hash%uint32(len(failedWords))]
+		return StatusWordsFailed[hash%uint32(len(StatusWordsFailed))]
 	default:
-		return "Preparing"
+		return StatusWordPending
 	}
 }
 
 // getStepIcon returns the icon for a step status.
-func getStepIcon(status StepStatus) string {
+func (s *Sequence) getStepIcon(status StepStatus) string {
 	switch status {
 	case StepRunning:
-		return "⟳" // Loading spinner
+		return s.spinner.View() // Animated spinner
 	case StepCompleted:
 		return "" // No icon - rely on emoji and colors
 	case StepFailed:
@@ -228,4 +225,9 @@ func getStepIcon(status StepStatus) string {
 	default:
 		return "•" // Pending dot
 	}
+}
+
+// UpdateSpinner updates the spinner for animation (called from Bubbletea Update).
+func (s *Sequence) UpdateSpinner(spinner Spinner) {
+	s.spinner = spinner
 }

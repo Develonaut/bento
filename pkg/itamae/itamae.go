@@ -33,10 +33,19 @@ import (
 	"github.com/Develonaut/bento/pkg/shoyu"
 )
 
+// ProgressMessenger receives execution progress events.
+// Used by miso package for TUI/CLI progress display.
+// Optional - nil check before use.
+type ProgressMessenger interface {
+	SendNodeStarted(path, name, nodeType string)
+	SendNodeCompleted(path string, duration time.Duration, err error)
+}
+
 // Itamae orchestrates bento execution.
 type Itamae struct {
 	pantry     *pantry.Pantry
-	logger     *shoyu.Logger
+	logger     *shoyu.Logger     // Optional - can be nil
+	messenger  ProgressMessenger // Optional - for TUI progress updates
 	onProgress ProgressCallback
 }
 
@@ -69,6 +78,17 @@ func New(p *pantry.Pantry, logger *shoyu.Logger) *Itamae {
 	}
 }
 
+// NewWithMessenger creates an Itamae with progress messaging.
+// Messenger is used for TUI/CLI progress updates.
+// Both logger and messenger are optional - can be nil.
+func NewWithMessenger(p *pantry.Pantry, logger *shoyu.Logger, messenger ProgressMessenger) *Itamae {
+	return &Itamae{
+		pantry:    p,
+		logger:    logger,
+		messenger: messenger,
+	}
+}
+
 // OnProgress registers a callback for progress updates.
 func (i *Itamae) OnProgress(callback ProgressCallback) {
 	i.onProgress = callback
@@ -82,9 +102,14 @@ func (i *Itamae) OnProgress(callback ProgressCallback) {
 func (i *Itamae) Serve(ctx context.Context, def *neta.Definition) (*Result, error) {
 	start := time.Now()
 
-	i.logger.Info("🍱 Starting bento execution",
-		"bento_id", def.ID,
-		"bento_name", def.Name)
+	if i.logger != nil {
+		// Add separator line for visual clarity between bento executions
+		i.logger.Info("═══════════════════════════════════════════════════════════════════════════")
+		msg := msgBentoStarted()
+		i.logger.Info(msg.format(),
+			"bento_id", def.ID,
+			"bento_name", def.Name)
+	}
 
 	result := &Result{
 		NodeOutputs: make(map[string]interface{}),
@@ -102,21 +127,33 @@ func (i *Itamae) Serve(ctx context.Context, def *neta.Definition) (*Result, erro
 		result.Status = StatusFailed
 		result.Error = err
 
-		i.logger.Error("🍱 Bento execution failed",
-			"bento_id", def.ID,
-			"nodes_executed", result.NodesExecuted,
-			"duration", result.Duration,
-			"error", err)
+		if i.logger != nil {
+			// Add separator before failure for visual clarity
+			i.logger.Info("═══════════════════════════════════════════════════════════════════════════")
+			msg := msgBentoFailed()
+			i.logger.Error(msg.format(),
+				"bento_id", def.ID,
+				"nodes_executed", result.NodesExecuted,
+				"duration", result.Duration,
+				"error", err)
+		}
 
 		return result, err
 	}
 
 	result.Status = StatusSuccess
 
-	i.logger.Info("🍱 Bento execution completed",
-		"bento_id", def.ID,
-		"nodes_executed", result.NodesExecuted,
-		"duration", result.Duration)
+	if i.logger != nil {
+		// Add separator before completion for visual clarity
+		i.logger.Info("═══════════════════════════════════════════════════════════════════════════")
+		msg := msgBentoCompleted()
+		i.logger.Info(msg.format(),
+			"bento_id", def.ID,
+			"nodes_executed", result.NodesExecuted,
+			"duration", result.Duration)
+		// Add blank line after completion for readability
+		i.logger.Info("")
+	}
 
 	return result, nil
 }

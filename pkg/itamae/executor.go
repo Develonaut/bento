@@ -3,6 +3,7 @@ package itamae
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/Develonaut/bento/pkg/neta"
 )
@@ -44,9 +45,19 @@ func (i *Itamae) executeSingle(
 	// Progress callback: starting
 	i.notifyProgress(def.ID, "starting")
 
-	i.logger.Info("🍙 Executing neta",
-		"neta_id", def.ID,
-		"neta_type", def.Type)
+	// Send messenger event: node started
+	if i.messenger != nil {
+		i.messenger.SendNodeStarted(def.ID, def.Name, def.Type)
+	}
+
+	if i.logger != nil {
+		msg := msgNetaStarted()
+		// Use debug level for individual neta execution to reduce log verbosity
+		// This keeps logs clean while still providing detail with --verbose
+		i.logger.Debug(msg.format(),
+			"neta_id", def.ID,
+			"neta_type", def.Type)
+	}
 
 	// Get neta implementation from pantry
 	netaImpl, err := i.pantry.GetNew(def.Type)
@@ -67,11 +78,24 @@ func (i *Itamae) executeSingle(
 	// Add streaming callback for shell-command neta (Phase 8.5)
 	// This enables real-time output from long-running processes like Blender
 	params["_onOutput"] = func(line string) {
-		i.logger.Stream(line)
+		if i.logger != nil {
+			i.logger.Stream(line)
+		}
 	}
+
+	// Track execution time for messenger
+	start := time.Now()
 
 	// Execute neta
 	output, err := netaImpl.Execute(ctx, params)
+
+	duration := time.Since(start)
+
+	// Send messenger event: node completed (with duration and error if any)
+	if i.messenger != nil {
+		i.messenger.SendNodeCompleted(def.ID, duration, err)
+	}
+
 	if err != nil {
 		return newNodeError(def.ID, def.Type, "execute", err)
 	}
@@ -84,9 +108,13 @@ func (i *Itamae) executeSingle(
 	// Progress callback: completed
 	i.notifyProgress(def.ID, "completed")
 
-	i.logger.Info("✓ Neta completed",
-		"neta_id", def.ID,
-		"neta_type", def.Type)
+	if i.logger != nil {
+		msg := msgNetaCompleted()
+		// Use debug level for individual neta completion to reduce log verbosity
+		i.logger.Debug(msg.format(),
+			"neta_id", def.ID,
+			"neta_type", def.Type)
+	}
 
 	return nil
 }
@@ -100,39 +128,76 @@ func (i *Itamae) executeGroup(
 ) error {
 	i.notifyProgress(def.ID, "starting")
 
-	i.logger.Info("📦 Executing group",
-		"group_id", def.ID,
-		"child_count", len(def.Nodes))
+	// Send messenger event: node started
+	if i.messenger != nil {
+		i.messenger.SendNodeStarted(def.ID, def.Name, def.Type)
+	}
+
+	if i.logger != nil {
+		msg := msgGroupStarted()
+		i.logger.Info(msg.format(),
+			"group_id", def.ID,
+			"group_name", def.Name,
+			"child_count", len(def.Nodes))
+	}
 
 	// Handle empty group
 	if len(def.Nodes) == 0 {
 		i.notifyProgress(def.ID, "completed")
+		// Send messenger event: node completed
+		if i.messenger != nil {
+			i.messenger.SendNodeCompleted(def.ID, 0, nil)
+		}
 		return nil
 	}
+
+	// Track execution time for messenger
+	start := time.Now()
 
 	// Build execution graph
 	g, err := buildGraph(def)
 	if err != nil {
+		if i.messenger != nil {
+			i.messenger.SendNodeCompleted(def.ID, time.Since(start), err)
+		}
 		return newNodeError(def.ID, "group", "build graph", err)
 	}
 
 	// Check for cycles
 	if g.hasCycle() {
-		return newNodeError(def.ID, "group", "validate",
+		err := newNodeError(def.ID, "group", "validate",
 			fmt.Errorf("circular dependency detected"))
+		if i.messenger != nil {
+			i.messenger.SendNodeCompleted(def.ID, time.Since(start), err)
+		}
+		return err
 	}
 
 	// Execute nodes in topological order
 	if err := i.executeGraph(ctx, g, execCtx, result); err != nil {
+		if i.messenger != nil {
+			i.messenger.SendNodeCompleted(def.ID, time.Since(start), err)
+		}
 		return err
 	}
+
+	duration := time.Since(start)
 
 	i.notifyProgress(def.ID, "completed")
 	// Note: Group execution is tracked by child nodes, not the group itself
 
-	i.logger.Info("✓ Group completed",
-		"group_id", def.ID,
-		"child_count", len(def.Nodes))
+	// Send messenger event: node completed
+	if i.messenger != nil {
+		i.messenger.SendNodeCompleted(def.ID, duration, nil)
+	}
+
+	if i.logger != nil {
+		msg := msgGroupCompleted()
+		i.logger.Info(msg.format(),
+			"group_id", def.ID,
+			"group_name", def.Name,
+			"child_count", len(def.Nodes))
+	}
 
 	return nil
 }
