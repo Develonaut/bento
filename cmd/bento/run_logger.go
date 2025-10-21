@@ -55,9 +55,8 @@ func createFileLogger() (*shoyu.Logger, *os.File, error) {
 		Output: logFile,
 	})
 
-	// Log the start of execution with blank line before for separation
+	// Add blank line before execution for separation
 	logger.Info("")
-	logger.Info("🍱 Bento execution started", "log_file", logPath)
 
 	return logger, logFile, nil
 }

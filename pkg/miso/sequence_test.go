@@ -162,22 +162,3 @@ func TestStatusWordVariety(t *testing.T) {
 	}
 }
 
-// TestEmojiSelection verifies deterministic emoji selection.
-func TestEmojiSelection(t *testing.T) {
-	// Same step should get same emoji
-	emoji1 := getStepEmoji("test-step")
-	emoji2 := getStepEmoji("test-step")
-
-	if emoji1 != emoji2 {
-		t.Errorf("Emoji not deterministic: %s != %s", emoji1, emoji2)
-	}
-
-	// Should be one of approved sushi emojis
-	validEmojis := map[string]bool{
-		"🍣": true, "🍙": true, "🥢": true, "🍥": true,
-	}
-
-	if !validEmojis[emoji1] {
-		t.Errorf("Emoji %s not in approved list", emoji1)
-	}
-}

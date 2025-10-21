@@ -4,6 +4,7 @@
 package miso
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -73,4 +74,60 @@ func SaveTheme(variant Variant) error {
 	}
 
 	return os.WriteFile(path, []byte(string(variant)), 0644)
+}
+
+// slowMoConfigPath returns the path to the slowMo config file.
+func slowMoConfigPath() (string, error) {
+	dir, err := configDir()
+	if err != nil {
+		return "", err
+	}
+	return filepath.Join(dir, "slowmo"), nil
+}
+
+// LoadSlowMoDelay loads the saved slowMo delay from disk.
+// Returns 250ms as default if no saved value or on error.
+// SlowMo adds artificial delays between node executions to make animations visible.
+func LoadSlowMoDelay() int {
+	path, err := slowMoConfigPath()
+	if err != nil {
+		return 250
+	}
+
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return 250
+	}
+
+	value := strings.TrimSpace(string(data))
+
+	// Parse as milliseconds
+	var ms int
+	_, err = fmt.Sscanf(value, "%d", &ms)
+	if err != nil || ms < 0 {
+		return 250
+	}
+
+	return ms
+}
+
+// SaveSlowMoDelay saves the slowMo delay (in milliseconds) to disk.
+// Creates ~/.bento directory if it doesn't exist.
+func SaveSlowMoDelay(ms int) error {
+	dir, err := configDir()
+	if err != nil {
+		return err
+	}
+
+	// Create config directory if needed
+	if err := os.MkdirAll(dir, 0755); err != nil {
+		return err
+	}
+
+	path, err := slowMoConfigPath()
+	if err != nil {
+		return err
+	}
+
+	return os.WriteFile(path, []byte(fmt.Sprintf("%d", ms)), 0644)
 }

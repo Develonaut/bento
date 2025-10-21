@@ -14,6 +14,7 @@ import (
 type executionContext struct {
 	nodeData       map[string]interface{} // Data from each executed node
 	secretsManager *wasabi.Manager        // Secrets manager for {{SECRETS.X}} resolution
+	depth          int                    // Nesting depth for logging indentation
 }
 
 // newExecutionContext creates a new execution context.
@@ -43,6 +44,7 @@ func newExecutionContext() *executionContext {
 	return &executionContext{
 		nodeData:       nodeData,
 		secretsManager: secretsMgr,
+		depth:          0,
 	}
 }
 
@@ -220,6 +222,15 @@ func (ec *executionContext) copy() *executionContext {
 	}
 	// Share the same secrets manager (thread-safe)
 	newCtx.secretsManager = ec.secretsManager
+	// Preserve depth
+	newCtx.depth = ec.depth
+	return newCtx
+}
+
+// withDepth returns a copy of the context with incremented depth.
+func (ec *executionContext) withDepth(increment int) *executionContext {
+	newCtx := ec.copy()
+	newCtx.depth = ec.depth + increment
 	return newCtx
 }
 

@@ -56,6 +56,10 @@ func setupTUIContext(def *neta.Definition) *tuiContext {
 	messenger := miso.NewBubbletMessenger(program)
 	chef := itamae.NewWithMessenger(p, logger, messenger)
 
+	// Load slowMo delay from config for TUI animations
+	slowMoMs := miso.LoadSlowMoDelay()
+	chef.SetSlowMoDelay(time.Duration(slowMoMs) * time.Millisecond)
+
 	return &tuiContext{
 		program: program,
 		chef:    chef,

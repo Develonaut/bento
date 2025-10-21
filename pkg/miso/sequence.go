@@ -130,22 +130,10 @@ func (s *Sequence) formatStep(step Step) string {
 	return strings.Join(parts, " ")
 }
 
-// buildStepPrefix creates the indent/emoji/icon prefix for a step.
+// buildStepPrefix creates the indent/icon prefix for a step.
 func (s *Sequence) buildStepPrefix(step Step) string {
 	indent := strings.Repeat("  ", step.Depth)
 	icon := s.getStepIcon(step.Status)
-	emoji := ""
-
-	if step.Status == StepCompleted {
-		emoji = getStepEmoji(step.Name)
-	}
-
-	if emoji != "" {
-		if icon != "" {
-			return indent + emoji + " " + icon
-		}
-		return indent + emoji
-	}
 
 	if icon != "" {
 		return indent + icon
@@ -166,15 +154,6 @@ func buildStepSuffix(step Step) string {
 		return fmt.Sprintf("(%s)", step.Duration.Round(time.Millisecond).String())
 	}
 	return ""
-}
-
-// getStepEmoji returns a deterministic sushi emoji based on step name.
-// Uses FNV-1a hash to ensure the same step always gets the same emoji.
-func getStepEmoji(stepName string) string {
-	h := fnv.New32a()
-	h.Write([]byte(stepName))
-	hash := h.Sum32()
-	return SushiSpinner[hash%uint32(len(SushiSpinner))]
 }
 
 // colorStatusWord colors the status word based on status using the sequence's theme.

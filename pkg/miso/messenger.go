@@ -2,7 +2,6 @@ package miso
 
 import (
 	"fmt"
-	"math/rand"
 	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -71,7 +70,6 @@ type SimpleMessenger struct {
 type nodeStartInfo struct {
 	name     string
 	nodeType string
-	emoji    string
 }
 
 // NewSimpleMessenger creates a messenger for simple progress output.
@@ -85,13 +83,10 @@ func NewSimpleMessenger(theme *Theme, palette Palette) *SimpleMessenger {
 
 // SendNodeStarted stores node start information (doesn't print yet).
 func (m *SimpleMessenger) SendNodeStarted(path, name, nodeType string) {
-	emoji := getStepEmoji(name)
-
 	// Store node info for when it completes
 	m.nodeInfo[path] = nodeStartInfo{
 		name:     name,
 		nodeType: nodeType,
-		emoji:    emoji,
 	}
 }
 
@@ -102,8 +97,7 @@ func (m *SimpleMessenger) SendNodeCompleted(path string, duration time.Duration,
 	if !ok {
 		// Fallback if we don't have the info
 		info = nodeStartInfo{
-			name:  path,
-			emoji: getStepEmoji(path),
+			name: path,
 		}
 	}
 
@@ -111,21 +105,20 @@ func (m *SimpleMessenger) SendNodeCompleted(path string, duration time.Duration,
 	delete(m.nodeInfo, path)
 
 	if err != nil {
-		// Print: 💥 Failed Create Product Directory… (error message)
+		// Print: Failed NETA:file-system Create Product Directory… (error message)
 		statusWord := getStatusLabel(StepFailed, info.name)
-		errorEmoji := getErrorEmoji()
-		fmt.Printf("  %s %s %s… %s\n",
-			errorEmoji,
+		fmt.Printf("  %s NETA:%s %s… %s\n",
 			m.theme.Error.Render(statusWord),
+			info.nodeType,
 			info.name,
 			m.theme.Error.Render(err.Error()))
 	} else {
-		// Print: 🍥 Perfected Read Products CSV… (2ms)
+		// Print: Perfected NETA:spreadsheet Read Products CSV… (2ms)
 		statusWord := getStatusLabel(StepCompleted, info.name)
 		durationStr := formatSimpleDuration(duration)
-		fmt.Printf("  %s %s %s… %s\n",
-			info.emoji,
+		fmt.Printf("  %s NETA:%s %s… %s\n",
 			m.theme.Success.Render(statusWord),
+			info.nodeType,
 			info.name,
 			m.theme.Subtle.Render(fmt.Sprintf("(%s)", durationStr)))
 	}
@@ -142,20 +135,4 @@ func formatSimpleDuration(d time.Duration) string {
 	mins := int(d.Minutes())
 	secs := int(d.Seconds()) % 60
 	return fmt.Sprintf("%dm %ds", mins, secs)
-}
-
-// getErrorEmoji returns a random error emoji for failed operations.
-func getErrorEmoji() string {
-	errorEmojis := []string{
-		"👹",  // oni mask (Japanese demon)
-		"👺",  // tengu/goblin mask
-		"💀",  // skull
-		"☠️", // skull and crossbones
-		"💥",  // collision/explosion
-		"🔥",  // fire
-		"⚠️", // warning
-		"❌",  // cross mark
-		"🚫",  // no entry
-	}
-	return errorEmojis[rand.Intn(len(errorEmojis))]
 }

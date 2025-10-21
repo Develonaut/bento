@@ -26,6 +26,7 @@ package itamae
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/Develonaut/bento/pkg/neta"
@@ -43,10 +44,13 @@ type ProgressMessenger interface {
 
 // Itamae orchestrates bento execution.
 type Itamae struct {
-	pantry     *pantry.Pantry
-	logger     *shoyu.Logger     // Optional - can be nil
-	messenger  ProgressMessenger // Optional - for TUI progress updates
-	onProgress ProgressCallback
+	pantry         *pantry.Pantry
+	logger         *shoyu.Logger     // Optional - can be nil
+	messenger      ProgressMessenger // Optional - for TUI progress updates
+	onProgress     ProgressCallback
+	slowMoDelay    time.Duration // Delay between node completions for animations
+	totalNodes     int           // Total executable nodes in graph
+	completedNodes int           // Number of completed nodes
 }
 
 // ProgressCallback is called when a node starts/completes execution.
@@ -81,12 +85,20 @@ func New(p *pantry.Pantry, logger *shoyu.Logger) *Itamae {
 // NewWithMessenger creates an Itamae with progress messaging.
 // Messenger is used for TUI/CLI progress updates.
 // Both logger and messenger are optional - can be nil.
+// Automatically loads slowMo delay from config for TUI animations.
 func NewWithMessenger(p *pantry.Pantry, logger *shoyu.Logger, messenger ProgressMessenger) *Itamae {
+	// Note: Import miso here would create circular dependency, so we'll set slowMo from outside
 	return &Itamae{
-		pantry:    p,
-		logger:    logger,
-		messenger: messenger,
+		pantry:      p,
+		logger:      logger,
+		messenger:   messenger,
+		slowMoDelay: 0, // Will be set by caller to avoid circular dependency
 	}
+}
+
+// SetSlowMoDelay sets the delay between node completions for animations.
+func (i *Itamae) SetSlowMoDelay(delay time.Duration) {
+	i.slowMoDelay = delay
 }
 
 // OnProgress registers a callback for progress updates.
@@ -102,13 +114,13 @@ func (i *Itamae) OnProgress(callback ProgressCallback) {
 func (i *Itamae) Serve(ctx context.Context, def *neta.Definition) (*Result, error) {
 	start := time.Now()
 
+	// Count total executable nodes for progress tracking
+	i.totalNodes = countExecutableNodes(def)
+	i.completedNodes = 0
+
 	if i.logger != nil {
-		// Add separator line for visual clarity between bento executions
-		i.logger.Info("═══════════════════════════════════════════════════════════════════════════")
-		msg := msgBentoStarted()
-		i.logger.Info(msg.format(),
-			"bento_id", def.ID,
-			"bento_name", def.Name)
+		msg := msgBentoStarted(def.Name)
+		i.logger.Info(msg.format())
 	}
 
 	result := &Result{
@@ -128,14 +140,11 @@ func (i *Itamae) Serve(ctx context.Context, def *neta.Definition) (*Result, erro
 		result.Error = err
 
 		if i.logger != nil {
-			// Add separator before failure for visual clarity
-			i.logger.Info("═══════════════════════════════════════════════════════════════════════════")
-			msg := msgBentoFailed()
-			i.logger.Error(msg.format(),
-				"bento_id", def.ID,
-				"nodes_executed", result.NodesExecuted,
-				"duration", result.Duration,
-				"error", err)
+			durationStr := formatDuration(result.Duration)
+			msg := msgBentoFailed(durationStr)
+			i.logger.Error(msg.format())
+			i.logger.Error("Error: " + err.Error())
+			i.logger.Info("")
 		}
 
 		return result, err
@@ -144,16 +153,39 @@ func (i *Itamae) Serve(ctx context.Context, def *neta.Definition) (*Result, erro
 	result.Status = StatusSuccess
 
 	if i.logger != nil {
-		// Add separator before completion for visual clarity
-		i.logger.Info("═══════════════════════════════════════════════════════════════════════════")
-		msg := msgBentoCompleted()
-		i.logger.Info(msg.format(),
-			"bento_id", def.ID,
-			"nodes_executed", result.NodesExecuted,
-			"duration", result.Duration)
-		// Add blank line after completion for readability
+		durationStr := formatDuration(result.Duration)
+		msg := msgBentoCompleted(durationStr)
+		i.logger.Info(msg.format())
 		i.logger.Info("")
 	}
 
 	return result, nil
+}
+
+// formatDuration formats a duration to match CLI output (e.g., "6ms", "1.2s")
+func formatDuration(d time.Duration) string {
+	if d < time.Second {
+		// Less than 1 second - show milliseconds
+		ms := d.Milliseconds()
+		return fmt.Sprintf("%dms", ms)
+	}
+	// 1 second or more - show with decimal
+	s := d.Seconds()
+	return fmt.Sprintf("%.1fs", s)
+}
+
+// countExecutableNodes counts the total number of executable nodes (leaf nodes only).
+// Groups, loops, and parallel containers are not counted - only actual neta executions.
+func countExecutableNodes(def *neta.Definition) int {
+	// If this is not a container, it's a single executable node
+	if def.Type != "group" && def.Type != "loop" && def.Type != "parallel" {
+		return 1
+	}
+
+	// Count child nodes recursively
+	count := 0
+	for _, child := range def.Nodes {
+		count += countExecutableNodes(&child)
+	}
+	return count
 }

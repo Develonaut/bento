@@ -24,6 +24,10 @@ func (e Executor) runningView() string {
 		lines = append(lines, e.sequence.View())
 	}
 
+	// Show progress bar at bottom
+	lines = append(lines, "")
+	lines = append(lines, e.progress.View())
+
 	return lipgloss.JoinVertical(lipgloss.Left, lines...)
 }
 
@@ -36,6 +40,9 @@ func (e Executor) completionView() string {
 		lines = append(lines, e.sequence.View())
 		lines = append(lines, "")
 	}
+
+	// Show final progress bar at bottom
+	lines = append(lines, e.progress.View())
 
 	// Note: We don't show completion message in TUI mode anymore
 	// The final success/error message is printed after TUI exits

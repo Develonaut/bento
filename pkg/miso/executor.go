@@ -3,6 +3,7 @@ package miso
 import (
 	"time"
 
+	"github.com/charmbracelet/bubbles/progress"
 	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
 
@@ -44,6 +45,7 @@ type Executor struct {
 	success    bool
 	errorMsg   string
 	spinner    Spinner
+	progress   progress.Model
 }
 
 // Message types for Bubbletea
@@ -78,6 +80,11 @@ func NewExecutor(def *neta.Definition, theme *Theme, palette Palette) Executor {
 	sequence := NewSequenceWithTheme(theme, palette)
 	spinner := NewSpinner(palette)
 
+	// Create progress bar with theme colors
+	prog := progress.New(progress.WithDefaultGradient())
+	prog.ShowPercentage = true
+	prog.Width = 76 // Default width, will be updated by WindowSizeMsg
+
 	return Executor{
 		theme:      theme,
 		palette:    palette,
@@ -88,6 +95,7 @@ func NewExecutor(def *neta.Definition, theme *Theme, palette Palette) Executor {
 		complete:   false,
 		success:    false,
 		spinner:    spinner,
+		progress:   prog,
 	}
 }
 
@@ -95,6 +103,7 @@ func NewExecutor(def *neta.Definition, theme *Theme, palette Palette) Executor {
 func (e Executor) Init() tea.Cmd {
 	return tea.Batch(
 		e.spinner.Model.Tick,
+		e.progress.Init(),
 	)
 }
 
@@ -107,20 +116,32 @@ func (e Executor) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return e, tea.Quit
 		}
 
+	case tea.WindowSizeMsg:
+		// Update progress bar width (cap at 80 characters)
+		width := msg.Width
+		if width > 80 {
+			width = 80
+		}
+		e.progress.Width = width - 4 // Leave some padding
+		return e, nil
+
 	case ExecutionInitMsg:
 		// Flatten definition to get all nodes
 		e.nodeStates = flattenDefinition(*msg.Definition, "")
 		e.updateSequence()
+		e.updateProgress()
 		return e, nil
 
 	case NodeStartedMsg:
 		e.handleNodeStarted(msg)
 		e.updateSequence()
+		e.updateProgress()
 		return e, nil
 
 	case NodeCompletedMsg:
 		e.handleNodeCompleted(msg)
 		e.updateSequence()
+		e.updateProgress()
 		return e, nil
 
 	case ExecutionCompleteMsg:
@@ -130,6 +151,7 @@ func (e Executor) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if msg.Error != nil {
 			e.errorMsg = msg.Error.Error()
 		}
+		e.updateProgress()
 		// Exit after showing completion message briefly
 		return e, tea.Sequence(
 			tea.Tick(500*time.Millisecond, func(t time.Time) tea.Msg {
@@ -142,6 +164,12 @@ func (e Executor) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		var cmd tea.Cmd
 		e.spinner, cmd = e.spinner.Update(msg)
 		e.sequence.UpdateSpinner(e.spinner)
+		return e, cmd
+
+	case progress.FrameMsg:
+		// Update progress bar animation
+		progressModel, cmd := e.progress.Update(msg)
+		e.progress = progressModel.(progress.Model)
 		return e, cmd
 	}
 
@@ -208,4 +236,22 @@ func convertNodeStatusToStepStatus(status NodeStatus) StepStatus {
 // Success returns whether execution was successful.
 func (e Executor) Success() bool {
 	return e.success
+}
+
+// updateProgress calculates and updates the progress bar percentage.
+func (e *Executor) updateProgress() {
+	if len(e.nodeStates) == 0 {
+		e.progress.SetPercent(0.0)
+		return
+	}
+
+	completed := 0
+	for _, node := range e.nodeStates {
+		if node.status == NodeCompleted || node.status == NodeFailed {
+			completed++
+		}
+	}
+
+	percent := float64(completed) / float64(len(e.nodeStates))
+	e.progress.SetPercent(percent)
 }

@@ -3,6 +3,7 @@ package itamae
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/Develonaut/bento/pkg/neta"
 )
@@ -20,15 +21,27 @@ func (i *Itamae) executeTimes(
 	}
 
 	if i.logger != nil {
-		msg := msgLoopStarted("times")
-		i.logger.Info(msg.format(),
-			"loop_id", def.ID,
-			"count", count)
+		msg := msgLoopStarted(execCtx.depth, def.Name)
+		i.logger.Info(msg.format())
 	}
 
-	iterations := i.executeTimesIterations(ctx, def, count, execCtx, result)
+	start := time.Now()
+	iterations, err := i.executeTimesIterations(ctx, def, count, execCtx, result)
+	duration := time.Since(start)
 
+	// Store result even if there was an error (to track partial progress)
 	i.storeLoopResult(def, execCtx, result, iterations)
+
+	if i.logger != nil {
+		durationStr := formatDuration(duration)
+		msg := msgLoopCompleted(execCtx.depth, def.Name, durationStr)
+		i.logger.Info(msg.format())
+	}
+
+	// Return error if iterations failed
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -51,19 +64,20 @@ func (i *Itamae) executeTimesIterations(
 	count int,
 	execCtx *executionContext,
 	result *Result,
-) int {
+) (int, error) {
 	iterations := 0
 	for idx := 0; idx < count; idx++ {
 		if err := i.executeSingleIteration(ctx, def, idx, nil, execCtx, result); err != nil {
 			if i.logger != nil {
-				i.logger.Error("Times loop iteration failed",
+				// Use proper indentation for error messages inside loops (depth 1)
+				i.logger.Error("│  │   ✗ Times loop iteration failed",
 					"loop_id", def.ID,
 					"iteration", idx,
 					"error", err)
 			}
-			return iterations
+			return iterations, err
 		}
 		iterations++
 	}
-	return iterations
+	return iterations, nil
 }

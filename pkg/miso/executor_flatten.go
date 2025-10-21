@@ -10,6 +10,7 @@ import (
 // flattenDefinition converts a bento definition tree into a flat list of node states.
 // This recursively processes groups, loops, and parallel nodes to create a linear
 // sequence suitable for display in the TUI.
+// Note: Loop children are not shown individually since they execute multiple times.
 func flattenDefinition(def neta.Definition, basePath string) []NodeState {
 	if def.Type != "group" && def.Type != "loop" && def.Type != "parallel" {
 		return flattenSingleNode(def, basePath)
@@ -43,12 +44,14 @@ func flattenGroupNodes(def neta.Definition, basePath string) []NodeState {
 	for idx, child := range def.Nodes {
 		// Use node ID if present (graph-based execution), otherwise use hierarchical path
 		path := getNodePath(child, basePath, idx)
-		states = append(states, createNodeState(child, path))
 
-		// Recursively flatten child groups
+		// Recursively flatten child groups/loops/parallel (don't track containers, only leaf nodes)
 		if child.Type == "group" || child.Type == "loop" || child.Type == "parallel" {
 			childStates := flattenDefinition(child, path)
 			states = append(states, childStates...)
+		} else {
+			// Only track actual execution nodes (not containers)
+			states = append(states, createNodeState(child, path))
 		}
 	}
 

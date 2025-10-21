@@ -3,6 +3,7 @@ package itamae
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/Develonaut/bento/pkg/neta"
 )
@@ -20,23 +21,26 @@ func (i *Itamae) executeForEach(
 	}
 
 	if i.logger != nil {
-		msg := msgLoopStarted("forEach")
-		i.logger.Info(msg.format(),
-			"loop_id", def.ID,
-			"loop_name", def.Name,
-			"item_count", len(items))
+		msg := msgLoopStarted(execCtx.depth, def.Name)
+		i.logger.Info(msg.format())
 	}
 
-	iterations := i.executeLoopIterations(ctx, def, items, execCtx, result)
+	start := time.Now()
+	iterations, err := i.executeLoopIterations(ctx, def, items, execCtx, result)
+	duration := time.Since(start)
 
+	// Store result even if there was an error (to track partial progress)
 	i.storeLoopResult(def, execCtx, result, iterations)
 
 	if i.logger != nil {
-		msg := msgLoopCompleted("forEach")
-		i.logger.Info(msg.format(),
-			"loop_id", def.ID,
-			"loop_name", def.Name,
-			"iterations", iterations)
+		durationStr := formatDuration(duration)
+		msg := msgLoopCompleted(execCtx.depth, def.Name, durationStr)
+		i.logger.Info(msg.format())
+	}
+
+	// Return error if iterations failed
+	if err != nil {
+		return err
 	}
 
 	return nil
@@ -101,21 +105,22 @@ func (i *Itamae) executeLoopIterations(
 	items []interface{},
 	execCtx *executionContext,
 	result *Result,
-) int {
+) (int, error) {
 	iterations := 0
 	for idx, item := range items {
 		if err := i.executeSingleIteration(ctx, def, idx, item, execCtx, result); err != nil {
 			if i.logger != nil {
-				i.logger.Error("Loop iteration failed",
+				// Use proper indentation for error messages inside loops (depth 1)
+				i.logger.Error("│  │   ✗ Loop iteration failed",
 					"loop_id", def.ID,
 					"iteration", idx,
 					"error", err)
 			}
-			return iterations
+			return iterations, err
 		}
 		iterations++
 	}
-	return iterations
+	return iterations, nil
 }
 
 // executeSingleIteration executes loop body for one iteration.
@@ -152,7 +157,7 @@ func (i *Itamae) createIterationContext(
 	item interface{},
 	idx int,
 ) *executionContext {
-	iterCtx := execCtx.copy()
+	iterCtx := execCtx.withDepth(1) // Increment depth for child nodes
 	iterCtx.set("item", item)
 	iterCtx.set("index", idx)
 	return iterCtx
