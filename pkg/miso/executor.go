@@ -22,13 +22,16 @@ const (
 
 // NodeState tracks individual node execution.
 type NodeState struct {
-	path      string
-	name      string
-	nodeType  string
-	status    NodeStatus
-	startTime time.Time
-	duration  time.Duration
-	depth     int // Nesting level for indentation
+	path         string
+	name         string
+	nodeType     string
+	status       NodeStatus
+	startTime    time.Time
+	duration     time.Duration
+	depth        int    // Nesting level for indentation
+	currentChild string // For loops: name of currently executing child
+	childIndex   int    // For loops: current iteration index
+	childTotal   int    // For loops: total iterations
 }
 
 // Executor displays bento execution progress using Bubbletea.
@@ -75,6 +78,14 @@ type ExecutionCompleteMsg struct {
 	Error   error
 }
 
+// LoopChildMsg signals that a loop is executing a specific child.
+type LoopChildMsg struct {
+	LoopPath  string // Path to the loop node
+	ChildName string // Name of the current child being executed
+	Index     int    // Current iteration index (0-based)
+	Total     int    // Total number of iterations
+}
+
 // NewExecutor creates an executor for the given bento definition.
 func NewExecutor(def *neta.Definition, theme *Theme, palette Palette) Executor {
 	sequence := NewSequenceWithTheme(theme, palette)
@@ -107,6 +118,9 @@ func (e Executor) Init() tea.Cmd {
 	)
 }
 
+// quitMsg signals that it's time to quit after waiting for final updates.
+type quitMsg struct{}
+
 // Update handles Bubbletea messages.
 func (e Executor) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
@@ -115,6 +129,12 @@ func (e Executor) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if msg.Type == tea.KeyCtrlC {
 			return e, tea.Quit
 		}
+
+	case quitMsg:
+		// Final update before quitting
+		e.updateSequence()
+		e.updateProgress()
+		return e, tea.Quit
 
 	case tea.WindowSizeMsg:
 		// Update progress bar width (cap at 80 characters)
@@ -144,6 +164,11 @@ func (e Executor) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		e.updateProgress()
 		return e, nil
 
+	case LoopChildMsg:
+		e.handleLoopChild(msg)
+		e.updateSequence()
+		return e, nil
+
 	case ExecutionCompleteMsg:
 		e.complete = true
 		e.running = false
@@ -151,13 +176,14 @@ func (e Executor) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if msg.Error != nil {
 			e.errorMsg = msg.Error.Error()
 		}
+		e.updateSequence() // Update sequence immediately
 		e.updateProgress()
-		// Exit after showing completion message briefly
-		return e, tea.Sequence(
-			tea.Tick(500*time.Millisecond, func(t time.Time) tea.Msg {
-				return tea.Quit()
-			}),
-		)
+
+		// Wait a brief moment for any final node completion messages to arrive
+		// This handles race conditions where NodeCompletedMsg arrives after ExecutionCompleteMsg
+		return e, tea.Tick(100*time.Millisecond, func(t time.Time) tea.Msg {
+			return quitMsg{}
+		})
 
 	case spinner.TickMsg:
 		// Update spinner animation
@@ -197,6 +223,20 @@ func (e *Executor) handleNodeCompleted(msg NodeCompletedMsg) {
 			} else {
 				e.nodeStates[i].status = NodeCompleted
 			}
+			// Clear loop child info when node completes
+			e.nodeStates[i].currentChild = ""
+			return
+		}
+	}
+}
+
+// handleLoopChild updates loop with current child execution info.
+func (e *Executor) handleLoopChild(msg LoopChildMsg) {
+	for i := range e.nodeStates {
+		if e.nodeStates[i].path == msg.LoopPath {
+			e.nodeStates[i].currentChild = msg.ChildName
+			e.nodeStates[i].childIndex = msg.Index
+			e.nodeStates[i].childTotal = msg.Total
 			return
 		}
 	}
@@ -207,11 +247,14 @@ func (e *Executor) updateSequence() {
 	steps := make([]Step, len(e.nodeStates))
 	for i, node := range e.nodeStates {
 		steps[i] = Step{
-			Name:     node.name,
-			Type:     node.nodeType,
-			Status:   convertNodeStatusToStepStatus(node.status),
-			Duration: node.duration,
-			Depth:    node.depth,
+			Name:         node.name,
+			Type:         node.nodeType,
+			Status:       convertNodeStatusToStepStatus(node.status),
+			Duration:     node.duration,
+			Depth:        node.depth,
+			CurrentChild: node.currentChild,
+			ChildIndex:   node.childIndex,
+			ChildTotal:   node.childTotal,
 		}
 	}
 	e.sequence.SetSteps(steps)

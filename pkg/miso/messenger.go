@@ -21,6 +21,13 @@ type ProgressMessenger interface {
 	// duration: how long the node took to execute
 	// err: error if node failed, nil if successful
 	SendNodeCompleted(path string, duration time.Duration, err error)
+
+	// SendLoopChild notifies which child a loop is currently executing.
+	// loopPath: path to the loop node
+	// childName: name of the child being executed
+	// index: current iteration index (0-based)
+	// total: total number of iterations
+	SendLoopChild(loopPath, childName string, index, total int)
 }
 
 // BubbletMessenger sends progress messages to a Bubbletea program.
@@ -54,6 +61,18 @@ func (m *BubbletMessenger) SendNodeCompleted(path string, duration time.Duration
 			Path:     path,
 			Duration: duration,
 			Error:    err,
+		})
+	}
+}
+
+// SendLoopChild sends loop child execution message to Bubbletea.
+func (m *BubbletMessenger) SendLoopChild(loopPath, childName string, index, total int) {
+	if m.program != nil {
+		m.program.Send(LoopChildMsg{
+			LoopPath:  loopPath,
+			ChildName: childName,
+			Index:     index,
+			Total:     total,
 		})
 	}
 }
@@ -122,6 +141,11 @@ func (m *SimpleMessenger) SendNodeCompleted(path string, duration time.Duration,
 			info.name,
 			m.theme.Subtle.Render(fmt.Sprintf("(%s)", durationStr)))
 	}
+}
+
+// SendLoopChild is a no-op for SimpleMessenger (no real-time progress).
+func (m *SimpleMessenger) SendLoopChild(loopPath, childName string, index, total int) {
+	// No-op: Simple mode doesn't show real-time child execution
 }
 
 // formatSimpleDuration formats duration for simple display.

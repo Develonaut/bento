@@ -38,11 +38,10 @@ func (e Executor) completionView() string {
 	// Show sequence
 	if e.sequence != nil {
 		lines = append(lines, e.sequence.View())
-		lines = append(lines, "")
 	}
 
-	// Show final progress bar at bottom
-	lines = append(lines, e.progress.View())
+	// Note: Progress bar is printed manually after TUI exit
+	// We don't include it here to avoid blank lines in the output
 
 	// Note: We don't show completion message in TUI mode anymore
 	// The final success/error message is printed after TUI exits

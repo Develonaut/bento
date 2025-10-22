@@ -161,4 +161,3 @@ func TestStatusWordVariety(t *testing.T) {
 		t.Error("Status word is empty")
 	}
 }
-

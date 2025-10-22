@@ -59,7 +59,7 @@ func executeSimple(def *neta.Definition) error {
 		os.Exit(1)
 	}
 
-	printSuccess(fmt.Sprintf("Delicious! Bento executed successfully in %s", formatDuration(duration)))
-	fmt.Printf("   ✓ %d nodes executed\n", result.NodesExecuted)
+	printSuccess(fmt.Sprintf("Delicious! Bento executed %d nodes successfully in %s",
+		result.NodesExecuted, formatDuration(duration)))
 	return nil
 }

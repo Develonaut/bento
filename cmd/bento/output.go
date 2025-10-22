@@ -38,12 +38,10 @@ func formatDuration(d time.Duration) string {
 	return fmt.Sprintf("%dh %dm", hours, mins)
 }
 
-// printSuccess prints a success message with random success emoji and color-coded text.
+// printSuccess prints a success message with random success emoji.
 func printSuccess(message string) {
 	emoji := successEmojis[rand.Intn(len(successEmojis))]
-	manager := miso.NewManager()
-	theme := manager.GetTheme()
-	fmt.Printf("\n%s %s\n", emoji, theme.Success.Render(message))
+	fmt.Printf("\n%s %s\n", emoji, message)
 }
 
 // printError prints an error message with random error emoji and color-coded text.

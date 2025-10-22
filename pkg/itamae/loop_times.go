@@ -8,7 +8,7 @@ import (
 	"github.com/Develonaut/bento/pkg/neta"
 )
 
-// executeTimes executes a times loop (repeat N times).
+// executeTimes executes a times loop (repeat N times) AS A LEAF NODE.
 func (i *Itamae) executeTimes(
 	ctx context.Context,
 	def *neta.Definition,
@@ -17,33 +17,64 @@ func (i *Itamae) executeTimes(
 ) error {
 	count, err := i.extractTimesCount(def)
 	if err != nil {
+		i.state.setNodeState(def.ID, "error")
 		return err
 	}
 
-	if i.logger != nil {
-		msg := msgLoopStarted(execCtx.depth, def.Name)
-		i.logger.Info(msg.format())
-	}
+	i.initializeLoopExecution(def, execCtx)
 
 	start := time.Now()
-	iterations, err := i.executeTimesIterations(ctx, def, count, execCtx, result)
-	duration := time.Since(start)
-
-	// Store result even if there was an error (to track partial progress)
-	i.storeLoopResult(def, execCtx, result, iterations)
-
-	if i.logger != nil {
-		durationStr := formatDuration(duration)
-		msg := msgLoopCompleted(execCtx.depth, def.Name, durationStr)
-		i.logger.Info(msg.format())
-	}
-
-	// Return error if iterations failed
+	loopResults, err := i.executeTimesIterations(ctx, def, count, execCtx)
 	if err != nil {
+		i.state.setNodeState(def.ID, "error")
 		return err
 	}
 
+	i.finalizeLoopExecution(def, loopResults, execCtx, result, time.Since(start))
 	return nil
+}
+
+// executeTimesIterations executes all times loop iterations and returns results.
+func (i *Itamae) executeTimesIterations(
+	ctx context.Context,
+	def *neta.Definition,
+	count int,
+	execCtx *executionContext,
+) ([]interface{}, error) {
+	loopResults := make([]interface{}, 0, count)
+
+	for iteration := 0; iteration < count; iteration++ {
+		if err := i.checkLoopCancellation(ctx, def); err != nil {
+			return nil, err
+		}
+
+		i.reportLoopProgress(def, iteration, count)
+
+		iterResult, err := i.executeTimesIteration(ctx, def, iteration, count, execCtx)
+		if err != nil {
+			i.logLoopIterationError(def, iteration, err)
+			return nil, fmt.Errorf("iteration %d failed: %w", iteration, err)
+		}
+
+		loopResults = append(loopResults, iterResult)
+	}
+
+	return loopResults, nil
+}
+
+// executeTimesIteration executes one iteration (INTERNAL - not tracked in graph).
+func (i *Itamae) executeTimesIteration(
+	ctx context.Context,
+	def *neta.Definition,
+	iteration int,
+	total int,
+	execCtx *executionContext,
+) (map[string]interface{}, error) {
+	iterCtx := execCtx.withDepth(1)
+	iterCtx.set("iteration", iteration)
+	iterCtx.set("index", iteration) // Alias for consistency with forEach
+
+	return i.executeIterationChildren(ctx, def, iteration, total, iterCtx)
 }
 
 // extractTimesCount extracts and validates count parameter for times loop.
@@ -55,29 +86,4 @@ func (i *Itamae) extractTimesCount(def *neta.Definition) (int, error) {
 			fmt.Errorf("'count' must be a number"))
 	}
 	return int(count), nil
-}
-
-// executeTimesIterations executes N iterations for times loop.
-func (i *Itamae) executeTimesIterations(
-	ctx context.Context,
-	def *neta.Definition,
-	count int,
-	execCtx *executionContext,
-	result *Result,
-) (int, error) {
-	iterations := 0
-	for idx := 0; idx < count; idx++ {
-		if err := i.executeSingleIteration(ctx, def, idx, nil, execCtx, result); err != nil {
-			if i.logger != nil {
-				// Use proper indentation for error messages inside loops (depth 1)
-				i.logger.Error("│  │   ✗ Times loop iteration failed",
-					"loop_id", def.ID,
-					"iteration", idx,
-					"error", err)
-			}
-			return iterations, err
-		}
-		iterations++
-	}
-	return iterations, nil
 }

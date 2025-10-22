@@ -86,17 +86,17 @@ func slowMoConfigPath() (string, error) {
 }
 
 // LoadSlowMoDelay loads the saved slowMo delay from disk.
-// Returns 250ms as default if no saved value or on error.
+// Returns 5000ms as default if no saved value or on error.
 // SlowMo adds artificial delays between node executions to make animations visible.
 func LoadSlowMoDelay() int {
 	path, err := slowMoConfigPath()
 	if err != nil {
-		return 250
+		return 5000
 	}
 
 	data, err := os.ReadFile(path)
 	if err != nil {
-		return 250
+		return 5000
 	}
 
 	value := strings.TrimSpace(string(data))
@@ -105,7 +105,7 @@ func LoadSlowMoDelay() int {
 	var ms int
 	_, err = fmt.Sscanf(value, "%d", &ms)
 	if err != nil || ms < 0 {
-		return 250
+		return 5000
 	}
 
 	return ms

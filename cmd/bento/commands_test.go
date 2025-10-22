@@ -25,11 +25,10 @@ func TestRunCommand_ValidBento(t *testing.T) {
 	defer os.Remove(bentoFile)
 
 	cmd := exec.Command("bento", "run", bentoFile)
-	output := verifyCommandSuccess(t, cmd, "Delicious")
+	verifyCommandSuccess(t, cmd, "Delicious")
 
-	if !strings.Contains(output, "✓") {
-		t.Error("Output should contain success checkmark ✓")
-	}
+	// Success is verified by "Delicious" message from itamae
+	// Output includes random sushi emoji (🍣, 🍙, etc.) not checkmark
 }
 
 // TestRunCommand_InvalidBento verifies proper error handling for invalid bentos.

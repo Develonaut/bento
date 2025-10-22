@@ -71,7 +71,7 @@ func main() {
 
 // isKnownSubcommand checks if the arg is a registered subcommand.
 func isKnownSubcommand(arg string) bool {
-	knownCommands := []string{"run", "validate", "list", "new", "docs", "secrets", "logs", "version", "v", "help"}
+	knownCommands := []string{"run", "validate", "list", "new", "docs", "secrets", "logs", "version", "v", "help", "config"}
 	for _, cmd := range knownCommands {
 		if arg == cmd {
 			return true
@@ -113,4 +113,5 @@ func init() {
 	rootCmd.AddCommand(secretsCmd)
 	rootCmd.AddCommand(logsCmd)
 	rootCmd.AddCommand(versionCmd)
+	rootCmd.AddCommand(configCmd)
 }

@@ -47,6 +47,10 @@ func (i *Itamae) executeAndRecordNeta(ctx context.Context, def *neta.Definition,
 func (i *Itamae) logExecutionStart(def *neta.Definition, execCtx *executionContext) {
 	i.notifyProgress(def.ID, "starting")
 
+	// Mark node as executing in execution state
+	i.state.setNodeState(def.ID, "executing")
+	i.state.setNodeProgress(def.ID, 0, "Starting")
+
 	if i.messenger != nil {
 		i.messenger.SendNodeStarted(def.ID, def.Name, def.Type)
 	}
@@ -100,7 +104,7 @@ func (i *Itamae) sendNodeCompleted(nodeID string, duration time.Duration, err er
 	}
 }
 
-// storeExecutionResult stores node output and increments counters.
+// storeExecutionResult stores node output and marks node as completed.
 func (i *Itamae) storeExecutionResult(
 	nodeID string,
 	output interface{},
@@ -110,7 +114,10 @@ func (i *Itamae) storeExecutionResult(
 	execCtx.set(nodeID, output)
 	result.NodeOutputs[nodeID] = output
 	result.NodesExecuted++
-	i.completedNodes++
+
+	// Mark node as completed in execution state
+	i.state.setNodeProgress(nodeID, 100, "Completed")
+	i.state.setNodeState(nodeID, "completed")
 }
 
 // logExecutionComplete logs completion with progress tracking.
@@ -118,17 +125,9 @@ func (i *Itamae) logExecutionComplete(def *neta.Definition, execCtx *executionCo
 	i.notifyProgress(def.ID, "completed")
 
 	if i.logger != nil {
-		progressPct := i.calculateProgress()
+		progressPct := i.state.getProgress()
 		durationStr := formatDuration(duration)
 		msg := msgChildNodeCompleted(execCtx.depth, def.Type, def.Name, durationStr, progressPct)
 		i.logger.Info(msg.format())
 	}
-}
-
-// calculateProgress returns current progress percentage.
-func (i *Itamae) calculateProgress() int {
-	if i.totalNodes == 0 {
-		return 0
-	}
-	return (i.completedNodes * 100) / i.totalNodes
 }

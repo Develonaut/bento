@@ -5,7 +5,7 @@ package miso
 
 import (
 	"fmt"
-	"hash/fnv"
+	"math/rand"
 	"strings"
 	"time"
 )
@@ -24,11 +24,14 @@ const (
 
 // Step represents a single step in a sequence.
 type Step struct {
-	Name     string
-	Type     string
-	Status   StepStatus
-	Duration time.Duration
-	Depth    int // Nesting level for indentation
+	Name         string
+	Type         string
+	Status       StepStatus
+	Duration     time.Duration
+	Depth        int    // Nesting level for indentation
+	CurrentChild string // For loops: name of currently executing child
+	ChildIndex   int    // For loops: current iteration index
+	ChildTotal   int    // For loops: total iterations
 }
 
 // Sequence displays a list of execution steps with status indicators.
@@ -111,18 +114,37 @@ func (s *Sequence) View() string {
 	lines := []string{}
 	for _, step := range s.steps {
 		lines = append(lines, s.formatStep(step))
+
+		// Show current child for running loops
+		if step.Status == StepRunning && step.CurrentChild != "" {
+			childLine := s.formatLoopChild(step)
+			lines = append(lines, childLine)
+		}
 	}
 
 	return strings.Join(lines, "\n")
 }
 
+// formatLoopChild renders the current child of a running loop.
+func (s *Sequence) formatLoopChild(step Step) string {
+	indent := strings.Repeat("  ", step.Depth+1)
+	arrow := s.theme.Subtle.Render("→")
+	childName := s.theme.Subtle.Render(step.CurrentChild)
+	return fmt.Sprintf("%s%s %s", indent, arrow, childName)
+}
+
 // formatStep renders a single step with status and timing.
 func (s *Sequence) formatStep(step Step) string {
 	prefix := s.buildStepPrefix(step)
+	emoji := s.getStepEmoji(step)
 	status := s.buildStepStatus(step)
 	suffix := buildStepSuffix(step)
 
-	parts := []string{prefix, status, step.Name + "…"}
+	parts := []string{prefix}
+	if emoji != "" {
+		parts = append(parts, emoji)
+	}
+	parts = append(parts, status, step.Name)
 	if suffix != "" {
 		parts = append(parts, suffix)
 	}
@@ -171,22 +193,17 @@ func (s *Sequence) colorStatusWord(word string, status StepStatus) string {
 	}
 }
 
-// getStatusLabel returns a fun varied status word based on step name.
-// Uses deterministic hash to ensure same step gets same word.
+// getStatusLabel returns a random fun status word.
 func getStatusLabel(status StepStatus, stepName string) string {
-	h := fnv.New32a()
-	h.Write([]byte(stepName))
-	hash := h.Sum32()
-
 	switch status {
 	case StepPending:
 		return StatusWordPending
 	case StepRunning:
-		return StatusWordsRunning[hash%uint32(len(StatusWordsRunning))]
+		return StatusWordsRunning[rand.Intn(len(StatusWordsRunning))]
 	case StepCompleted:
-		return StatusWordsCompleted[hash%uint32(len(StatusWordsCompleted))]
+		return StatusWordsCompleted[rand.Intn(len(StatusWordsCompleted))]
 	case StepFailed:
-		return StatusWordsFailed[hash%uint32(len(StatusWordsFailed))]
+		return StatusWordsFailed[rand.Intn(len(StatusWordsFailed))]
 	default:
 		return StatusWordPending
 	}
@@ -204,6 +221,15 @@ func (s *Sequence) getStepIcon(status StepStatus) string {
 	default:
 		return "•" // Pending dot
 	}
+}
+
+// getStepEmoji returns a random sushi emoji for completed steps.
+func (s *Sequence) getStepEmoji(step Step) string {
+	if step.Status != StepCompleted {
+		return ""
+	}
+
+	return Sushi[rand.Intn(len(Sushi))]
 }
 
 // UpdateSpinner updates the spinner for animation (called from Bubbletea Update).

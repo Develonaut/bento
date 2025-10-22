@@ -118,99 +118,71 @@ func msgNetaStarted() logMessage {
 	}
 }
 
-// msgNetaCompleted creates a message for neta execution completion.
-func msgNetaCompleted() logMessage {
-	return logMessage{
-		emoji: "", // No emoji for individual neta logs
-		text:  "Neta completed",
-	}
-}
-
 // msgGroupStarted creates a message for group execution start.
-// Format: "     │ ┌─ Tasting NETA:group name …"
+// Format: "│ ┌─ Tasting NETA:group name"
 func msgGroupStarted(depth int, name string) logMessage {
 	indent := getIndent(depth)
 	statusWord := getStatusWord(name, true)
-	spacing := "     " // 5 spaces for alignment with progress lines
 	return logMessage{
 		emoji: "",
-		text:  spacing + indent + "  ┌─ " + statusWord + " NETA:group " + name + " …",
+		text:  indent + "  ┌─ " + statusWord + " NETA:group " + name,
 	}
 }
 
 // msgGroupCompleted creates a message for group execution completion.
-// Format: "     │ └─ Finished NETA:group name … (2ms)"
+// Format: "│ └─ Finished NETA:group name (2ms)"
 func msgGroupCompleted(depth int, name, duration string) logMessage {
 	indent := getIndent(depth)
 	statusWord := getStatusWord(name, false)
-	spacing := "     " // 5 spaces for alignment with progress lines
 	return logMessage{
 		emoji: "",
-		text:  spacing + indent + "  └─ " + statusWord + " NETA:group " + name + " … (" + duration + ")",
+		text:  indent + "  └─ " + statusWord + " NETA:group " + name + " (" + duration + ")",
 	}
 }
 
 // msgLoopStarted creates a message for loop execution start.
-// Format: "     │  │  ┌─ Sampling NETA:loop name …"
+// Format: "│  │  ┌─ Sampling NETA:loop name"
 func msgLoopStarted(depth int, name string) logMessage {
 	indent := getIndent(depth)
 	statusWord := getStatusWord(name, true)
-	spacing := "     " // 5 spaces for alignment with progress lines
 	return logMessage{
 		emoji: "",
-		text:  spacing + indent + "  ┌─ " + statusWord + " NETA:loop " + name + " …",
+		text:  indent + "  ┌─ " + statusWord + " NETA:loop " + name,
 	}
 }
 
 // msgLoopCompleted creates a message for loop execution completion.
-// Format: "     │  │  └─ Perfected NETA:loop name … (2ms)"
-func msgLoopCompleted(depth int, name, duration string) logMessage {
+// Format: "│  │  └─ Perfected NETA:loop name (2ms, 75%)"
+func msgLoopCompleted(depth int, name, duration string, progressPct int) logMessage {
 	indent := getIndent(depth)
 	statusWord := getStatusWord(name, false)
-	spacing := "     " // 5 spaces for alignment with progress lines
 	return logMessage{
 		emoji: "",
-		text:  spacing + indent + "  └─ " + statusWord + " NETA:loop " + name + " … (" + duration + ")",
+		text:  fmt.Sprintf("%s  └─ %s NETA:loop %s (%s, %d%%)", indent, statusWord, name, duration, progressPct),
 	}
 }
 
 // msgChildNodeStarted creates a message for child node execution start.
 // Depth indicates nesting level: 0=root, 1=in group, 2=in loop, etc.
-// Format: "     │  │  ┌─ Tasting NETA:type name …"
+// Format: "│  │  ┌─ Tasting NETA:type name"
 func msgChildNodeStarted(depth int, nodeType, name string) logMessage {
 	indent := getIndent(depth)
 	statusWord := getStatusWord(name, true)
-	spacing := "     " // 5 spaces for alignment with progress lines
 	return logMessage{
 		emoji: "",
-		text:  spacing + indent + "  ┌─ " + statusWord + " NETA:" + nodeType + " " + name + " …",
+		text:  indent + "  ┌─ " + statusWord + " NETA:" + nodeType + " " + name,
 	}
 }
 
 // msgChildNodeCompleted creates a message for child node execution completion.
-// Format: "10%  │  │  └─ Devoured NETA:type name … (2ms)"
+// Format: "│  │  └─ Devoured NETA:type name (2ms, 10%)"
 func msgChildNodeCompleted(depth int, nodeType, name, duration string, progressPct int) logMessage {
 	indent := getIndent(depth)
 	statusWord := getStatusWord(name, false)
-	pctPrefix := formatProgressPrefix(progressPct)
 	return logMessage{
 		emoji: "",
-		text:  pctPrefix + indent + "  └─ " + statusWord + " NETA:" + nodeType + " " + name + " … (" + duration + ")",
+		text:  fmt.Sprintf("%s  └─ %s NETA:%s %s (%s, %d%%)", indent, statusWord, nodeType, name, duration, progressPct),
 	}
-}
-
-// formatProgressPrefix formats the progress percentage with proper alignment.
-// Returns a 5-character string like " 10% " or "100% " for alignment.
-func formatProgressPrefix(pct int) string {
-	if pct <= 0 {
-		return "     " // 5 spaces for no progress
-	}
-	// Cap at 100% (loops may execute more nodes than statically counted)
-	if pct > 100 {
-		pct = 100
-	}
-	// Right-align percentage in 3 characters, add %, then add space
-	return fmt.Sprintf("%3d%% ", pct)
 }
 
 // getIndent returns the indentation string based on depth.

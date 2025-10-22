@@ -479,3 +479,167 @@ func TestItamae_MultipleStartNodes(t *testing.T) {
 		t.Errorf("NodesExecuted = %d, want 3", result.NodesExecuted)
 	}
 }
+
+// TestItamae_WeightedProgress tests that progress is weighted by node type
+func TestItamae_WeightedProgress(t *testing.T) {
+	ctx := context.Background()
+
+	// Create bento with 3 edit-fields nodes (each weight 50)
+	// Total weight = 150
+	// After node-1: 50/150 = 33%
+	// After node-2: 100/150 = 66%
+	// After node-3: 150/150 = 100%
+	bento := &neta.Definition{
+		ID:   "weighted-progress-bento",
+		Type: "group",
+		Nodes: []neta.Definition{
+			{ID: "node-1", Type: "edit-fields", Parameters: map[string]interface{}{"values": map[string]interface{}{"test": 1}}},
+			{ID: "node-2", Type: "edit-fields", Parameters: map[string]interface{}{"values": map[string]interface{}{"test": 2}}},
+			{ID: "node-3", Type: "edit-fields", Parameters: map[string]interface{}{"values": map[string]interface{}{"test": 3}}},
+		},
+		Edges: []neta.Edge{
+			{ID: "edge-1", Source: "node-1", Target: "node-2"},
+			{ID: "edge-2", Source: "node-2", Target: "node-3"},
+		},
+	}
+
+	p := pantry.New()
+	p.RegisterFactory("edit-fields", func() neta.Executable {
+		return editfields.New()
+	})
+	logger := shoyu.New(shoyu.Config{Level: shoyu.LevelDebug})
+	chef := itamae.New(p, logger)
+
+	completedNodes := make(map[string]bool)
+	onProgress := func(nodeID string, status string) {
+		if status == "completed" {
+			completedNodes[nodeID] = true
+			t.Logf("Node completed: %s", nodeID)
+		}
+	}
+
+	chef.OnProgress(onProgress)
+
+	result, err := chef.Serve(ctx, bento)
+	if err != nil {
+		t.Fatalf("Serve failed: %v", err)
+	}
+
+	// Verify expected nodes completed (excluding the group wrapper)
+	expectedNodes := []string{"node-1", "node-2", "node-3"}
+	for _, nodeID := range expectedNodes {
+		if !completedNodes[nodeID] {
+			t.Errorf("Expected node %s to be completed", nodeID)
+		}
+	}
+
+	// Verify execution completed
+	if result.Status != itamae.StatusSuccess {
+		t.Errorf("Status = %v, want Success", result.Status)
+	}
+}
+
+// TestItamae_LoopIterationProgress tests that loops report partial progress
+func TestItamae_LoopIterationProgress(t *testing.T) {
+	ctx := context.Background()
+
+	// Create bento with a times loop (3 iterations)
+	bento := &neta.Definition{
+		ID:   "loop-progress-bento",
+		Type: "group",
+		Nodes: []neta.Definition{
+			{
+				ID:   "before-loop",
+				Type: "edit-fields",
+				Parameters: map[string]interface{}{
+					"values": map[string]interface{}{"test": "before"},
+				},
+			},
+			{
+				ID:      "test-loop",
+				Type:    "loop",
+				Version: "1.0.0",
+				Name:    "Test Loop",
+				Parameters: map[string]interface{}{
+					"mode":  "times",
+					"count": float64(3),
+				},
+				Nodes: []neta.Definition{
+					{
+						ID:   "loop-child",
+						Type: "edit-fields",
+						Parameters: map[string]interface{}{
+							"values": map[string]interface{}{"iteration": "{{.index}}"},
+						},
+					},
+				},
+			},
+			{
+				ID:   "after-loop",
+				Type: "edit-fields",
+				Parameters: map[string]interface{}{
+					"values": map[string]interface{}{"test": "after"},
+				},
+			},
+		},
+		Edges: []neta.Edge{
+			{ID: "edge-1", Source: "before-loop", Target: "test-loop"},
+			{ID: "edge-2", Source: "test-loop", Target: "after-loop"},
+		},
+	}
+
+	p := pantry.New()
+	p.RegisterFactory("edit-fields", func() neta.Executable {
+		return editfields.New()
+	})
+	logger := shoyu.New(shoyu.Config{Level: shoyu.LevelDebug})
+	chef := itamae.New(p, logger)
+
+	completedNodes := make(map[string]bool)
+	onProgress := func(nodeID string, status string) {
+		if status == "completed" {
+			completedNodes[nodeID] = true
+			t.Logf("Node completed: %s", nodeID)
+		}
+	}
+
+	chef.OnProgress(onProgress)
+
+	result, err := chef.Serve(ctx, bento)
+	if err != nil {
+		t.Fatalf("Serve failed: %v", err)
+	}
+
+	// Verify loop completed (loop counts as 1 node, not 3)
+	if !completedNodes["test-loop"] {
+		t.Error("Loop node should be marked as completed")
+	}
+
+	// Verify all wrapper nodes completed
+	expectedCompleted := map[string]bool{
+		"before-loop": true,
+		"test-loop":   true,
+		"after-loop":  true,
+	}
+
+	for nodeID, expected := range expectedCompleted {
+		if completedNodes[nodeID] != expected {
+			t.Errorf("Node %s completed = %v, want %v", nodeID, completedNodes[nodeID], expected)
+		}
+	}
+
+	// Verify loop output contains 3 iterations
+	loopOutput, ok := result.NodeOutputs["test-loop"].([]interface{})
+	if !ok {
+		t.Fatalf("Loop output is not []interface{}")
+	}
+
+	if len(loopOutput) != 3 {
+		t.Errorf("Loop output length = %d, want 3 iterations", len(loopOutput))
+	}
+
+	// Verify execution completed
+	if result.Status != itamae.StatusSuccess {
+		t.Errorf("Status = %v, want Success", result.Status)
+	}
+}

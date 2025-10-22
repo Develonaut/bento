@@ -89,8 +89,9 @@ func loadAndValidate(bentoPath string) (*neta.Definition, error) {
 		return nil, err
 	}
 
-	printInfo(fmt.Sprintf("Running bento: %s", def.Name))
-	fmt.Println() // Add newline for better spacing
+	// Don't print "Running bento:" here - the logger will output it
+	// printInfo(fmt.Sprintf("Running bento: %s", def.Name))
+	// fmt.Println() // Add newline for better spacing
 
 	if err := validateBento(def); err != nil {
 		printError(fmt.Sprintf("Validation failed: %v", err))
