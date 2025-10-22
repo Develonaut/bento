@@ -125,176 +125,30 @@ type quitMsg struct{}
 func (e Executor) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
-		// Allow quit with Ctrl+C
-		if msg.Type == tea.KeyCtrlC {
-			return e, tea.Quit
-		}
-
+		return e.handleKeyMsg(msg)
 	case quitMsg:
-		// Final update before quitting
-		e.updateSequence()
-		e.updateProgress()
-		return e, tea.Quit
-
+		return e.handleQuitMsg()
 	case tea.WindowSizeMsg:
-		// Update progress bar width (cap at 80 characters)
-		width := msg.Width
-		if width > 80 {
-			width = 80
-		}
-		e.progress.Width = width - 4 // Leave some padding
-		return e, nil
-
+		return e.handleWindowSizeMsg(msg)
 	case ExecutionInitMsg:
-		// Flatten definition to get all nodes
-		e.nodeStates = flattenDefinition(*msg.Definition, "")
-		e.updateSequence()
-		e.updateProgress()
-		return e, nil
-
+		return e.handleExecutionInitMsg(msg)
 	case NodeStartedMsg:
-		e.handleNodeStarted(msg)
-		e.updateSequence()
-		e.updateProgress()
-		return e, nil
-
+		return e.handleNodeStartedMsg(msg)
 	case NodeCompletedMsg:
-		e.handleNodeCompleted(msg)
-		e.updateSequence()
-		e.updateProgress()
-		return e, nil
-
+		return e.handleNodeCompletedMsg(msg)
 	case LoopChildMsg:
-		e.handleLoopChild(msg)
-		e.updateSequence()
-		return e, nil
-
+		return e.handleLoopChildMsg(msg)
 	case ExecutionCompleteMsg:
-		e.complete = true
-		e.running = false
-		e.success = msg.Success
-		if msg.Error != nil {
-			e.errorMsg = msg.Error.Error()
-		}
-		e.updateSequence() // Update sequence immediately
-		e.updateProgress()
-
-		// Wait a brief moment for any final node completion messages to arrive
-		// This handles race conditions where NodeCompletedMsg arrives after ExecutionCompleteMsg
-		return e, tea.Tick(100*time.Millisecond, func(t time.Time) tea.Msg {
-			return quitMsg{}
-		})
-
+		return e.handleExecutionCompleteMsg(msg)
 	case spinner.TickMsg:
-		// Update spinner animation
-		var cmd tea.Cmd
-		e.spinner, cmd = e.spinner.Update(msg)
-		e.sequence.UpdateSpinner(e.spinner)
-		return e, cmd
-
+		return e.handleSpinnerTickMsg(msg)
 	case progress.FrameMsg:
-		// Update progress bar animation
-		progressModel, cmd := e.progress.Update(msg)
-		e.progress = progressModel.(progress.Model)
-		return e, cmd
+		return e.handleProgressFrameMsg(msg)
 	}
-
 	return e, nil
-}
-
-// handleNodeStarted updates node to running state.
-func (e *Executor) handleNodeStarted(msg NodeStartedMsg) {
-	for i := range e.nodeStates {
-		if e.nodeStates[i].path == msg.Path {
-			e.nodeStates[i].status = NodeRunning
-			e.nodeStates[i].startTime = time.Now()
-			return
-		}
-	}
-}
-
-// handleNodeCompleted updates node to completed/failed state.
-func (e *Executor) handleNodeCompleted(msg NodeCompletedMsg) {
-	for i := range e.nodeStates {
-		if e.nodeStates[i].path == msg.Path {
-			e.nodeStates[i].duration = msg.Duration
-			if msg.Error != nil {
-				e.nodeStates[i].status = NodeFailed
-			} else {
-				e.nodeStates[i].status = NodeCompleted
-			}
-			// Clear loop child info when node completes
-			e.nodeStates[i].currentChild = ""
-			return
-		}
-	}
-}
-
-// handleLoopChild updates loop with current child execution info.
-func (e *Executor) handleLoopChild(msg LoopChildMsg) {
-	for i := range e.nodeStates {
-		if e.nodeStates[i].path == msg.LoopPath {
-			e.nodeStates[i].currentChild = msg.ChildName
-			e.nodeStates[i].childIndex = msg.Index
-			e.nodeStates[i].childTotal = msg.Total
-			return
-		}
-	}
-}
-
-// updateSequence converts node states to sequence steps.
-func (e *Executor) updateSequence() {
-	steps := make([]Step, len(e.nodeStates))
-	for i, node := range e.nodeStates {
-		steps[i] = Step{
-			Name:         node.name,
-			Type:         node.nodeType,
-			Status:       convertNodeStatusToStepStatus(node.status),
-			Duration:     node.duration,
-			Depth:        node.depth,
-			CurrentChild: node.currentChild,
-			ChildIndex:   node.childIndex,
-			ChildTotal:   node.childTotal,
-		}
-	}
-	e.sequence.SetSteps(steps)
-}
-
-// convertNodeStatusToStepStatus converts NodeStatus to StepStatus.
-func convertNodeStatusToStepStatus(status NodeStatus) StepStatus {
-	switch status {
-	case NodePending:
-		return StepPending
-	case NodeRunning:
-		return StepRunning
-	case NodeCompleted:
-		return StepCompleted
-	case NodeFailed:
-		return StepFailed
-	default:
-		return StepPending
-	}
 }
 
 // Success returns whether execution was successful.
 func (e Executor) Success() bool {
 	return e.success
-}
-
-// updateProgress calculates and updates the progress bar percentage.
-func (e *Executor) updateProgress() {
-	if len(e.nodeStates) == 0 {
-		e.progress.SetPercent(0.0)
-		return
-	}
-
-	completed := 0
-	for _, node := range e.nodeStates {
-		if node.status == NodeCompleted || node.status == NodeFailed {
-			completed++
-		}
-	}
-
-	percent := float64(completed) / float64(len(e.nodeStates))
-	e.progress.SetPercent(percent)
 }
