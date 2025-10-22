@@ -213,9 +213,26 @@ func showDryRun(def *neta.Definition) error {
 		for i, node := range def.Nodes {
 			fmt.Printf("  %d. [%s] %s (type: %s)\n", i+1, node.ID, node.Name, node.Type)
 		}
+		fmt.Println()
 	}
 
-	fmt.Println("\nValidation: ✓ Passed")
-	printSuccess("Dry run complete. Use 'bento run' without --dry-run to execute.")
+	// Perform preflight checks
+	fmt.Println("Running preflight checks...")
+	validator := createValidator()
+	ctx := context.Background()
+	if err := validator.PreflightCheck(ctx, def); err != nil {
+		printError(fmt.Sprintf("Preflight check failed: %v", err))
+		fmt.Println("\n❌ Dry run failed - fix the issues above before running")
+		return err
+	}
+
+	fmt.Println("Validation: ✓ Passed")
+	fmt.Println("Preflight: ✓ Passed")
+	printSuccess("\nDry run complete. Use 'bento run' without --dry-run to execute.")
 	return nil
+}
+
+// createValidator creates a new omakase validator.
+func createValidator() *omakase.Validator {
+	return omakase.New()
 }

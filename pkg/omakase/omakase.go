@@ -191,6 +191,7 @@ func buildNodeIDMap(nodes []neta.Definition) map[string]bool {
 //   - Verifying required commands are installed
 //   - Checking environment variables exist
 //   - Validating file paths exist
+//   - Recursively checking child nodes in groups and loops
 //
 // Returns a clear error message if any pre-flight check fails.
 func (v *Validator) PreflightCheck(ctx context.Context, def *neta.Definition) error {
@@ -198,6 +199,17 @@ func (v *Validator) PreflightCheck(ctx context.Context, def *neta.Definition) er
 		return ctx.Err()
 	}
 
+	// Type-specific preflight checks
+	if err := v.preflightTypeSpecific(def); err != nil {
+		return err
+	}
+
+	// Recursive preflight for groups and loops
+	return v.preflightRecursive(ctx, def)
+}
+
+// preflightTypeSpecific performs type-specific preflight checks.
+func (v *Validator) preflightTypeSpecific(def *neta.Definition) error {
 	switch def.Type {
 	case "shell-command":
 		return preflightShellCommand(def)
@@ -205,7 +217,22 @@ func (v *Validator) PreflightCheck(ctx context.Context, def *neta.Definition) er
 		return preflightHTTPRequest(def)
 	case "file-system":
 		return preflightFileSystem(def)
+	case "spreadsheet":
+		return preflightSpreadsheet(def)
+	}
+	return nil
+}
+
+// preflightRecursive performs preflight checks on child nodes.
+func (v *Validator) preflightRecursive(ctx context.Context, def *neta.Definition) error {
+	if def.Type != "group" && def.Type != "loop" {
+		return nil
 	}
 
+	for _, child := range def.Nodes {
+		if err := v.PreflightCheck(ctx, &child); err != nil {
+			return fmt.Errorf("preflight check failed in '%s': %w", def.ID, err)
+		}
+	}
 	return nil
 }

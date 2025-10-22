@@ -78,12 +78,33 @@ func checkHeaderValue(def *neta.Definition, key, value string) error {
 // preflightFileSystem checks if file paths exist for read operations.
 func preflightFileSystem(def *neta.Definition) error {
 	operation, _ := def.Parameters["operation"].(string)
+	path, ok := def.Parameters["path"].(string)
+	if !ok {
+		return nil
+	}
 
-	// For read operations, check file exists
-	if operation == "read" {
-		if path, ok := def.Parameters["path"].(string); ok {
-			if _, err := os.Stat(path); os.IsNotExist(err) {
-				return fmt.Errorf("file-system neta '%s': file not found: %s", def.ID, path)
+	// Check environment variables in path first
+	if err := checkPathEnvVars(def, path); err != nil {
+		return err
+	}
+
+	// For read/copy operations, check source file exists (only if no templates)
+	if (operation == "read" || operation == "copy") && !containsTemplates(path) {
+		if _, err := os.Stat(path); os.IsNotExist(err) {
+			return fmt.Errorf("file-system neta '%s': file not found: %s", def.ID, path)
+		}
+	}
+
+	// For copy operation, also check source path
+	if operation == "copy" {
+		if source, ok := def.Parameters["source"].(string); ok {
+			if err := checkPathEnvVars(def, source); err != nil {
+				return err
+			}
+			if !containsTemplates(source) {
+				if _, err := os.Stat(source); os.IsNotExist(err) {
+					return fmt.Errorf("file-system neta '%s': source file not found: %s", def.ID, source)
+				}
 			}
 		}
 	}
@@ -95,6 +116,7 @@ func preflightFileSystem(def *neta.Definition) error {
 //
 // This is a simple string-based approach that doesn't require regex.
 // It extracts all environment variable names from Go template syntax.
+// Skips context variables like {{.item.*}}, {{.index}}, etc.
 func extractEnvVars(s string) []string {
 	var vars []string
 
@@ -103,11 +125,29 @@ func extractEnvVars(s string) []string {
 		if !found {
 			break
 		}
-		vars = append(vars, varName)
+		// Only include if it's an environment variable (not a context variable)
+		if isEnvVar(varName) {
+			vars = append(vars, varName)
+		}
 		s = remaining
 	}
 
 	return vars
+}
+
+// isEnvVar determines if a variable name is an environment variable.
+// Returns false for context variables like "item.name", "index", etc.
+func isEnvVar(varName string) bool {
+	// Skip context variables used in loops and templates
+	contextVars := []string{"item.", "index", "output", "result", "context"}
+
+	for _, ctx := range contextVars {
+		if strings.HasPrefix(varName, ctx) || varName == ctx {
+			return false
+		}
+	}
+
+	return true
 }
 
 // findNextVar finds the next {{.VAR}} pattern and returns (varName, remaining, found).
@@ -125,4 +165,49 @@ func findNextVar(s string) (string, string, bool) {
 	varName := s[start+3 : start+end]
 	remaining := s[start+end+2:]
 	return varName, remaining, true
+}
+
+// preflightSpreadsheet checks CSV file exists and environment variables in path.
+func preflightSpreadsheet(def *neta.Definition) error {
+	operation, _ := def.Parameters["operation"].(string)
+	if operation != "read" {
+		return nil
+	}
+
+	path, ok := def.Parameters["path"].(string)
+	if !ok {
+		return nil
+	}
+
+	// Check environment variables in path first
+	if err := checkPathEnvVars(def, path); err != nil {
+		return err
+	}
+
+	// Check file exists (only if no templates like {{.index}})
+	if !containsTemplates(path) {
+		if _, err := os.Stat(path); os.IsNotExist(err) {
+			return fmt.Errorf("spreadsheet neta '%s': CSV file not found: %s", def.ID, path)
+		}
+	}
+
+	return nil
+}
+
+// checkPathEnvVars validates environment variables in a file path.
+func checkPathEnvVars(def *neta.Definition, path string) error {
+	envVars := extractEnvVars(path)
+	for _, envVar := range envVars {
+		if os.Getenv(envVar) == "" {
+			return fmt.Errorf("neta '%s': environment variable '%s' not set (required in path: %s)",
+				def.ID, envVar, path)
+		}
+	}
+	return nil
+}
+
+// containsTemplates checks if a string contains any Go template syntax.
+// Returns true if it contains {{.VAR}}, {{.item.field}}, {{.index}}, etc.
+func containsTemplates(s string) bool {
+	return strings.Contains(s, "{{.")
 }
