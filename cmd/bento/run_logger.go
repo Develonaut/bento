@@ -74,6 +74,10 @@ func createDualLogger(fileLogger *shoyu.Logger) *shoyu.Logger {
 		// This outputs lines from shell-command neta in real-time
 		OnStream: func(line string) {
 			fmt.Println(line)
+			// Also write to file logger for record-keeping
+			if fileLogger != nil {
+				fileLogger.Stream(line)
+			}
 		},
 	})
 }

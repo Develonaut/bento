@@ -137,14 +137,14 @@ func (l *Logger) With(args ...any) *Logger {
 // This bypasses normal log levels and calls the OnStream callback if set.
 // Critical for Phase 8: real-time output from shell-command neta.
 //
-// The line is also logged at debug level for record-keeping.
+// The line is also logged at info level for visibility in logs.
 func (l *Logger) Stream(line string) {
 	if l.onStream != nil {
 		l.onStream(line)
 	}
 
-	// Also log at debug level for record-keeping
-	l.sl.Debug("stream", "output", line)
+	// Also log at info level so it appears in default logs
+	l.sl.Info("stream", "output", line)
 }
 
 // SetOutput changes the output destination.

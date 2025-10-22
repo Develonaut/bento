@@ -73,7 +73,10 @@ func (i *Itamae) prepareNetaParams(def *neta.Definition, execCtx *executionConte
 	params["_context"] = execCtx.toMap()
 	params["_onOutput"] = func(line string) {
 		if i.logger != nil {
-			i.logger.Stream(line)
+			// Format streaming output with proper tree indentation
+			indent := getIndent(execCtx.depth)
+			formattedLine := indent + "  │  " + line
+			i.logger.Info(formattedLine)
 		}
 	}
 

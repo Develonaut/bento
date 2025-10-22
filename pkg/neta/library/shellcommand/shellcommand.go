@@ -41,6 +41,7 @@ import (
 	"bufio"
 	"context"
 	"fmt"
+	"io"
 	"os/exec"
 	"strings"
 	"time"
@@ -57,6 +58,15 @@ const (
 
 // ShellCommandNeta implements shell command execution.
 type ShellCommandNeta struct{}
+
+// commandParams holds extracted and validated command parameters.
+type commandParams struct {
+	command  string
+	args     []string
+	timeout  int
+	stream   bool
+	onOutput func(string)
+}
 
 // New creates a new shellcommand neta instance.
 func New() neta.Executable {
@@ -77,140 +87,153 @@ func New() neta.Executable {
 //   - stderr (string): Standard error
 //   - exitCode (int): Exit code (0 = success)
 func (s *ShellCommandNeta) Execute(ctx context.Context, params map[string]interface{}) (interface{}, error) {
-	// Extract command
+	cmdParams, err := s.extractCommandParams(params)
+	if err != nil {
+		return nil, err
+	}
+
+	cmdCtx, cancel := context.WithTimeout(ctx, time.Duration(cmdParams.timeout)*time.Second)
+	defer cancel()
+
+	cmd := exec.CommandContext(cmdCtx, cmdParams.command, cmdParams.args...)
+
+	if cmdParams.stream && cmdParams.onOutput != nil {
+		return s.executeStreaming(cmdCtx, cmd, cmdParams)
+	}
+	return s.executeBuffered(cmdCtx, cmd, cmdParams.timeout)
+}
+
+// extractCommandParams extracts and validates command parameters from the params map.
+func (s *ShellCommandNeta) extractCommandParams(params map[string]interface{}) (*commandParams, error) {
 	command, ok := params["command"].(string)
 	if !ok {
 		return nil, fmt.Errorf("command parameter is required and must be a string")
 	}
 
-	// Extract args (optional)
-	var args []string
-	if argsRaw, ok := params["args"].([]interface{}); ok {
-		args = make([]string, len(argsRaw))
-		for i, arg := range argsRaw {
-			if strArg, ok := arg.(string); ok {
-				args[i] = strArg
-			} else {
-				return nil, fmt.Errorf("all args must be strings, got %T at index %d", arg, i)
-			}
-		}
+	args, err := s.extractArgs(params)
+	if err != nil {
+		return nil, err
 	}
 
-	// Extract timeout (optional, default 120 seconds)
-	timeout := DefaultTimeout
-	if t, ok := params["timeout"].(int); ok {
-		timeout = t
-	}
-
-	// Extract streaming settings
+	timeout := s.extractTimeout(params)
 	stream, _ := params["stream"].(bool)
+
 	var onOutput func(string)
 	if callback, ok := params["_onOutput"].(func(string)); ok {
 		onOutput = callback
 	}
 
-	// Create context with timeout
-	cmdCtx, cancel := context.WithTimeout(ctx, time.Duration(timeout)*time.Second)
-	defer cancel()
+	return &commandParams{
+		command:  command,
+		args:     args,
+		timeout:  timeout,
+		stream:   stream,
+		onOutput: onOutput,
+	}, nil
+}
 
-	// Create command
-	cmd := exec.CommandContext(cmdCtx, command, args...)
-
-	// Capture stdout and stderr
-	var stdoutBuilder strings.Builder
-	var stderrBuilder strings.Builder
-
-	if stream && onOutput != nil {
-		// Streaming mode: read line-by-line and call callback
-		stdoutPipe, err := cmd.StdoutPipe()
-		if err != nil {
-			return nil, fmt.Errorf("failed to create stdout pipe: %w", err)
-		}
-
-		stderrPipe, err := cmd.StderrPipe()
-		if err != nil {
-			return nil, fmt.Errorf("failed to create stderr pipe: %w", err)
-		}
-
-		// Start the command
-		if err := cmd.Start(); err != nil {
-			return nil, fmt.Errorf("failed to start command: %w", err)
-		}
-
-		// Read stdout line-by-line
-		stdoutScanner := bufio.NewScanner(stdoutPipe)
-		go func() {
-			for stdoutScanner.Scan() {
-				line := stdoutScanner.Text()
-				stdoutBuilder.WriteString(line)
-				stdoutBuilder.WriteString("\n")
-				onOutput(line)
-			}
-		}()
-
-		// Read stderr line-by-line
-		stderrScanner := bufio.NewScanner(stderrPipe)
-		go func() {
-			for stderrScanner.Scan() {
-				line := stderrScanner.Text()
-				stderrBuilder.WriteString(line)
-				stderrBuilder.WriteString("\n")
-			}
-		}()
-
-		// Wait for command to finish
-		err = cmd.Wait()
-
-		// Check context errors first
-		if cmdCtx.Err() == context.DeadlineExceeded {
-			return nil, fmt.Errorf("command timeout after %d seconds", timeout)
-		}
-		if cmdCtx.Err() == context.Canceled {
-			return nil, fmt.Errorf("command killed due to context cancellation")
-		}
-
-		exitCode := 0
-		if err != nil {
-			if exitErr, ok := err.(*exec.ExitError); ok {
-				exitCode = exitErr.ExitCode()
-			} else {
-				return nil, fmt.Errorf("command failed: %w", err)
-			}
-		}
-
-		return map[string]interface{}{
-			"stdout":   stdoutBuilder.String(),
-			"stderr":   stderrBuilder.String(),
-			"exitCode": exitCode,
-		}, nil
-	} else {
-		// Non-streaming mode: capture all output
-		cmd.Stdout = &stdoutBuilder
-		cmd.Stderr = &stderrBuilder
-
-		err := cmd.Run()
-
-		// Check context errors first
-		if cmdCtx.Err() == context.DeadlineExceeded {
-			return nil, fmt.Errorf("command timeout after %d seconds", timeout)
-		}
-		if cmdCtx.Err() == context.Canceled {
-			return nil, fmt.Errorf("command killed due to context cancellation")
-		}
-
-		exitCode := 0
-		if err != nil {
-			if exitErr, ok := err.(*exec.ExitError); ok {
-				exitCode = exitErr.ExitCode()
-			} else {
-				return nil, fmt.Errorf("command failed: %w", err)
-			}
-		}
-
-		return map[string]interface{}{
-			"stdout":   stdoutBuilder.String(),
-			"stderr":   stderrBuilder.String(),
-			"exitCode": exitCode,
-		}, nil
+// extractArgs extracts and validates command arguments.
+func (s *ShellCommandNeta) extractArgs(params map[string]interface{}) ([]string, error) {
+	argsRaw, ok := params["args"].([]interface{})
+	if !ok {
+		return nil, nil
 	}
+
+	args := make([]string, len(argsRaw))
+	for i, arg := range argsRaw {
+		strArg, ok := arg.(string)
+		if !ok {
+			return nil, fmt.Errorf("all args must be strings, got %T at index %d", arg, i)
+		}
+		args[i] = strArg
+	}
+	return args, nil
+}
+
+// extractTimeout extracts timeout value, handling both int and float64 from JSON.
+func (s *ShellCommandNeta) extractTimeout(params map[string]interface{}) int {
+	if t, ok := params["timeout"].(int); ok {
+		return t
+	}
+	if t, ok := params["timeout"].(float64); ok {
+		return int(t)
+	}
+	return DefaultTimeout
+}
+
+// executeStreaming runs a command with streaming output.
+func (s *ShellCommandNeta) executeStreaming(cmdCtx context.Context, cmd *exec.Cmd, params *commandParams) (interface{}, error) {
+	var stdoutBuilder, stderrBuilder strings.Builder
+
+	stdoutPipe, err := cmd.StdoutPipe()
+	if err != nil {
+		return nil, fmt.Errorf("failed to create stdout pipe: %w", err)
+	}
+
+	stderrPipe, err := cmd.StderrPipe()
+	if err != nil {
+		return nil, fmt.Errorf("failed to create stderr pipe: %w", err)
+	}
+
+	if err := cmd.Start(); err != nil {
+		return nil, fmt.Errorf("failed to start command: %w", err)
+	}
+
+	s.streamOutput(stdoutPipe, &stdoutBuilder, params.onOutput)
+	s.streamOutput(stderrPipe, &stderrBuilder, nil)
+
+	err = cmd.Wait()
+	return s.handleCommandResult(cmdCtx, err, &stdoutBuilder, &stderrBuilder, params.timeout)
+}
+
+// streamOutput reads from a pipe line-by-line and optionally calls a callback.
+func (s *ShellCommandNeta) streamOutput(pipe io.ReadCloser, builder *strings.Builder, callback func(string)) {
+	scanner := bufio.NewScanner(pipe)
+	go func() {
+		for scanner.Scan() {
+			line := scanner.Text()
+			builder.WriteString(line)
+			builder.WriteString("\n")
+			if callback != nil {
+				callback(line)
+			}
+		}
+	}()
+}
+
+// executeBuffered runs a command with buffered output.
+func (s *ShellCommandNeta) executeBuffered(cmdCtx context.Context, cmd *exec.Cmd, timeout int) (interface{}, error) {
+	var stdoutBuilder, stderrBuilder strings.Builder
+
+	cmd.Stdout = &stdoutBuilder
+	cmd.Stderr = &stderrBuilder
+
+	err := cmd.Run()
+	return s.handleCommandResult(cmdCtx, err, &stdoutBuilder, &stderrBuilder, timeout)
+}
+
+// handleCommandResult processes command execution results and errors.
+func (s *ShellCommandNeta) handleCommandResult(cmdCtx context.Context, err error, stdout, stderr *strings.Builder, timeout int) (interface{}, error) {
+	// Check context errors first
+	if cmdCtx.Err() == context.DeadlineExceeded {
+		return nil, fmt.Errorf("command timeout after %d seconds", timeout)
+	}
+	if cmdCtx.Err() == context.Canceled {
+		return nil, fmt.Errorf("command killed due to context cancellation")
+	}
+
+	exitCode := 0
+	if err != nil {
+		if exitErr, ok := err.(*exec.ExitError); ok {
+			exitCode = exitErr.ExitCode()
+		} else {
+			return nil, fmt.Errorf("command failed: %w", err)
+		}
+	}
+
+	return map[string]interface{}{
+		"stdout":   stdout.String(),
+		"stderr":   stderr.String(),
+		"exitCode": exitCode,
+	}, nil
 }
