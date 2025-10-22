@@ -116,7 +116,7 @@
               "--output-dir",
               "/Users/Ryan/Library/CloudStorage/GoogleDrive-ryanmmchenry@gmail.com/My Drive/Heavy Handed/Products/Miniatures/Bite The Bullet/Bite The Bullet - Bullet Crusade Sanctified Legion - Bento/{{.item.name}}/renders",
               "--color-theme",
-              "stormcaller",
+              "{{.item.renderTheme}}",
               "--filename-prefix",
               "{{.item.name}}",
               "--quiet"
