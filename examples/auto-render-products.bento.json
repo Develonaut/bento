@@ -70,6 +70,44 @@
       "outputPorts": [],
       "nodes": [
         {
+          "id": "check-model-exists",
+          "type": "file-system",
+          "version": "1.0.0",
+          "name": "Check model.stl Exists",
+          "position": {
+            "x": 100,
+            "y": 50
+          },
+          "metadata": {
+            "description": "Verifies model.stl exists before attempting render. If missing, loop continues to next product."
+          },
+          "parameters": {
+            "operation": "read",
+            "path": "/Users/Ryan/Library/CloudStorage/GoogleDrive-ryanmmchenry@gmail.com/My Drive/Heavy Handed/Products/Miniatures/Bite The Bullet/Bite The Bullet - Bullet Crusade Sanctified Legion - Bento/{{.item.name}}/model.stl"
+          },
+          "inputPorts": [],
+          "outputPorts": []
+        },
+        {
+          "id": "check-overlay-exists",
+          "type": "file-system",
+          "version": "1.0.0",
+          "name": "Check overlay.png Exists",
+          "position": {
+            "x": 100,
+            "y": 75
+          },
+          "metadata": {
+            "description": "Verifies overlay.png exists before attempting render. If missing, loop continues to next product."
+          },
+          "parameters": {
+            "operation": "read",
+            "path": "/Users/Ryan/Library/CloudStorage/GoogleDrive-ryanmmchenry@gmail.com/My Drive/Heavy Handed/Products/Miniatures/Bite The Bullet/Bite The Bullet - Bullet Crusade Sanctified Legion - Bento/{{.item.name}}/overlay.png"
+          },
+          "inputPorts": [],
+          "outputPorts": []
+        },
+        {
           "id": "create-renders-dir",
           "type": "file-system",
           "version": "1.0.0",
