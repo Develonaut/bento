@@ -33,7 +33,7 @@
       "parameters": {
         "operation": "read",
         "format": "csv",
-        "path": "${PRODUCTS_PATH}/Miniatures/Bite The Bullet/Bite The Bullet - Bullet Crusade Sanctified Legion - Bento/products.csv",
+        "path": "{{.PRODUCTS_PATH}}/Miniatures/Bite The Bullet/Bite The Bullet - Bullet Crusade Sanctified Legion - Bento/products.csv",
         "hasHeaders": true
       },
       "inputPorts": [],
@@ -83,7 +83,7 @@
           },
           "parameters": {
             "operation": "mkdir",
-            "path": "${PRODUCTS_PATH}/Miniatures/Bite The Bullet/Bite The Bullet - Bullet Crusade Sanctified Legion - Bento/{{.item.name}}",
+            "path": "{{.PRODUCTS_PATH}}/Miniatures/Bite The Bullet/Bite The Bullet - Bullet Crusade Sanctified Legion - Bento/{{.item.name}}",
             "recursive": true
           },
           "inputPorts": [],
@@ -103,8 +103,8 @@
           },
           "parameters": {
             "operation": "copy",
-            "source": "${PRODUCTS_PATH}/Miniatures/Bite The Bullet/Bite The Bullet - Bullet Crusade Sanctified Legion - Bento/overlays/{{.index}}.png",
-            "dest": "${PRODUCTS_PATH}/Miniatures/Bite The Bullet/Bite The Bullet - Bullet Crusade Sanctified Legion - Bento/{{.item.name}}/overlay.png"
+            "source": "{{.PRODUCTS_PATH}}/Miniatures/Bite The Bullet/Bite The Bullet - Bullet Crusade Sanctified Legion - Bento/overlays/{{.index}}.png",
+            "dest": "{{.PRODUCTS_PATH}}/Miniatures/Bite The Bullet/Bite The Bullet - Bullet Crusade Sanctified Legion - Bento/{{.item.name}}/overlay.png"
           },
           "inputPorts": [],
           "outputPorts": []
