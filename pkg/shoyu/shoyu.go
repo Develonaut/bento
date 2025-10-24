@@ -34,6 +34,9 @@ func New(cfg Config) *Logger {
 		ReportCaller:    false,
 	})
 
+	// Apply custom styles for colored log levels and breadcrumbs
+	handler.SetStyles(createCustomStyles())
+
 	// Create slog logger using charm handler
 	sl := slog.New(handler)
 

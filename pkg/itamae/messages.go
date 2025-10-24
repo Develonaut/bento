@@ -10,16 +10,22 @@ import (
 // This ensures all log output uses approved emojis from .claude/EMOJIS.md
 // and fun terminology from .claude/STATUS_WORDS.md.
 type logMessage struct {
-	emoji string
-	text  string
+	emoji     string
+	text      string
+	isRunning bool
+	isSuccess bool
+	isFailed  bool
 }
 
-// format returns the formatted log message with emoji if present.
+// format returns the formatted log message with emoji and colors.
 func (m logMessage) format() string {
+	// Colorize the text based on message type
+	coloredText := colorizeMessage(m.text, m.isRunning, m.isSuccess, m.isFailed)
+
 	if m.emoji != "" {
-		return m.emoji + " " + m.text
+		return m.emoji + " " + coloredText
 	}
-	return m.text
+	return coloredText
 }
 
 // errorEmojis contains approved error emojis for failed operations.
@@ -75,8 +81,9 @@ func getStatusWord(name string, isRunning bool) string {
 // Format matches CLI output: "🍱 Running Bento: [name]"
 func msgBentoStarted(name string) logMessage {
 	return logMessage{
-		emoji: "🍱",
-		text:  "Running Bento: " + name,
+		emoji:     "🍱",
+		text:      "Running Bento: " + name,
+		isRunning: true,
 	}
 }
 
@@ -84,8 +91,9 @@ func msgBentoStarted(name string) logMessage {
 // Format: "🍱 Delicious! Bento executed successfully in [duration]"
 func msgBentoCompleted(duration string) logMessage {
 	return logMessage{
-		emoji: "🍱", // Always use bento box emoji for consistency
-		text:  "Delicious! Bento executed successfully in " + duration,
+		emoji:     "🍱", // Always use bento box emoji for consistency
+		text:      "Delicious! Bento executed successfully in " + duration,
+		isSuccess: true,
 	}
 }
 
@@ -93,8 +101,9 @@ func msgBentoCompleted(duration string) logMessage {
 // Format: "❌ Failed! Bento execution failed in [duration]"
 func msgBentoFailed(duration string) logMessage {
 	return logMessage{
-		emoji: randomErrorEmoji(),
-		text:  "Failed! Bento execution failed in " + duration,
+		emoji:    randomErrorEmoji(),
+		text:     "Failed! Bento execution failed in " + duration,
+		isFailed: true,
 	}
 }
 
@@ -112,11 +121,12 @@ func msgGroupStarted(breadcrumb, name string) logMessage {
 	statusWord := getStatusWord(name, true)
 	prefix := ""
 	if breadcrumb != "" {
-		prefix = breadcrumb + " "
+		prefix = "[" + breadcrumb + "]"
 	}
 	return logMessage{
-		emoji: "",
-		text:  prefix + statusWord + " NETA:group " + name,
+		emoji:     "",
+		text:      prefix + " " + statusWord + " NETA:group " + name,
+		isRunning: true,
 	}
 }
 
@@ -126,11 +136,12 @@ func msgGroupCompleted(breadcrumb, name, duration string) logMessage {
 	statusWord := getStatusWord(name, false)
 	prefix := ""
 	if breadcrumb != "" {
-		prefix = breadcrumb + " "
+		prefix = "[" + breadcrumb + "]"
 	}
 	return logMessage{
-		emoji: "",
-		text:  prefix + statusWord + " NETA:group " + name + " (" + duration + ")",
+		emoji:     "",
+		text:      prefix + " " + statusWord + " NETA:group " + name + " (" + duration + ")",
+		isSuccess: true,
 	}
 }
 
@@ -140,11 +151,12 @@ func msgLoopStarted(breadcrumb, name string) logMessage {
 	statusWord := getStatusWord(name, true)
 	prefix := ""
 	if breadcrumb != "" {
-		prefix = breadcrumb + " "
+		prefix = "[" + breadcrumb + "]"
 	}
 	return logMessage{
-		emoji: "",
-		text:  prefix + statusWord + " NETA:loop " + name,
+		emoji:     "",
+		text:      prefix + " " + statusWord + " NETA:loop " + name,
+		isRunning: true,
 	}
 }
 
@@ -154,11 +166,12 @@ func msgLoopCompleted(breadcrumb, name, duration string, progressPct int) logMes
 	statusWord := getStatusWord(name, false)
 	prefix := ""
 	if breadcrumb != "" {
-		prefix = breadcrumb + " "
+		prefix = "[" + breadcrumb + "]"
 	}
 	return logMessage{
-		emoji: "",
-		text:  fmt.Sprintf("%s%s NETA:loop %s (%s, %d%%)", prefix, statusWord, name, duration, progressPct),
+		emoji:     "",
+		text:      fmt.Sprintf("%s %s NETA:loop %s (%s, %d%%)", prefix, statusWord, name, duration, progressPct),
+		isSuccess: true,
 	}
 }
 
@@ -168,11 +181,12 @@ func msgChildNodeStarted(breadcrumb, nodeType, name string) logMessage {
 	statusWord := getStatusWord(name, true)
 	prefix := ""
 	if breadcrumb != "" {
-		prefix = breadcrumb + " "
+		prefix = "[" + breadcrumb + "]"
 	}
 	return logMessage{
-		emoji: "",
-		text:  prefix + statusWord + " NETA:" + nodeType + " " + name,
+		emoji:     "",
+		text:      prefix + " " + statusWord + " NETA:" + nodeType + " " + name,
+		isRunning: true,
 	}
 }
 
@@ -182,10 +196,11 @@ func msgChildNodeCompleted(breadcrumb, nodeType, name, duration string, progress
 	statusWord := getStatusWord(name, false)
 	prefix := ""
 	if breadcrumb != "" {
-		prefix = breadcrumb + " "
+		prefix = "[" + breadcrumb + "]"
 	}
 	return logMessage{
-		emoji: "",
-		text:  fmt.Sprintf("%s%s NETA:%s %s (%s, %d%%)", prefix, statusWord, nodeType, name, duration, progressPct),
+		emoji:     "",
+		text:      fmt.Sprintf("%s %s NETA:%s %s (%s, %d%%)", prefix, statusWord, nodeType, name, duration, progressPct),
+		isSuccess: true,
 	}
 }
