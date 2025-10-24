@@ -115,8 +115,10 @@ func (m Model) startExecution() (tea.Model, tea.Cmd) {
 	m.logChan = make(chan string, 100)
 
 	// Start async execution and log listener
+	execCmd, startCmd := m.executeBentoAsync(m.logChan)
 	return m, tea.Batch(
-		m.executeBentoAsync(m.logChan),
+		startCmd, // Send start message with cancel function
+		execCmd,  // Start execution
 		listenForLogs(m.logChan),
 	)
 }

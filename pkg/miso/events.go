@@ -185,6 +185,16 @@ func (m Model) updateExecution(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "esc":
+			// Cancel execution if still running
+			if m.executing && m.executionCancel != nil {
+				m.executionCancel()
+				m.logs += "\n\n⚠️  Execution cancelled by user\n\n"
+				wrappedLogs := wrapLogContent(m.logs, m.logViewport.Width)
+				m.logViewport.SetContent(wrappedLogs)
+				m.logViewport.GotoBottom()
+				m.executing = false
+				m.executionCancel = nil
+			}
 			// Return to list
 			m.currentView = listView
 			return m, nil

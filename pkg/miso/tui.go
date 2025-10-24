@@ -66,6 +66,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case executionStartMsg:
 		m.executing = true
+		m.executionCancel = msg.cancel
 		return m, nil
 
 	case executionOutputMsg:
@@ -79,6 +80,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case executionCompleteMsg:
 		m.executing = false
+		m.executionCancel = nil // Clear cancel function
 		if msg.err != nil {
 			m.logs += fmt.Sprintf("\n\n❌ Error: %v\n\n", msg.err)
 		} else {

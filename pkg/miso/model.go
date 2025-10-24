@@ -1,6 +1,7 @@
 package miso
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -27,7 +28,9 @@ type executionCompleteMsg struct {
 	err      error
 	duration time.Duration
 }
-type executionStartMsg struct{}
+type executionStartMsg struct {
+	cancel context.CancelFunc
+}
 
 // settingsFormType identifies which settings form is active
 type settingsFormType int
@@ -52,8 +55,9 @@ type Model struct {
 	bentoVars          []Variable
 	varHolders         map[string]*string // Pointers to form values
 	logs               string
-	logViewport        viewport.Model // Viewport for scrollable log display
-	logChan            chan string    // Channel for streaming execution logs
+	logViewport        viewport.Model      // Viewport for scrollable log display
+	logChan            chan string         // Channel for streaming execution logs
+	executionCancel    context.CancelFunc  // Cancel function for running execution
 	executing          bool
 	width              int
 	height             int

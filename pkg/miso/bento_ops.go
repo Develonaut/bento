@@ -121,10 +121,22 @@ func (m Model) runBento() (tea.Model, tea.Cmd) {
 	return m.startExecution()
 }
 
-// executeBentoAsync runs the bento in a goroutine and returns a tea.Cmd
-func (m Model) executeBentoAsync(logChan chan string) tea.Cmd {
-	return func() tea.Msg {
+// executeBentoAsync runs the bento in a goroutine and returns two tea.Cmds:
+// 1. execCmd - the actual execution command
+// 2. startCmd - a command that sends the cancel function to the model
+func (m Model) executeBentoAsync(logChan chan string) (tea.Cmd, tea.Cmd) {
+	// Create context and cancel function
+	ctx, cancel := context.WithTimeout(context.Background(), 45*time.Minute)
+
+	// Return start message with cancel function immediately
+	startCmd := func() tea.Msg {
+		return executionStartMsg{cancel: cancel}
+	}
+
+	// Execution command runs in goroutine
+	execCmd := func() tea.Msg {
 		defer close(logChan)
+		defer cancel() // Ensure context is cancelled when done
 
 		// Load bento definition
 		def, err := loadBentoDefinition(m.selectedBento)
@@ -145,10 +157,6 @@ func (m Model) executeBentoAsync(logChan chan string) tea.Cmd {
 		// Create chef with logger (no messenger needed)
 		chef := itamae.NewWithMessenger(p, logger, nil)
 
-		// Execute with timeout
-		ctx, cancel := context.WithTimeout(context.Background(), 45*time.Minute)
-		defer cancel()
-
 		start := time.Now()
 		_, err = chef.Serve(ctx, def)
 		duration := time.Since(start)
@@ -158,4 +166,6 @@ func (m Model) executeBentoAsync(logChan chan string) tea.Cmd {
 			duration: duration,
 		}
 	}
+
+	return execCmd, startCmd
 }
