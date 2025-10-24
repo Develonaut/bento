@@ -109,15 +109,25 @@ func (m Model) configureTheme() (tea.Model, tea.Cmd) {
 // buildThemeDescription creates a description showing current theme colors
 func buildThemeDescription(variant Variant) string {
 	palette := GetPalette(variant)
+
+	// Style each color value with its actual color
+	primaryStyled := lipgloss.NewStyle().Foreground(palette.Primary).Render(string(palette.Primary))
+	secondaryStyled := lipgloss.NewStyle().Foreground(palette.Secondary).Render(string(palette.Secondary))
+	successStyled := lipgloss.NewStyle().Foreground(palette.Success).Render(string(palette.Success))
+	errorStyled := lipgloss.NewStyle().Foreground(palette.Error).Render(string(palette.Error))
+	warningStyled := lipgloss.NewStyle().Foreground(palette.Warning).Render(string(palette.Warning))
+	textStyled := lipgloss.NewStyle().Foreground(palette.Text).Render(string(palette.Text))
+	mutedStyled := lipgloss.NewStyle().Foreground(palette.Muted).Render(string(palette.Muted))
+
 	return fmt.Sprintf("Current: %s\n\nColors:\n  Primary:   %s\n  Secondary: %s\n  Success:   %s\n  Error:     %s\n  Warning:   %s\n  Text:      %s\n  Muted:     %s",
 		variant,
-		palette.Primary,
-		palette.Secondary,
-		palette.Success,
-		palette.Error,
-		palette.Warning,
-		palette.Text,
-		palette.Muted,
+		primaryStyled,
+		secondaryStyled,
+		successStyled,
+		errorStyled,
+		warningStyled,
+		textStyled,
+		mutedStyled,
 	)
 }
 
