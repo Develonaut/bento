@@ -166,8 +166,6 @@ func (m Model) updateForm(msg tea.Msg) (tea.Model, tea.Cmd) {
 		switch m.activeSettingsForm {
 		case bentoHomeForm:
 			return m.completeBentoHomeForm()
-		case themeForm:
-			return m.completeThemeForm()
 		case variableForm:
 			return m.completeVariableForm()
 		default:
