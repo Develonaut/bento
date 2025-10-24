@@ -113,15 +113,15 @@ func (m Model) completeBentoHomeForm() (tea.Model, tea.Cmd) {
 	}
 
 	if err := SaveBentoHome(newHome); err != nil {
-		m.logs = fmt.Sprintf("Failed to save bento home: %v", err)
+		// Return to settings on error
 		m.activeSettingsForm = noSettingsForm
-		m.currentView = executionView
+		m.currentView = settingsView
 		return m, nil
 	}
 
-	m.logs = fmt.Sprintf("✅ Bento home set to: %s\n\nNote: Existing bentos in the old location will not be moved automatically.", newHome)
+	// Successfully changed bento home - return to settings
 	m.activeSettingsForm = noSettingsForm
-	m.currentView = executionView
+	m.currentView = settingsView
 	return m, nil
 }
 
@@ -136,15 +136,15 @@ func (m Model) completeThemeForm() (tea.Model, tea.Cmd) {
 
 	newVariant := Variant(selectedTheme)
 	if err := SaveTheme(newVariant); err != nil {
-		m.logs = fmt.Sprintf("Failed to save theme: %v", err)
+		// Return to settings on error
 		m.activeSettingsForm = noSettingsForm
-		m.currentView = executionView
+		m.currentView = settingsView
 		return m, nil
 	}
 
+	// Successfully changed theme - update model and return to settings
 	m.theme = newVariant
-	m.logs = fmt.Sprintf("✅ Theme changed to: %s\n\nThe new theme will be visible on next screen refresh.", newVariant)
 	m.activeSettingsForm = noSettingsForm
-	m.currentView = executionView
+	m.currentView = settingsView
 	return m, nil
 }

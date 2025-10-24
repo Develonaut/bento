@@ -1,0 +1,188 @@
+package miso
+
+import "github.com/charmbracelet/bubbles/key"
+
+// listKeyMap defines key bindings for the bento list view
+type listKeyMap struct {
+	Enter    key.Binding
+	Settings key.Binding
+	Quit     key.Binding
+}
+
+// settingsKeyMap defines key bindings for the settings view
+type settingsKeyMap struct {
+	Enter key.Binding
+	Back  key.Binding
+	Quit  key.Binding
+}
+
+// secretsKeyMap defines key bindings for secrets view
+type secretsKeyMap struct {
+	Add    key.Binding
+	Delete key.Binding
+	Back   key.Binding
+	Quit   key.Binding
+}
+
+// variablesKeyMap defines key bindings for variables view
+type variablesKeyMap struct {
+	Add    key.Binding
+	Delete key.Binding
+	Back   key.Binding
+	Quit   key.Binding
+}
+
+// formKeyMap defines key bindings for form view
+type formKeyMap struct {
+	Cancel key.Binding
+}
+
+// executionKeyMap defines key bindings for execution view
+type executionKeyMap struct {
+	ScrollUp   key.Binding
+	ScrollDown key.Binding
+	PageUp     key.Binding
+	PageDown   key.Binding
+	Back       key.Binding
+	Quit       key.Binding
+}
+
+// newListKeyMap creates the default key bindings for list view
+func newListKeyMap() listKeyMap {
+	return listKeyMap{
+		Enter: key.NewBinding(
+			key.WithKeys("enter"),
+			key.WithHelp("enter", "select bento"),
+		),
+		Settings: key.NewBinding(
+			key.WithKeys("s"),
+			key.WithHelp("s", "settings"),
+		),
+		Quit: key.NewBinding(
+			key.WithKeys("q", "ctrl+c"),
+			key.WithHelp("q", "quit"),
+		),
+	}
+}
+
+// newSettingsKeyMap creates the default key bindings for settings view
+func newSettingsKeyMap() settingsKeyMap {
+	return settingsKeyMap{
+		Enter: key.NewBinding(
+			key.WithKeys("enter"),
+			key.WithHelp("enter", "select"),
+		),
+		Back: key.NewBinding(
+			key.WithKeys("esc"),
+			key.WithHelp("esc", "back to list"),
+		),
+		Quit: key.NewBinding(
+			key.WithKeys("q", "ctrl+c"),
+			key.WithHelp("q", "quit"),
+		),
+	}
+}
+
+// newSecretsKeyMap creates the default key bindings for secrets view
+func newSecretsKeyMap() secretsKeyMap {
+	return secretsKeyMap{
+		Add: key.NewBinding(
+			key.WithKeys("a"),
+			key.WithHelp("a", "add secret"),
+		),
+		Delete: key.NewBinding(
+			key.WithKeys("d", "x"),
+			key.WithHelp("d/x", "delete"),
+		),
+		Back: key.NewBinding(
+			key.WithKeys("esc"),
+			key.WithHelp("esc", "back"),
+		),
+		Quit: key.NewBinding(
+			key.WithKeys("q", "ctrl+c"),
+			key.WithHelp("q", "quit"),
+		),
+	}
+}
+
+// newVariablesKeyMap creates the default key bindings for variables view
+func newVariablesKeyMap() variablesKeyMap {
+	return variablesKeyMap{
+		Add: key.NewBinding(
+			key.WithKeys("a"),
+			key.WithHelp("a", "add variable"),
+		),
+		Delete: key.NewBinding(
+			key.WithKeys("d", "x"),
+			key.WithHelp("d/x", "delete"),
+		),
+		Back: key.NewBinding(
+			key.WithKeys("esc"),
+			key.WithHelp("esc", "back"),
+		),
+		Quit: key.NewBinding(
+			key.WithKeys("q", "ctrl+c"),
+			key.WithHelp("q", "quit"),
+		),
+	}
+}
+
+// newFormKeyMap creates the default key bindings for form view
+func newFormKeyMap() formKeyMap {
+	return formKeyMap{
+		Cancel: key.NewBinding(
+			key.WithKeys("esc"),
+			key.WithHelp("esc", "cancel"),
+		),
+	}
+}
+
+// newExecutionKeyMap creates the default key bindings for execution view
+func newExecutionKeyMap() executionKeyMap {
+	return executionKeyMap{
+		ScrollUp: key.NewBinding(
+			key.WithKeys("up", "k"),
+			key.WithHelp("↑/k", "scroll up"),
+		),
+		ScrollDown: key.NewBinding(
+			key.WithKeys("down", "j"),
+			key.WithHelp("↓/j", "scroll down"),
+		),
+		PageUp: key.NewBinding(
+			key.WithKeys("pgup", "b"),
+			key.WithHelp("pgup/b", "page up"),
+		),
+		PageDown: key.NewBinding(
+			key.WithKeys("pgdown", "f", " "),
+			key.WithHelp("pgdn/f", "page down"),
+		),
+		Back: key.NewBinding(
+			key.WithKeys("esc"),
+			key.WithHelp("esc", "back to list"),
+		),
+		Quit: key.NewBinding(
+			key.WithKeys("q", "ctrl+c"),
+			key.WithHelp("q", "quit"),
+		),
+	}
+}
+
+// helpText generates a help string from key bindings
+func helpText(keys ...key.Binding) string {
+	var helpParts []string
+	for _, k := range keys {
+		if k.Enabled() {
+			h := k.Help()
+			helpParts = append(helpParts, h.Key+" "+h.Desc)
+		}
+	}
+
+	result := ""
+	for i, part := range helpParts {
+		if i > 0 {
+			result += " • "
+		}
+		result += part
+	}
+	return result
+}
