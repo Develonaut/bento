@@ -98,7 +98,7 @@ func buildSelectField(v Variable, title string, valueHolder *string) huh.Field {
 	field := huh.NewSelect[string]().
 		Title(title).
 		Options(options...).
-		Height(8).
+		Height(10).
 		Value(valueHolder)
 
 	// Add description if available
