@@ -11,19 +11,22 @@ import (
 	"strings"
 
 	"github.com/Develonaut/bento/pkg/logs"
+	"github.com/Develonaut/bento/pkg/miso"
 	"github.com/Develonaut/bento/pkg/shoyu"
 )
 
-// createFileLogger creates a logger that writes to ~/.bento/logs/
+// createFileLogger creates a logger that writes to {bento-home}/logs/
 // Returns the logger, the log file (for cleanup), and any error.
 func createFileLogger() (*shoyu.Logger, *os.File, error) {
+	bentoHome := miso.LoadBentoHome()
+
 	// Ensure logs directory exists
-	if err := logs.EnsureLogsDirectory(); err != nil {
+	if err := logs.EnsureLogsDirectory(bentoHome); err != nil {
 		return nil, nil, err
 	}
 
 	// Get logs directory path
-	logsDir, err := logs.GetLogsDirectory()
+	logsDir, err := logs.GetLogsDirectory(bentoHome)
 	if err != nil {
 		return nil, nil, err
 	}

@@ -24,12 +24,14 @@ func TestLogTailingWithExecution(t *testing.T) {
 		t.Skip("Skipping integration test in short mode")
 	}
 
+	bentoHome := miso.LoadBentoHome()
+
 	// Ensure logs directory exists
-	if err := logs.EnsureLogsDirectory(); err != nil {
+	if err := logs.EnsureLogsDirectory(bentoHome); err != nil {
 		t.Fatalf("Failed to ensure logs directory: %v", err)
 	}
 
-	logsDir, err := logs.GetLogsDirectory()
+	logsDir, err := logs.GetLogsDirectory(bentoHome)
 	if err != nil {
 		t.Fatalf("Failed to get logs directory: %v", err)
 	}

@@ -178,7 +178,7 @@ func TestListLogFiles_IgnoresDirectories(t *testing.T) {
 }
 
 func TestGetLogsDirectory(t *testing.T) {
-	path, err := GetLogsDirectory()
+	path, err := GetLogsDirectory("")
 	if err != nil {
 		t.Fatalf("Expected no error getting logs directory, got: %v", err)
 	}
@@ -194,7 +194,7 @@ func TestEnsureLogsDirectory(t *testing.T) {
 	tmpHome := t.TempDir()
 	t.Setenv("HOME", tmpHome)
 
-	logsDir, err := GetLogsDirectory()
+	logsDir, err := GetLogsDirectory("")
 	if err != nil {
 		t.Fatalf("Failed to get logs directory: %v", err)
 	}

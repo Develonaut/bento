@@ -24,13 +24,15 @@ func (w *channelWriter) Write(p []byte) (n int, err error) {
 
 // createTUILogger creates a logger that writes to both file and TUI channel
 func createTUILogger(logChan chan string) (*os.File, *shoyu.Logger, error) {
+	bentoHome := LoadBentoHome()
+
 	// Ensure logs directory exists
-	if err := logs.EnsureLogsDirectory(); err != nil {
+	if err := logs.EnsureLogsDirectory(bentoHome); err != nil {
 		return nil, nil, err
 	}
 
 	// Get logs directory path
-	logsDir, err := logs.GetLogsDirectory()
+	logsDir, err := logs.GetLogsDirectory(bentoHome)
 	if err != nil {
 		return nil, nil, err
 	}

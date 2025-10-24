@@ -1,6 +1,6 @@
 // Package logs provides utilities for managing bento execution logs.
 //
-// Logs are stored in ~/.bento/logs/ with timestamped filenames.
+// Logs are stored in {bento-home}/logs/ with timestamped filenames.
 package logs
 
 import (
@@ -17,19 +17,23 @@ type LogFile struct {
 	ModTime time.Time
 }
 
-// GetLogsDirectory returns the path to the logs directory (~/.bento/logs/).
-func GetLogsDirectory() (string, error) {
-	homeDir, err := os.UserHomeDir()
-	if err != nil {
-		return "", fmt.Errorf("failed to get home directory: %w", err)
+// GetLogsDirectory returns the path to the logs directory.
+// If bentoHome is empty, defaults to ~/.bento
+func GetLogsDirectory(bentoHome string) (string, error) {
+	if bentoHome == "" {
+		homeDir, err := os.UserHomeDir()
+		if err != nil {
+			return "", fmt.Errorf("failed to get home directory: %w", err)
+		}
+		bentoHome = filepath.Join(homeDir, ".bento")
 	}
-
-	return filepath.Join(homeDir, ".bento", "logs"), nil
+	return filepath.Join(bentoHome, "logs"), nil
 }
 
 // EnsureLogsDirectory creates the logs directory if it doesn't exist.
-func EnsureLogsDirectory() error {
-	logsDir, err := GetLogsDirectory()
+// Accepts optional bentoHome parameter.
+func EnsureLogsDirectory(bentoHome string) error {
+	logsDir, err := GetLogsDirectory(bentoHome)
 	if err != nil {
 		return err
 	}

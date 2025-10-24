@@ -112,11 +112,15 @@ func NewTUI() (*Model, error) {
 	l.Title = "🍱 Bentos"
 	l.SetShowStatusBar(false)
 
+	// Load current values for settings display
+	currentHome := LoadBentoHome()
+	currentTheme := LoadSavedTheme()
+
 	// Create settings list
 	settingsItems := []list.Item{
 		SettingsItem{
 			Name:   "Configure Bento Home",
-			Desc:   "Set custom bento home directory for syncing across computers",
+			Desc:   fmt.Sprintf("Current: %s", currentHome),
 			Action: "bentohome",
 		},
 		SettingsItem{
@@ -131,7 +135,7 @@ func NewTUI() (*Model, error) {
 		},
 		SettingsItem{
 			Name:   "Change Theme",
-			Desc:   "Select color theme",
+			Desc:   fmt.Sprintf("Current: %s", currentTheme),
 			Action: "theme",
 		},
 	}

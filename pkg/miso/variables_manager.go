@@ -17,17 +17,12 @@ type VariablesManager struct {
 
 // NewVariablesManager creates a new variables manager.
 func NewVariablesManager() (*VariablesManager, error) {
-	homeDir, err := os.UserHomeDir()
-	if err != nil {
-		return nil, fmt.Errorf("failed to get home directory: %w", err)
-	}
-
-	bentoDir := filepath.Join(homeDir, ".bento")
+	bentoDir := LoadBentoHome()
 	filePath := filepath.Join(bentoDir, "variables.json")
 
-	// Ensure .bento directory exists
+	// Ensure bento directory exists
 	if err := os.MkdirAll(bentoDir, 0755); err != nil {
-		return nil, fmt.Errorf("failed to create .bento directory: %w", err)
+		return nil, fmt.Errorf("failed to create bento directory: %w", err)
 	}
 
 	mgr := &VariablesManager{

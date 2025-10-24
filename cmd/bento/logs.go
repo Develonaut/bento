@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/Develonaut/bento/pkg/logs"
+	"github.com/Develonaut/bento/pkg/miso"
 	"github.com/spf13/cobra"
 )
 
@@ -41,12 +42,14 @@ func init() {
 
 // runLogs executes the logs command logic.
 func runLogs(cmd *cobra.Command, args []string) error {
+	bentoHome := miso.LoadBentoHome()
+
 	// Ensure logs directory exists (create if needed)
-	if err := logs.EnsureLogsDirectory(); err != nil {
+	if err := logs.EnsureLogsDirectory(bentoHome); err != nil {
 		return err
 	}
 
-	logsDir, err := logs.GetLogsDirectory()
+	logsDir, err := logs.GetLogsDirectory(bentoHome)
 	if err != nil {
 		return err
 	}
