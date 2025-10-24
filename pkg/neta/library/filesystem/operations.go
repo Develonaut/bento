@@ -5,6 +5,7 @@ package filesystem
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 )
 
 // read reads the contents of a file.
@@ -37,7 +38,18 @@ func (f *FileSystemNeta) write(params map[string]interface{}) (interface{}, erro
 		return nil, fmt.Errorf("content parameter is required and must be a string")
 	}
 
-	err := os.WriteFile(path, []byte(content), 0644)
+	// Check .bentoignore in the target directory
+	dir := filepath.Dir(path)
+	bentoIgnore, err := LoadBentoIgnore(dir)
+	if err != nil {
+		// If we can't load .bentoignore, log warning but continue
+		// (don't want to break existing workflows)
+		fmt.Fprintf(os.Stderr, "Warning: failed to load .bentoignore: %v\n", err)
+	} else if bentoIgnore.ShouldIgnore(path) {
+		return nil, fmt.Errorf("file %s is protected by .bentoignore and cannot be overwritten", path)
+	}
+
+	err = os.WriteFile(path, []byte(content), 0644)
 	if err != nil {
 		return nil, fmt.Errorf("failed to write file: %w", err)
 	}
