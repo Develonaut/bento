@@ -300,9 +300,10 @@ func detectGoogleDrive() string {
 
 	case "windows":
 		// Windows: Check common drive letters for "My Drive"
+		// Note: Use letter+":\" (with backslash) to ensure we check the root of the drive
 		driveLetters := []string{"G", "H", "I", "J", "K", "L", "M", "N", "O"}
 		for _, letter := range driveLetters {
-			myDrive := filepath.Join(letter+":", "My Drive")
+			myDrive := filepath.Join(letter+":\\", "My Drive")
 			if stat, err := os.Stat(myDrive); err == nil && stat.IsDir() {
 				return myDrive
 			}
