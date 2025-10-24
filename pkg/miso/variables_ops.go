@@ -35,26 +35,46 @@ func (m Model) loadVariablesView() (tea.Model, tea.Cmd) {
 
 // addVariable prompts for a new variable
 func (m Model) addVariable() (tea.Model, tea.Cmd) {
-	// Use Huh form to get variable key and value
-	var key, value string
+	// Create value holders for form
+	key := ""
+	value := ""
+	m.varHolders = map[string]*string{
+		"VAR_KEY":   &key,
+		"VAR_VALUE": &value,
+	}
 
-	form := huh.NewForm(
+	// Create non-blocking form
+	m.form = huh.NewForm(
 		huh.NewGroup(
 			huh.NewInput().
 				Title("Variable Key").
-				Description("Uppercase letters, numbers, and underscores").
+				Description("Uppercase letters, numbers, and underscores (e.g., PRODUCTS_URL)").
 				Placeholder("PRODUCTS_URL").
 				Value(&key),
 			huh.NewInput().
 				Title("Variable Value").
-				Description("The value to store").
-				Placeholder("/Users/you/Products").
+				Description("The value to store (supports {{GDRIVE}}, {{DROPBOX}}, {{ONEDRIVE}})").
+				Placeholder("{{GDRIVE}}/Products").
 				Value(&value),
 		),
-	).WithTheme(huh.ThemeCharm())
+	).WithTheme(huh.ThemeCharm()).
+		WithWidth(m.width).
+		WithHeight(m.height)
 
-	if err := form.Run(); err != nil {
-		// User cancelled
+	m.activeSettingsForm = variableForm
+	m.currentView = formView
+	return m, m.form.Init()
+}
+
+// completeVariableForm handles variable form completion
+func (m Model) completeVariableForm() (tea.Model, tea.Cmd) {
+	key := getFormValue(m.varHolders, "VAR_KEY")
+	value := getFormValue(m.varHolders, "VAR_VALUE")
+
+	// If empty, just cancel
+	if key == "" || value == "" {
+		m.activeSettingsForm = noSettingsForm
+		m.currentView = variablesView
 		return m, nil
 	}
 
@@ -62,15 +82,20 @@ func (m Model) addVariable() (tea.Model, tea.Cmd) {
 	mgr, err := NewVariablesManager()
 	if err != nil {
 		m.logs = fmt.Sprintf("Failed to initialize variables: %v", err)
+		m.activeSettingsForm = noSettingsForm
+		m.currentView = variablesView
 		return m, nil
 	}
 
 	if err := mgr.Set(key, value); err != nil {
 		m.logs = fmt.Sprintf("Failed to store variable: %v", err)
+		m.activeSettingsForm = noSettingsForm
+		m.currentView = variablesView
 		return m, nil
 	}
 
-	// Reload variables view
+	// Successfully added variable - reload variables view
+	m.activeSettingsForm = noSettingsForm
 	return m.loadVariablesView()
 }
 

@@ -8,6 +8,7 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/huh"
+	"github.com/charmbracelet/lipgloss"
 )
 
 // expandHomePath expands ~ to full path
@@ -55,14 +56,24 @@ func (m Model) configureBentoHome() (tea.Model, tea.Cmd) {
 // buildThemeOptions creates the theme selection options for huh form.
 func buildThemeOptions() []huh.Option[string] {
 	return []huh.Option[string]{
-		huh.NewOption("Nasu - Purple (eggplant sushi)", string(VariantNasu)),
-		huh.NewOption("Wasabi - Green (wasabi)", string(VariantWasabi)),
-		huh.NewOption("Toro - Pink (fatty tuna)", string(VariantToro)),
-		huh.NewOption("Tamago - Yellow (egg sushi)", string(VariantTamago)),
-		huh.NewOption("Tonkotsu - Red (pork bone broth)", string(VariantTonkotsu)),
-		huh.NewOption("Saba - Cyan (mackerel)", string(VariantSaba)),
-		huh.NewOption("Ika - White (squid)", string(VariantIka)),
+		huh.NewOption(formatThemeOption(VariantNasu, "Purple", "eggplant sushi"), string(VariantNasu)),
+		huh.NewOption(formatThemeOption(VariantWasabi, "Green", "wasabi"), string(VariantWasabi)),
+		huh.NewOption(formatThemeOption(VariantToro, "Pink", "fatty tuna"), string(VariantToro)),
+		huh.NewOption(formatThemeOption(VariantTamago, "Yellow", "egg sushi"), string(VariantTamago)),
+		huh.NewOption(formatThemeOption(VariantTonkotsu, "Red", "pork bone broth"), string(VariantTonkotsu)),
+		huh.NewOption(formatThemeOption(VariantSaba, "Cyan", "mackerel"), string(VariantSaba)),
+		huh.NewOption(formatThemeOption(VariantIka, "White", "squid"), string(VariantIka)),
 	}
+}
+
+// formatThemeOption creates a theme option with a color swatch
+func formatThemeOption(variant Variant, color string, description string) string {
+	palette := GetPalette(variant)
+	// Create a colored square using the primary color
+	swatch := lipgloss.NewStyle().
+		Foreground(palette.Primary).
+		Render("■")
+	return fmt.Sprintf("%s  %s - %s (%s)", swatch, variant, color, description)
 }
 
 // configureTheme prompts for theme selection

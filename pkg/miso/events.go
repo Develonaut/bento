@@ -168,6 +168,8 @@ func (m Model) updateForm(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m.completeBentoHomeForm()
 		case themeForm:
 			return m.completeThemeForm()
+		case variableForm:
+			return m.completeVariableForm()
 		default:
 			// Bento variable form - start execution
 			return m.startExecution()

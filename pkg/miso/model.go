@@ -35,6 +35,7 @@ const (
 	noSettingsForm settingsFormType = iota
 	bentoHomeForm
 	themeForm
+	variableForm
 )
 
 // Model holds the TUI state
@@ -104,8 +105,14 @@ type VariableItem struct {
 	Value string
 }
 
-func (i VariableItem) Title() string       { return i.Key }
-func (i VariableItem) Description() string { return i.Value }
+func (i VariableItem) Title() string { return i.Key }
+func (i VariableItem) Description() string {
+	// Show compressed path if it looks like a path
+	if len(i.Value) > 0 && (i.Value[0] == '/' || i.Value[0] == '~' || (len(i.Value) > 1 && i.Value[1] == ':')) {
+		return CompressPath(i.Value)
+	}
+	return i.Value
+}
 func (i VariableItem) FilterValue() string { return i.Key }
 
 // NewTUI creates a new TUI model
