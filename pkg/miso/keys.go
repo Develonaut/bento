@@ -7,10 +7,13 @@ import (
 
 // listKeyMap defines key bindings for the bento list view
 type listKeyMap struct {
-	Enter    key.Binding
-	Settings key.Binding
-	Reorder  key.Binding
-	Quit     key.Binding
+	Enter      key.Binding
+	Settings   key.Binding
+	Reorder    key.Binding
+	Quit       key.Binding
+	MoveUp     key.Binding
+	MoveDown   key.Binding
+	SaveReorder key.Binding
 }
 
 // settingsKeyMap defines key bindings for the settings view
@@ -76,6 +79,18 @@ func newListKeyMap() listKeyMap {
 		Quit: key.NewBinding(
 			key.WithKeys("q", "ctrl+c"),
 			key.WithHelp("q", "quit"),
+		),
+		MoveUp: key.NewBinding(
+			key.WithKeys("up"),
+			key.WithHelp("↑/↓", "move item"),
+		),
+		MoveDown: key.NewBinding(
+			key.WithKeys("down"),
+			key.WithHelp("", ""),
+		),
+		SaveReorder: key.NewBinding(
+			key.WithKeys("esc"),
+			key.WithHelp("esc", "save & exit"),
 		),
 	}
 }

@@ -9,8 +9,8 @@ func (m Model) viewList() string {
 	palette := GetPalette(m.theme)
 	var helpStr string
 	if m.reorderMode {
-		// Show reorder mode help
-		helpStr = "↑/↓ move item • esc save & exit • q quit"
+		// Show reorder mode help with styled keys
+		helpStr = helpText(palette, m.listKeys.MoveUp, m.listKeys.SaveReorder, m.listKeys.Quit)
 	} else {
 		// Show normal mode help
 		helpStr = helpText(palette, m.listKeys.Enter, m.listKeys.Settings, m.listKeys.Reorder, m.listKeys.Quit)
