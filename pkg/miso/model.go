@@ -28,25 +28,35 @@ type executionCompleteMsg struct {
 }
 type executionStartMsg struct{}
 
+// settingsFormType identifies which settings form is active
+type settingsFormType int
+
+const (
+	noSettingsForm settingsFormType = iota
+	bentoHomeForm
+	themeForm
+)
+
 // Model holds the TUI state
 type Model struct {
-	currentView   int
-	list          list.Model
-	settingsList  list.Model
-	secretsList   list.Model
-	variablesList list.Model
-	form          *huh.Form
-	selectedBento string
-	bentoVars     []Variable
-	varHolders    map[string]*string // Pointers to form values
-	logs          string
-	logViewport   viewport.Model // Viewport for scrollable log display
-	logChan       chan string    // Channel for streaming execution logs
-	executing     bool
-	width         int
-	height        int
-	theme         Variant
-	quitting      bool
+	currentView      int
+	list             list.Model
+	settingsList     list.Model
+	secretsList      list.Model
+	variablesList    list.Model
+	form             *huh.Form
+	selectedBento    string
+	bentoVars        []Variable
+	varHolders       map[string]*string // Pointers to form values
+	logs             string
+	logViewport      viewport.Model // Viewport for scrollable log display
+	logChan          chan string    // Channel for streaming execution logs
+	executing        bool
+	width            int
+	height           int
+	theme            Variant
+	quitting         bool
+	activeSettingsForm settingsFormType // Tracks which settings form is active
 }
 
 // BentoItem represents a bento in the list

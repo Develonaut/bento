@@ -44,8 +44,7 @@ func (m Model) updateSettings(msg tea.Msg) (tea.Model, tea.Cmd) {
 				case "bentohome":
 					return m.configureBentoHome()
 				case "theme":
-					// TODO: Show theme selection
-					return m, nil
+					return m.configureTheme()
 				}
 			}
 		case "esc":
@@ -114,6 +113,15 @@ func (m Model) updateVariables(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m Model) updateForm(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 
+	// Check for ESC to cancel before updating form
+	if keyMsg, ok := msg.(tea.KeyMsg); ok {
+		if keyMsg.String() == "esc" {
+			m.activeSettingsForm = noSettingsForm
+			m.currentView = settingsView
+			return m, nil
+		}
+	}
+
 	// Update the form
 	form, formCmd := m.form.Update(msg)
 	if f, ok := form.(*huh.Form); ok {
@@ -122,15 +130,15 @@ func (m Model) updateForm(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	// Check if form is complete
 	if m.form.State == huh.StateCompleted {
-		// Extract values and move to execution
-		return m.startExecution()
-	}
-
-	// Check for ESC to cancel
-	if msg, ok := msg.(tea.KeyMsg); ok {
-		if msg.String() == "esc" {
-			m.currentView = listView
-			return m, nil
+		// Handle different form types
+		switch m.activeSettingsForm {
+		case bentoHomeForm:
+			return m.completeBentoHomeForm()
+		case themeForm:
+			return m.completeThemeForm()
+		default:
+			// Bento variable form - start execution
+			return m.startExecution()
 		}
 	}
 
