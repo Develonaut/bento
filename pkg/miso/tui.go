@@ -23,6 +23,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.settingsList.SetSize(msg.Width, msg.Height-4)
 		m.secretsList.SetSize(msg.Width, msg.Height-4)
 		m.variablesList.SetSize(msg.Width, msg.Height-4)
+		m.themeList.SetSize(msg.Width/2-4, msg.Height-4)
 
 		// Update viewport dimensions if in execution view
 		if m.currentView == executionView && m.logViewport.Width > 0 {
@@ -77,6 +78,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m.updateForm(msg)
 	case executionView:
 		return m.updateExecution(msg)
+	case themeView:
+		return m.updateTheme(msg)
 	}
 
 	return m, nil
@@ -101,6 +104,8 @@ func (m Model) View() string {
 		return m.viewForm()
 	case executionView:
 		return m.viewExecution()
+	case themeView:
+		return m.viewTheme()
 	}
 
 	return ""

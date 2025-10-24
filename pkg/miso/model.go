@@ -18,6 +18,7 @@ const (
 	variablesView
 	formView
 	executionView
+	themeView
 )
 
 // Messages for async execution
@@ -45,6 +46,7 @@ type Model struct {
 	settingsList       list.Model
 	secretsList        list.Model
 	variablesList      list.Model
+	themeList          list.Model
 	form               *huh.Form
 	selectedBento      string
 	bentoVars          []Variable
@@ -67,6 +69,7 @@ type Model struct {
 	variablesKeys variablesKeyMap
 	formKeys      formKeyMap
 	executionKeys executionKeyMap
+	themeKeys     themeKeyMap
 }
 
 // BentoItem represents a bento in the list
@@ -114,6 +117,17 @@ func (i VariableItem) Description() string {
 	return i.Value
 }
 func (i VariableItem) FilterValue() string { return i.Key }
+
+// ThemeItem represents a theme in the list
+type ThemeItem struct {
+	Variant     Variant
+	DisplayName string
+	Desc        string
+}
+
+func (i ThemeItem) Title() string       { return i.DisplayName }
+func (i ThemeItem) Description() string { return i.Desc }
+func (i ThemeItem) FilterValue() string { return i.DisplayName }
 
 // NewTUI creates a new TUI model
 func NewTUI() (*Model, error) {
@@ -173,12 +187,56 @@ func NewTUI() (*Model, error) {
 	variablesl.SetShowStatusBar(false)
 	variablesl.SetShowHelp(false) // Disable built-in help - we provide our own
 
+	// Create theme list with all available themes
+	themeItems := []list.Item{
+		ThemeItem{
+			Variant:     VariantNasu,
+			DisplayName: "Nasu",
+			Desc:        "Purple - eggplant sushi",
+		},
+		ThemeItem{
+			Variant:     VariantWasabi,
+			DisplayName: "Wasabi",
+			Desc:        "Green - wasabi",
+		},
+		ThemeItem{
+			Variant:     VariantToro,
+			DisplayName: "Toro",
+			Desc:        "Pink - fatty tuna",
+		},
+		ThemeItem{
+			Variant:     VariantTamago,
+			DisplayName: "Tamago",
+			Desc:        "Yellow - egg sushi",
+		},
+		ThemeItem{
+			Variant:     VariantTonkotsu,
+			DisplayName: "Tonkotsu",
+			Desc:        "Red - pork bone broth",
+		},
+		ThemeItem{
+			Variant:     VariantSaba,
+			DisplayName: "Saba",
+			Desc:        "Cyan - mackerel",
+		},
+		ThemeItem{
+			Variant:     VariantIka,
+			DisplayName: "Ika",
+			Desc:        "White - squid",
+		},
+	}
+	themel := list.New(themeItems, list.NewDefaultDelegate(), 0, 0)
+	themel.Title = "🎨 Themes"
+	themel.SetShowStatusBar(false)
+	themel.SetShowHelp(false) // Disable built-in help - we provide our own
+
 	return &Model{
 		currentView:   listView,
 		list:          l,
 		settingsList:  sl,
 		secretsList:   secretsl,
 		variablesList: variablesl,
+		themeList:     themel,
 		theme:         VariantNasu, // Default theme
 
 		// Initialize key bindings
@@ -188,6 +246,7 @@ func NewTUI() (*Model, error) {
 		variablesKeys: newVariablesKeyMap(),
 		formKeys:      newFormKeyMap(),
 		executionKeys: newExecutionKeyMap(),
+		themeKeys:     newThemeKeyMap(),
 	}, nil
 }
 

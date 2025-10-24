@@ -209,3 +209,32 @@ func (m Model) updateExecution(msg tea.Msg) (tea.Model, tea.Cmd) {
 	m.logViewport, cmd = m.logViewport.Update(msg)
 	return m, cmd
 }
+
+// updateTheme handles theme view updates
+func (m Model) updateTheme(msg tea.Msg) (tea.Model, tea.Cmd) {
+	switch msg := msg.(type) {
+	case tea.KeyMsg:
+		switch msg.String() {
+		case "enter":
+			// Select theme
+			if selected, ok := m.themeList.SelectedItem().(ThemeItem); ok {
+				newVariant := selected.Variant
+				if err := SaveTheme(newVariant); err == nil {
+					// Successfully saved theme - update model
+					m.theme = newVariant
+				}
+				// Return to settings view
+				m.currentView = settingsView
+				return m, nil
+			}
+		case "esc":
+			// Return to settings without changing theme
+			m.currentView = settingsView
+			return m, nil
+		}
+	}
+
+	var cmd tea.Cmd
+	m.themeList, cmd = m.themeList.Update(msg)
+	return m, cmd
+}

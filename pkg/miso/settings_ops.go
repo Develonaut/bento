@@ -76,34 +76,10 @@ func formatThemeOption(variant Variant, color string, description string) string
 	return fmt.Sprintf("%s  %s - %s (%s)", swatch, variant, color, description)
 }
 
-// configureTheme prompts for theme selection
+// configureTheme switches to the theme view for theme selection
 func (m Model) configureTheme() (tea.Model, tea.Cmd) {
-	currentTheme := LoadSavedTheme()
-	selectedTheme := string(currentTheme)
-
-	// Create value holder for form
-	m.varHolders = map[string]*string{"THEME": &selectedTheme}
-
-	// Build description with current theme colors
-	descriptionText := buildThemeDescription(currentTheme)
-
-	// Create form
-	m.form = huh.NewForm(
-		huh.NewGroup(
-			huh.NewSelect[string]().
-				Title("Select Theme").
-				Description(descriptionText).
-				Options(buildThemeOptions()...).
-				Value(&selectedTheme),
-		),
-	).WithTheme(huh.ThemeCharm()).
-		WithWidth(m.width).
-		WithHeight(m.height)
-
-	// Set form type and switch to form view
-	m.activeSettingsForm = themeForm
-	m.currentView = formView
-	return m, m.form.Init()
+	m.currentView = themeView
+	return m, nil
 }
 
 // buildThemeDescription creates a description showing current theme colors

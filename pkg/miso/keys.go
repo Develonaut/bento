@@ -1,6 +1,9 @@
 package miso
 
-import "github.com/charmbracelet/bubbles/key"
+import (
+	"github.com/charmbracelet/bubbles/key"
+	"github.com/charmbracelet/lipgloss"
+)
 
 // listKeyMap defines key bindings for the bento list view
 type listKeyMap struct {
@@ -46,6 +49,13 @@ type executionKeyMap struct {
 	PageDown   key.Binding
 	Back       key.Binding
 	Quit       key.Binding
+}
+
+// themeKeyMap defines key bindings for theme view
+type themeKeyMap struct {
+	Select key.Binding
+	Back   key.Binding
+	Quit   key.Binding
 }
 
 // newListKeyMap creates the default key bindings for list view
@@ -172,13 +182,36 @@ func newExecutionKeyMap() executionKeyMap {
 	}
 }
 
-// helpText generates a help string from key bindings
-func helpText(keys ...key.Binding) string {
+// newThemeKeyMap creates the default key bindings for theme view
+func newThemeKeyMap() themeKeyMap {
+	return themeKeyMap{
+		Select: key.NewBinding(
+			key.WithKeys("enter"),
+			key.WithHelp("enter", "select theme"),
+		),
+		Back: key.NewBinding(
+			key.WithKeys("esc"),
+			key.WithHelp("esc", "back to settings"),
+		),
+		Quit: key.NewBinding(
+			key.WithKeys("q", "ctrl+c"),
+			key.WithHelp("q", "quit"),
+		),
+	}
+}
+
+// helpText generates a help string from key bindings with theme colors
+func helpText(palette Palette, keys ...key.Binding) string {
+	keyStyle := lipgloss.NewStyle().Foreground(palette.Text)
+	descStyle := lipgloss.NewStyle().Foreground(palette.Muted)
+
 	var helpParts []string
 	for _, k := range keys {
 		if k.Enabled() {
 			h := k.Help()
-			helpParts = append(helpParts, h.Key+" "+h.Desc)
+			// Style key with Text color and description with Muted color
+			styledPart := keyStyle.Render(h.Key) + " " + descStyle.Render(h.Desc)
+			helpParts = append(helpParts, styledPart)
 		}
 	}
 
