@@ -15,8 +15,26 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 )
 
+// ensureBentoDirectories creates bento home structure if it doesn't exist
+func ensureBentoDirectories() error {
+	bentoHome := LoadBentoHome()
+	bentosDir := filepath.Join(bentoHome, "bentos")
+
+	// Create bentos directory with parents if needed
+	if err := os.MkdirAll(bentosDir, 0755); err != nil {
+		return fmt.Errorf("failed to create bentos directory: %w", err)
+	}
+
+	return nil
+}
+
 // loadBentos scans configured bento home for bento files
 func loadBentos() ([]list.Item, error) {
+	// Ensure directory structure exists
+	if err := ensureBentoDirectories(); err != nil {
+		return nil, err
+	}
+
 	bentoHome := LoadBentoHome()
 	bentosDir := filepath.Join(bentoHome, "bentos")
 
