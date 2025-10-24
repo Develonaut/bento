@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/Develonaut/bento/pkg/logs"
 	"github.com/Develonaut/bento/pkg/shoyu"
@@ -73,11 +74,47 @@ func createDualLogger(fileLogger *shoyu.Logger) *shoyu.Logger {
 		// Enable streaming output for long-running processes
 		// This outputs lines from shell-command neta in real-time
 		OnStream: func(line string) {
-			fmt.Println(line)
-			// Also write to file logger for record-keeping
+			// Always write to file for record-keeping
 			if fileLogger != nil {
 				fileLogger.Stream(line)
 			}
+
+			// Filter output to stdout unless verbose
+			if verboseFlag || shouldShowStreamLine(line) {
+				fmt.Println(line)
+			}
 		},
 	})
+}
+
+// shouldShowStreamLine determines if a stream line should be shown.
+// Returns false for noisy Blender startup messages, true for important output.
+func shouldShowStreamLine(line string) bool {
+	// Skip common Blender noise
+	noisePatterns := []string{
+		"WARN (bgl):",
+		"Photographer preferences",
+		"Blender 4.",
+		"Read blend:",
+		"Info: Read library:",
+		"Warning: Unable to open",
+		"Info: Cannot find lib",
+		"Info: LIB:",
+		"Warning: 1 libraries",
+		"blenderkit:",
+		"Deleting object:",
+		"Imported object name:",
+		"Import finished in",
+		"Selected imported object:",
+		"Camera '",
+		"Removed image:",
+	}
+
+	for _, pattern := range noisePatterns {
+		if strings.Contains(line, pattern) {
+			return false
+		}
+	}
+
+	return true
 }

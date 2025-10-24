@@ -160,3 +160,66 @@ func formatSimpleDuration(d time.Duration) string {
 	secs := int(d.Seconds()) % 60
 	return fmt.Sprintf("%dm %ds", mins, secs)
 }
+
+// CallbackMessenger sends log messages via a callback function.
+// Used for async TUI execution where we can't access tea.Program directly.
+type CallbackMessenger struct {
+	theme    *Theme
+	palette  Palette
+	nodeInfo map[string]nodeStartInfo
+	onLog    func(string) // Callback to send log messages
+}
+
+// NewCallbackMessenger creates a messenger that sends logs via callback.
+func NewCallbackMessenger(theme *Theme, palette Palette, onLog func(string)) *CallbackMessenger {
+	return &CallbackMessenger{
+		theme:    theme,
+		palette:  palette,
+		nodeInfo: make(map[string]nodeStartInfo),
+		onLog:    onLog,
+	}
+}
+
+// SendNodeStarted stores node start information.
+func (m *CallbackMessenger) SendNodeStarted(path, name, nodeType string) {
+	m.nodeInfo[path] = nodeStartInfo{
+		name:     name,
+		nodeType: nodeType,
+	}
+}
+
+// SendNodeCompleted formats and sends log via callback.
+func (m *CallbackMessenger) SendNodeCompleted(path string, duration time.Duration, err error) {
+	info, ok := m.nodeInfo[path]
+	if !ok {
+		info = nodeStartInfo{name: path}
+	}
+	delete(m.nodeInfo, path)
+
+	var logLine string
+	if err != nil {
+		statusWord := getStatusLabel(StepFailed, info.name)
+		logLine = fmt.Sprintf("  %s NETA:%s %s… %s\n",
+			m.theme.Error.Render(statusWord),
+			info.nodeType,
+			info.name,
+			m.theme.Error.Render(err.Error()))
+	} else {
+		statusWord := getStatusLabel(StepCompleted, info.name)
+		durationStr := formatSimpleDuration(duration)
+		logLine = fmt.Sprintf("  %s NETA:%s %s… %s\n",
+			m.theme.Success.Render(statusWord),
+			info.nodeType,
+			info.name,
+			m.theme.Subtle.Render(fmt.Sprintf("(%s)", durationStr)))
+	}
+
+	if m.onLog != nil {
+		m.onLog(logLine)
+	}
+}
+
+// SendLoopChild is a no-op for CallbackMessenger.
+func (m *CallbackMessenger) SendLoopChild(loopPath, childName string, index, total int) {
+	// No-op for now
+}

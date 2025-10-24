@@ -22,13 +22,6 @@ func (m logMessage) format() string {
 	return m.text
 }
 
-// sushiEmojis contains approved sushi-themed emojis for logs.
-// Source: .claude/EMOJIS.md (synchronized with pkg/miso/sushi.go)
-var sushiEmojis = []string{
-	"🍣", "🍙", "🥢", "🍥", "🍱", "🍜", "🍡", "🍢",
-	"🦐", "🦑", "🐟", "🍤", "🥟", "🥡", "🍶", "🍵", "🥠", "🧋",
-}
-
 // errorEmojis contains approved error emojis for failed operations.
 var errorEmojis = []string{
 	"👹", "👺", "💀", "☠️", "💥", "🔥", "⚠️", "❌", "🚫", "🤢",
@@ -60,11 +53,6 @@ var statusWordsCompleted = []string{
 	"Perfected",
 }
 
-// randomSushi returns a random sushi emoji from the approved list.
-func randomSushi() string {
-	return sushiEmojis[rand.Intn(len(sushiEmojis))]
-}
-
 // randomErrorEmoji returns a random error emoji from the approved list.
 func randomErrorEmoji() string {
 	return errorEmojis[rand.Intn(len(errorEmojis))]
@@ -93,10 +81,10 @@ func msgBentoStarted(name string) logMessage {
 }
 
 // msgBentoCompleted creates a message for bento execution completion.
-// Format matches CLI output: "🍥 Delicious! Bento executed successfully in [duration]"
+// Format: "🍱 Delicious! Bento executed successfully in [duration]"
 func msgBentoCompleted(duration string) logMessage {
 	return logMessage{
-		emoji: randomSushi(),
+		emoji: "🍱", // Always use bento box emoji for consistency
 		text:  "Delicious! Bento executed successfully in " + duration,
 	}
 }
@@ -119,84 +107,85 @@ func msgNetaStarted() logMessage {
 }
 
 // msgGroupStarted creates a message for group execution start.
-// Format: "│ ┌─ Tasting NETA:group name"
-func msgGroupStarted(depth int, name string) logMessage {
-	indent := getIndent(depth)
+// Format: "[Parent:Child] Tasting NETA:group name"
+func msgGroupStarted(breadcrumb, name string) logMessage {
 	statusWord := getStatusWord(name, true)
+	prefix := ""
+	if breadcrumb != "" {
+		prefix = breadcrumb + " "
+	}
 	return logMessage{
 		emoji: "",
-		text:  indent + "  ┌─ " + statusWord + " NETA:group " + name,
+		text:  prefix + statusWord + " NETA:group " + name,
 	}
 }
 
 // msgGroupCompleted creates a message for group execution completion.
-// Format: "│ └─ Finished NETA:group name (2ms)"
-func msgGroupCompleted(depth int, name, duration string) logMessage {
-	indent := getIndent(depth)
+// Format: "[Parent:Child] Finished NETA:group name (2ms)"
+func msgGroupCompleted(breadcrumb, name, duration string) logMessage {
 	statusWord := getStatusWord(name, false)
+	prefix := ""
+	if breadcrumb != "" {
+		prefix = breadcrumb + " "
+	}
 	return logMessage{
 		emoji: "",
-		text:  indent + "  └─ " + statusWord + " NETA:group " + name + " (" + duration + ")",
+		text:  prefix + statusWord + " NETA:group " + name + " (" + duration + ")",
 	}
 }
 
 // msgLoopStarted creates a message for loop execution start.
-// Format: "│  │  ┌─ Sampling NETA:loop name"
-func msgLoopStarted(depth int, name string) logMessage {
-	indent := getIndent(depth)
+// Format: "[Parent:Child] Sampling NETA:loop name"
+func msgLoopStarted(breadcrumb, name string) logMessage {
 	statusWord := getStatusWord(name, true)
+	prefix := ""
+	if breadcrumb != "" {
+		prefix = breadcrumb + " "
+	}
 	return logMessage{
 		emoji: "",
-		text:  indent + "  ┌─ " + statusWord + " NETA:loop " + name,
+		text:  prefix + statusWord + " NETA:loop " + name,
 	}
 }
 
 // msgLoopCompleted creates a message for loop execution completion.
-// Format: "│  │  └─ Perfected NETA:loop name (2ms, 75%)"
-func msgLoopCompleted(depth int, name, duration string, progressPct int) logMessage {
-	indent := getIndent(depth)
+// Format: "[Parent:Child] Perfected NETA:loop name (2ms, 75%)"
+func msgLoopCompleted(breadcrumb, name, duration string, progressPct int) logMessage {
 	statusWord := getStatusWord(name, false)
+	prefix := ""
+	if breadcrumb != "" {
+		prefix = breadcrumb + " "
+	}
 	return logMessage{
 		emoji: "",
-		text:  fmt.Sprintf("%s  └─ %s NETA:loop %s (%s, %d%%)", indent, statusWord, name, duration, progressPct),
+		text:  fmt.Sprintf("%s%s NETA:loop %s (%s, %d%%)", prefix, statusWord, name, duration, progressPct),
 	}
 }
 
 // msgChildNodeStarted creates a message for child node execution start.
-// Depth indicates nesting level: 0=root, 1=in group, 2=in loop, etc.
-// Format: "│  │  ┌─ Tasting NETA:type name"
-func msgChildNodeStarted(depth int, nodeType, name string) logMessage {
-	indent := getIndent(depth)
+// Format: "[Parent:Child] Tasting NETA:type name"
+func msgChildNodeStarted(breadcrumb, nodeType, name string) logMessage {
 	statusWord := getStatusWord(name, true)
+	prefix := ""
+	if breadcrumb != "" {
+		prefix = breadcrumb + " "
+	}
 	return logMessage{
 		emoji: "",
-		text:  indent + "  ┌─ " + statusWord + " NETA:" + nodeType + " " + name,
+		text:  prefix + statusWord + " NETA:" + nodeType + " " + name,
 	}
 }
 
 // msgChildNodeCompleted creates a message for child node execution completion.
-// Format: "│  │  └─ Devoured NETA:type name (2ms, 10%)"
-func msgChildNodeCompleted(depth int, nodeType, name, duration string, progressPct int) logMessage {
-	indent := getIndent(depth)
+// Format: "[Parent:Child] Devoured NETA:type name (2ms, 10%)"
+func msgChildNodeCompleted(breadcrumb, nodeType, name, duration string, progressPct int) logMessage {
 	statusWord := getStatusWord(name, false)
+	prefix := ""
+	if breadcrumb != "" {
+		prefix = breadcrumb + " "
+	}
 	return logMessage{
 		emoji: "",
-		text:  fmt.Sprintf("%s  └─ %s NETA:%s %s (%s, %d%%)", indent, statusWord, nodeType, name, duration, progressPct),
+		text:  fmt.Sprintf("%s%s NETA:%s %s (%s, %d%%)", prefix, statusWord, nodeType, name, duration, progressPct),
 	}
-}
-
-// getIndent returns the indentation string based on depth.
-// Preserves parent dividers at each nesting level:
-// Depth 0 = "│"
-// Depth 1 = "│  │"
-// Depth 2 = "│  │  │"
-func getIndent(depth int) string {
-	if depth == 0 {
-		return "│"
-	}
-	base := "│"
-	for i := 0; i < depth; i++ {
-		base += "  │"
-	}
-	return base
 }

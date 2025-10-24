@@ -43,6 +43,7 @@ import (
 	"fmt"
 	"io"
 	"os/exec"
+	"strconv"
 	"strings"
 	"time"
 
@@ -150,13 +151,19 @@ func (s *ShellCommandNeta) extractArgs(params map[string]interface{}) ([]string,
 	return args, nil
 }
 
-// extractTimeout extracts timeout value, handling both int and float64 from JSON.
+// extractTimeout extracts timeout value, handling int, float64, and string from templates.
 func (s *ShellCommandNeta) extractTimeout(params map[string]interface{}) int {
 	if t, ok := params["timeout"].(int); ok {
 		return t
 	}
 	if t, ok := params["timeout"].(float64); ok {
 		return int(t)
+	}
+	// Handle string values from template resolution
+	if t, ok := params["timeout"].(string); ok {
+		if timeout, err := strconv.Atoi(t); err == nil {
+			return timeout
+		}
 	}
 	return DefaultTimeout
 }

@@ -131,3 +131,123 @@ func SaveSlowMoDelay(ms int) error {
 
 	return os.WriteFile(path, []byte(fmt.Sprintf("%d", ms)), 0644)
 }
+
+// saveDirConfigPath returns the path to the save directory config file.
+func saveDirConfigPath() (string, error) {
+	dir, err := configDir()
+	if err != nil {
+		return "", err
+	}
+	return filepath.Join(dir, "savedir"), nil
+}
+
+// LoadSaveDirectory loads the saved bentos directory from disk.
+// Returns ~/.bento as default if no saved value or on error.
+func LoadSaveDirectory() string {
+	path, err := saveDirConfigPath()
+	if err != nil {
+		return defaultSaveDir()
+	}
+
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return defaultSaveDir()
+	}
+
+	dir := strings.TrimSpace(string(data))
+	if dir == "" {
+		return defaultSaveDir()
+	}
+
+	return dir
+}
+
+// SaveSaveDirectory saves the bentos directory to disk.
+// Creates ~/.bento directory if it doesn't exist.
+func SaveSaveDirectory(dir string) error {
+	confDir, err := configDir()
+	if err != nil {
+		return err
+	}
+
+	// Create config directory if needed
+	if err := os.MkdirAll(confDir, 0755); err != nil {
+		return err
+	}
+
+	path, err := saveDirConfigPath()
+	if err != nil {
+		return err
+	}
+
+	return os.WriteFile(path, []byte(dir), 0644)
+}
+
+// defaultSaveDir returns the default save directory.
+func defaultSaveDir() string {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return "./.bento"
+	}
+	return filepath.Join(home, ".bento")
+}
+
+// bentoHomeConfigPath returns the path to the bento home config file.
+func bentoHomeConfigPath() (string, error) {
+	dir, err := configDir()
+	if err != nil {
+		return "", err
+	}
+	return filepath.Join(dir, "bentohome"), nil
+}
+
+// LoadBentoHome loads the configured bento home directory from disk.
+// Returns the default ~/.bento if no custom home is configured.
+func LoadBentoHome() string {
+	path, err := bentoHomeConfigPath()
+	if err != nil {
+		return defaultBentoHome()
+	}
+
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return defaultBentoHome()
+	}
+
+	dir := strings.TrimSpace(string(data))
+	if dir == "" {
+		return defaultBentoHome()
+	}
+
+	return dir
+}
+
+// SaveBentoHome saves the bento home directory to disk.
+// Creates ~/.bento directory if it doesn't exist.
+func SaveBentoHome(dir string) error {
+	confDir, err := configDir()
+	if err != nil {
+		return err
+	}
+
+	// Create config directory if needed
+	if err := os.MkdirAll(confDir, 0755); err != nil {
+		return err
+	}
+
+	path, err := bentoHomeConfigPath()
+	if err != nil {
+		return err
+	}
+
+	return os.WriteFile(path, []byte(dir), 0644)
+}
+
+// defaultBentoHome returns the default bento home directory.
+func defaultBentoHome() string {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return "./.bento"
+	}
+	return filepath.Join(home, ".bento")
+}

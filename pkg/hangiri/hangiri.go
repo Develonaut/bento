@@ -42,6 +42,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/Develonaut/bento/pkg/miso"
 	"github.com/Develonaut/bento/pkg/neta"
 )
 
@@ -68,9 +69,10 @@ func New(baseDir string) *Storage {
 	return &Storage{baseDir: expandHome(baseDir)}
 }
 
-// NewDefaultStorage creates a Storage instance using the default ~/.bento/ directory.
+// NewDefaultStorage creates a Storage instance using the configured bento home directory.
+// Falls back to ~/.bento/ if no custom directory is configured.
 func NewDefaultStorage() *Storage {
-	return New("~/.bento")
+	return New(miso.LoadBentoHome())
 }
 
 // expandHome expands ~ to the user's home directory.

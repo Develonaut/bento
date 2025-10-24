@@ -34,7 +34,7 @@ func (i *Itamae) executeNodeInternal(
 // logInternalNodeStart logs execution start for internal node.
 func (i *Itamae) logInternalNodeStart(def *neta.Definition, execCtx *executionContext) {
 	if i.logger != nil {
-		msg := msgChildNodeStarted(execCtx.depth, def.Type, def.Name)
+		msg := msgChildNodeStarted(execCtx.getBreadcrumb(), def.Type, def.Name)
 		i.logger.Info(msg.format())
 	}
 }
@@ -60,7 +60,14 @@ func (i *Itamae) prepareInternalNodeParams(
 	params["_context"] = execCtx.toMap()
 	params["_onOutput"] = func(line string) {
 		if i.logger != nil {
-			i.logger.Stream(line)
+			// Stream output with breadcrumb context
+			breadcrumb := execCtx.getBreadcrumb()
+			if breadcrumb != "" {
+				formattedLine := formatStreamingOutput(breadcrumb, line)
+				i.logger.Info(formattedLine)
+			} else {
+				i.logger.Info(line)
+			}
 		}
 	}
 	return params
@@ -86,7 +93,7 @@ func (i *Itamae) logInternalNodeComplete(
 	if i.logger != nil {
 		durationStr := formatDuration(duration)
 		progressPct := i.state.getProgress()
-		msg := msgChildNodeCompleted(execCtx.depth, def.Type, def.Name, durationStr, progressPct)
+		msg := msgChildNodeCompleted(execCtx.getBreadcrumb(), def.Type, def.Name, durationStr, progressPct)
 		i.logger.Info(msg.format())
 	}
 }

@@ -41,7 +41,7 @@ func (i *Itamae) initializeLoopExecution(def *neta.Definition, execCtx *executio
 	i.state.setNodeProgress(def.ID, 0, "Starting loop")
 
 	if i.logger != nil {
-		msg := msgLoopStarted(execCtx.depth, def.Name)
+		msg := msgLoopStarted(execCtx.getBreadcrumb(), def.Name)
 		i.logger.Info(msg.format())
 	}
 }
@@ -64,7 +64,7 @@ func (i *Itamae) finalizeLoopExecution(
 	if i.logger != nil {
 		durationStr := formatDuration(duration)
 		progressPct := i.state.getProgress()
-		msg := msgLoopCompleted(execCtx.depth, def.Name, durationStr, progressPct)
+		msg := msgLoopCompleted(execCtx.getBreadcrumb(), def.Name, durationStr, progressPct)
 		i.logger.Info(msg.format())
 	}
 

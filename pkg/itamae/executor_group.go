@@ -46,7 +46,7 @@ func (i *Itamae) logGroupStart(def *neta.Definition, execCtx *executionContext) 
 	}
 
 	if i.logger != nil {
-		msg := msgGroupStarted(execCtx.depth, def.Name)
+		msg := msgGroupStarted(execCtx.getBreadcrumb(), def.Name)
 		i.logger.Info(msg.format())
 	}
 }
@@ -110,7 +110,7 @@ func (i *Itamae) executeGroupGraph(
 	result *Result,
 	start time.Time,
 ) error {
-	childCtx := execCtx.withDepth(1)
+	childCtx := execCtx.withNode(def.Name)
 	if err := i.executeGraph(ctx, g, childCtx, result); err != nil {
 		if i.messenger != nil {
 			i.messenger.SendNodeCompleted(def.ID, time.Since(start), err)
@@ -130,7 +130,7 @@ func (i *Itamae) logGroupComplete(def *neta.Definition, execCtx *executionContex
 
 	if i.logger != nil {
 		durationStr := formatDuration(duration)
-		msg := msgGroupCompleted(execCtx.depth, def.Name, durationStr)
+		msg := msgGroupCompleted(execCtx.getBreadcrumb(), def.Name, durationStr)
 		i.logger.Info(msg.format())
 	}
 }

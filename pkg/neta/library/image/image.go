@@ -46,7 +46,7 @@ func New() *Image {
 // Execute runs image processing operations.
 //
 // Parameters:
-//   - operation: "resize", "convert", "optimize", or "batch"
+//   - operation: "resize", "convert", "optimize", "batch", or "composite"
 //   - input: input file path (or inputs for batch)
 //   - output: output file path
 //   - format: output format (webp, jpeg, png)
@@ -54,6 +54,9 @@ func New() *Image {
 //   - width: target width for resize
 //   - height: target height for resize (optional if maintainAspect=true)
 //   - maintainAspect: preserve aspect ratio (default true)
+//   - base: base image path (for composite)
+//   - overlay: overlay image path (for composite)
+//   - position: overlay position "center" or use x/y offsets (for composite)
 //
 // Returns:
 //   - path: output file path
@@ -63,7 +66,7 @@ func New() *Image {
 func (i *Image) Execute(ctx context.Context, params map[string]interface{}) (interface{}, error) {
 	operation, ok := params["operation"].(string)
 	if !ok {
-		return nil, fmt.Errorf("operation parameter is required (resize, convert, optimize, or batch)")
+		return nil, fmt.Errorf("operation parameter is required (resize, convert, optimize, composite, or batch)")
 	}
 
 	switch operation {
@@ -73,6 +76,8 @@ func (i *Image) Execute(ctx context.Context, params map[string]interface{}) (int
 		return i.convert(ctx, params)
 	case "optimize":
 		return i.optimize(ctx, params)
+	case "composite":
+		return i.composite(ctx, params)
 	case "batch":
 		return i.batch(ctx, params)
 	default:

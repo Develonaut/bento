@@ -3,6 +3,8 @@ package main
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
 
 	"github.com/spf13/cobra"
 
@@ -59,6 +61,22 @@ Examples:
 	RunE: runConfigSlowMo,
 }
 
+var configHomeCmd = &cobra.Command{
+	Use:   "home [directory]",
+	Short: "Get or set the bento home directory",
+	Long: `Get or set the bento home directory where bentos, config, and logs are stored.
+
+This allows you to use a custom location (like Google Drive) for syncing your bento
+setup across multiple computers.
+
+Examples:
+  bento config home                                    # Show current home directory
+  bento config home ~/Dropbox/.bento                   # Set home to Dropbox
+  bento config home "/path/to/Google Drive/.bento"     # Set home to Google Drive`,
+	Args: cobra.MaximumNArgs(1),
+	RunE: runConfigHome,
+}
+
 var configListCmd = &cobra.Command{
 	Use:   "list",
 	Short: "List all available configuration options",
@@ -69,6 +87,7 @@ var configListCmd = &cobra.Command{
 func init() {
 	configCmd.AddCommand(configThemeCmd)
 	configCmd.AddCommand(configSlowMoCmd)
+	configCmd.AddCommand(configHomeCmd)
 	configCmd.AddCommand(configListCmd)
 }
 
@@ -150,15 +169,50 @@ func runConfigSlowMo(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
+// runConfigHome handles the home subcommand.
+func runConfigHome(cmd *cobra.Command, args []string) error {
+	if len(args) == 0 {
+		// Show current home
+		home := miso.LoadBentoHome()
+		printInfo(fmt.Sprintf("Current bento home: %s", home))
+		return nil
+	}
+
+	// Set home
+	newHome := args[0]
+
+	// Expand ~ to home directory
+	if newHome[0] == '~' {
+		homeDir, err := os.UserHomeDir()
+		if err != nil {
+			printError(fmt.Sprintf("Failed to get home directory: %v", err))
+			return err
+		}
+		newHome = filepath.Join(homeDir, newHome[1:])
+	}
+
+	// Save the new home
+	if err := miso.SaveBentoHome(newHome); err != nil {
+		printError(fmt.Sprintf("Failed to save bento home: %v", err))
+		return err
+	}
+
+	printSuccess(fmt.Sprintf("Bento home set to: %s", newHome))
+	printInfo("Note: Existing bentos in the old location will not be moved automatically.")
+	return nil
+}
+
 // runConfigList lists all configuration options.
 func runConfigList(cmd *cobra.Command, args []string) error {
 	// Show current settings
 	variant := miso.LoadSavedTheme()
 	slowMo := miso.LoadSlowMoDelay()
+	home := miso.LoadBentoHome()
 
 	fmt.Println("Current Configuration:")
 	fmt.Printf("  Theme: %s\n", variant)
 	fmt.Printf("  SlowMo: %dms\n", slowMo)
+	fmt.Printf("  Home: %s\n", home)
 	fmt.Println()
 
 	// List all themes

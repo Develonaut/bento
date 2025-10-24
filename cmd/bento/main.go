@@ -53,9 +53,12 @@ Available Commands:
 }
 
 func main() {
-	// If first arg looks like a file path, inject "run" command
-	// This allows: bento [file] instead of: bento run [file]
-	if len(os.Args) > 1 {
+	// If no args provided, launch TUI
+	if len(os.Args) == 1 {
+		os.Args = append(os.Args, "tui")
+	} else if len(os.Args) > 1 {
+		// If first arg looks like a file path, inject "run" command
+		// This allows: bento [file] instead of: bento run [file]
 		firstArg := os.Args[1]
 		// Check if first arg is not a known subcommand and looks like a file
 		if !isKnownSubcommand(firstArg) && looksLikeFile(firstArg) {
@@ -71,7 +74,7 @@ func main() {
 
 // isKnownSubcommand checks if the arg is a registered subcommand.
 func isKnownSubcommand(arg string) bool {
-	knownCommands := []string{"run", "validate", "list", "new", "docs", "secrets", "logs", "version", "v", "help", "config"}
+	knownCommands := []string{"run", "validate", "list", "new", "docs", "secrets", "logs", "version", "v", "help", "config", "tui"}
 	for _, cmd := range knownCommands {
 		if arg == cmd {
 			return true
@@ -114,4 +117,5 @@ func init() {
 	rootCmd.AddCommand(logsCmd)
 	rootCmd.AddCommand(versionCmd)
 	rootCmd.AddCommand(configCmd)
+	rootCmd.AddCommand(tuiCmd)
 }

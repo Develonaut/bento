@@ -7,6 +7,7 @@ import (
 	"os"
 
 	"github.com/charmbracelet/log"
+	"github.com/muesli/termenv"
 )
 
 // Logger wraps slog.Logger using charm/log as the handler for beautiful output.
@@ -137,17 +138,25 @@ func (l *Logger) With(args ...any) *Logger {
 // This bypasses normal log levels and calls the OnStream callback if set.
 // Critical for Phase 8: real-time output from shell-command neta.
 //
-// The line is also logged at info level for visibility in logs.
+// If OnStream callback is set, it handles all output (including file logging).
+// Otherwise, log to info level for default visibility.
 func (l *Logger) Stream(line string) {
 	if l.onStream != nil {
 		l.onStream(line)
+		return
 	}
 
-	// Also log at info level so it appears in default logs
+	// No callback - log at info level to default output
 	l.sl.Info("stream", "output", line)
 }
 
 // SetOutput changes the output destination.
 func (l *Logger) SetOutput(w io.Writer) {
 	l.handler.SetOutput(w)
+}
+
+// SetColorProfile sets the color profile for the logger.
+// Use termenv.ANSI256 or termenv.TrueColor to force colors in non-TTY environments.
+func (l *Logger) SetColorProfile(profile termenv.Profile) {
+	l.handler.SetColorProfile(profile)
 }

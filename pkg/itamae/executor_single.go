@@ -2,9 +2,12 @@ package itamae
 
 import (
 	"context"
+	"regexp"
+	"strings"
 	"time"
 
 	"github.com/Develonaut/bento/pkg/neta"
+	"github.com/charmbracelet/lipgloss"
 )
 
 // executeSingle executes a single (non-group) neta.
@@ -73,10 +76,15 @@ func (i *Itamae) prepareNetaParams(def *neta.Definition, execCtx *executionConte
 	params["_context"] = execCtx.toMap()
 	params["_onOutput"] = func(line string) {
 		if i.logger != nil {
-			// Format streaming output with proper tree indentation
-			indent := getIndent(execCtx.depth)
-			formattedLine := indent + "  │  " + line
-			i.logger.Info(formattedLine)
+			// Stream output with breadcrumb context (no tree indentation)
+			// This is used for Blender/external process output
+			breadcrumb := execCtx.getBreadcrumb()
+			if breadcrumb != "" {
+				formattedLine := formatStreamingOutput(breadcrumb, line)
+				i.logger.Info(formattedLine)
+			} else {
+				i.logger.Info(line)
+			}
 		}
 	}
 
@@ -130,7 +138,71 @@ func (i *Itamae) logExecutionComplete(def *neta.Definition, execCtx *executionCo
 	if i.logger != nil {
 		progressPct := i.state.getProgress()
 		durationStr := formatDuration(duration)
-		msg := msgChildNodeCompleted(execCtx.depth, def.Type, def.Name, durationStr, progressPct)
+		msg := msgChildNodeCompleted(execCtx.getBreadcrumb(), def.Type, def.Name, durationStr, progressPct)
 		i.logger.Info(msg.format())
 	}
+}
+
+// formatStreamingOutput formats streaming output with colored breadcrumb and tool prefixes.
+// Example: Node1:Node2 [BLENDER] message
+// Breadcrumb nodes are colored in different shades, [BLENDER] is orange.
+func formatStreamingOutput(breadcrumb, line string) string {
+	var result strings.Builder
+
+	// Style the breadcrumb trail
+	if breadcrumb != "" {
+		nodes := strings.Split(breadcrumb, ":")
+
+		// Color palette for breadcrumb nodes (cyan to blue gradient)
+		nodeColors := []lipgloss.Color{
+			lipgloss.Color("#00D9FF"), // Bright cyan
+			lipgloss.Color("#0099FF"), // Sky blue
+			lipgloss.Color("#0066FF"), // Medium blue
+		}
+
+		for i, node := range nodes {
+			// Cycle through colors
+			color := nodeColors[i%len(nodeColors)]
+			styledNode := lipgloss.NewStyle().Foreground(color).Render(node)
+			if i > 0 {
+				result.WriteString(":")
+			}
+			result.WriteString(styledNode)
+		}
+		result.WriteString(" ")
+	}
+
+	// Detect and style tool prefixes like [BLENDER], [PYTHON], etc.
+	toolPrefixRegex := regexp.MustCompile(`^\[([A-Z]+)\]\s*`)
+	if matches := toolPrefixRegex.FindStringSubmatch(line); matches != nil {
+		toolName := matches[1]
+		restOfLine := toolPrefixRegex.ReplaceAllString(line, "")
+
+		// Define colors for different tools
+		var toolColor lipgloss.Color
+		switch toolName {
+		case "BLENDER":
+			toolColor = lipgloss.Color("#FF6C00") // Blender orange
+		case "PYTHON":
+			toolColor = lipgloss.Color("#3776AB") // Python blue
+		case "NODE":
+			toolColor = lipgloss.Color("#339933") // Node.js green
+		default:
+			toolColor = lipgloss.Color("#FF9900") // Default orange
+		}
+
+		styledTool := lipgloss.NewStyle().
+			Foreground(toolColor).
+			Bold(true).
+			Render("[" + toolName + "]")
+
+		result.WriteString(styledTool)
+		result.WriteString(" ")
+		result.WriteString(restOfLine)
+	} else {
+		// No tool prefix, just append the line
+		result.WriteString(line)
+	}
+
+	return result.String()
 }

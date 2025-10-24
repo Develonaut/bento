@@ -70,7 +70,7 @@ func (i *Itamae) executeTimesIteration(
 	total int,
 	execCtx *executionContext,
 ) (map[string]interface{}, error) {
-	iterCtx := execCtx.withDepth(1)
+	iterCtx := execCtx.withNode(def.Name)
 	iterCtx.set("iteration", iteration)
 	iterCtx.set("index", iteration) // Alias for consistency with forEach
 
