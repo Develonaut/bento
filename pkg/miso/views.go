@@ -6,21 +6,25 @@ import (
 
 // viewList renders the list view
 func (m Model) viewList() string {
+	help := "\n" + helpText(m.listKeys.Enter, m.listKeys.Settings, m.listKeys.Quit)
+	content := m.list.View() + help
 	return lipgloss.NewStyle().
 		Padding(1, 2).
-		Render(m.list.View())
+		Render(content)
 }
 
 // viewSettings renders the settings view
 func (m Model) viewSettings() string {
+	help := "\n" + helpText(m.settingsKeys.Enter, m.settingsKeys.Back, m.settingsKeys.Quit)
+	content := m.settingsList.View() + help
 	return lipgloss.NewStyle().
 		Padding(1, 2).
-		Render(m.settingsList.View())
+		Render(content)
 }
 
 // viewSecrets renders the secrets view
 func (m Model) viewSecrets() string {
-	help := "\nPress 'a' to add secret • 'd' to delete • 'esc' to go back"
+	help := "\n" + helpText(m.secretsKeys.Add, m.secretsKeys.Delete, m.secretsKeys.Back, m.secretsKeys.Quit)
 	content := m.secretsList.View() + help
 	return lipgloss.NewStyle().
 		Padding(1, 2).
@@ -29,7 +33,7 @@ func (m Model) viewSecrets() string {
 
 // viewVariables renders the variables view
 func (m Model) viewVariables() string {
-	help := "\nPress 'a' to add variable • 'd' to delete • 'esc' to go back"
+	help := "\n" + helpText(m.variablesKeys.Add, m.variablesKeys.Delete, m.variablesKeys.Back, m.variablesKeys.Quit)
 	content := m.variablesList.View() + help
 	return lipgloss.NewStyle().
 		Padding(1, 2).
@@ -63,11 +67,14 @@ func (m Model) viewExecution() string {
 
 	viewportContent := borderStyle.Render(m.logViewport.View())
 
-	// Help text
+	// Help text from key bindings
+	helpStr := helpText(m.executionKeys.ScrollUp, m.executionKeys.ScrollDown,
+		m.executionKeys.PageUp, m.executionKeys.PageDown,
+		m.executionKeys.Back, m.executionKeys.Quit)
 	help := lipgloss.NewStyle().
 		Padding(0, 2).
 		Faint(true).
-		Render("↑/↓ scroll • PgUp/PgDn page • ESC back")
+		Render(helpStr)
 
 	return lipgloss.JoinVertical(
 		lipgloss.Left,

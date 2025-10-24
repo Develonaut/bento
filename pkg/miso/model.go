@@ -39,24 +39,32 @@ const (
 
 // Model holds the TUI state
 type Model struct {
-	currentView      int
-	list             list.Model
-	settingsList     list.Model
-	secretsList      list.Model
-	variablesList    list.Model
-	form             *huh.Form
-	selectedBento    string
-	bentoVars        []Variable
-	varHolders       map[string]*string // Pointers to form values
-	logs             string
-	logViewport      viewport.Model // Viewport for scrollable log display
-	logChan          chan string    // Channel for streaming execution logs
-	executing        bool
-	width            int
-	height           int
-	theme            Variant
-	quitting         bool
+	currentView        int
+	list               list.Model
+	settingsList       list.Model
+	secretsList        list.Model
+	variablesList      list.Model
+	form               *huh.Form
+	selectedBento      string
+	bentoVars          []Variable
+	varHolders         map[string]*string // Pointers to form values
+	logs               string
+	logViewport        viewport.Model // Viewport for scrollable log display
+	logChan            chan string    // Channel for streaming execution logs
+	executing          bool
+	width              int
+	height             int
+	theme              Variant
+	quitting           bool
 	activeSettingsForm settingsFormType // Tracks which settings form is active
+
+	// Key bindings for each view
+	listKeys      listKeyMap
+	settingsKeys  settingsKeyMap
+	secretsKeys   secretsKeyMap
+	variablesKeys variablesKeyMap
+	formKeys      formKeyMap
+	executionKeys executionKeyMap
 }
 
 // BentoItem represents a bento in the list
@@ -160,6 +168,14 @@ func NewTUI() (*Model, error) {
 		secretsList:   secretsl,
 		variablesList: variablesl,
 		theme:         VariantNasu, // Default theme
+
+		// Initialize key bindings
+		listKeys:      newListKeyMap(),
+		settingsKeys:  newSettingsKeyMap(),
+		secretsKeys:   newSecretsKeyMap(),
+		variablesKeys: newVariablesKeyMap(),
+		formKeys:      newFormKeyMap(),
+		executionKeys: newExecutionKeyMap(),
 	}, nil
 }
 
