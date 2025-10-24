@@ -6,7 +6,15 @@ import (
 
 // viewList renders the list view
 func (m Model) viewList() string {
-	helpStr := helpText(m.listKeys.Enter, m.listKeys.Settings, m.listKeys.Quit)
+	var helpStr string
+	if m.reorderMode {
+		// Show reorder mode help
+		helpStr = "↑/↓ move item • esc save & exit • q quit"
+	} else {
+		// Show normal mode help
+		helpStr = helpText(m.listKeys.Enter, m.listKeys.Settings, m.listKeys.Reorder, m.listKeys.Quit)
+	}
+
 	helpStyled := lipgloss.NewStyle().
 		Faint(true).
 		Padding(1, 0).

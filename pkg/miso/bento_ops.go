@@ -43,17 +43,36 @@ func loadBentos() ([]list.Item, error) {
 		return nil, err
 	}
 
-	var items []list.Item
+	var bentoItems []BentoItem
 	for _, entry := range entries {
 		if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".bento.json") {
 			continue
 		}
 
 		name := strings.TrimSuffix(entry.Name(), ".bento.json")
-		items = append(items, BentoItem{
-			Name:     name,
+
+		// Strip number prefixes for display
+		displayName := stripNumberPrefix(name)
+
+		bentoItems = append(bentoItems, BentoItem{
+			Name:     displayName,
 			FilePath: filepath.Join(bentosDir, entry.Name()),
 		})
+	}
+
+	// Load saved order and apply it
+	order, err := loadBentoOrder()
+	if err != nil {
+		// If order loading fails, just use default order
+		order = &BentoOrder{Order: []string{}}
+	}
+
+	bentoItems = applyBentoOrder(bentoItems, order)
+
+	// Convert to list items
+	var items []list.Item
+	for _, item := range bentoItems {
+		items = append(items, item)
 	}
 
 	return items, nil

@@ -57,6 +57,7 @@ type Model struct {
 	theme              Variant
 	quitting           bool
 	activeSettingsForm settingsFormType // Tracks which settings form is active
+	reorderMode        bool             // Tracks if we're in bento reorder mode
 
 	// Key bindings for each view
 	listKeys      listKeyMap
@@ -74,7 +75,7 @@ type BentoItem struct {
 }
 
 func (i BentoItem) Title() string       { return i.Name }
-func (i BentoItem) Description() string { return i.FilePath }
+func (i BentoItem) Description() string { return CompressPath(i.FilePath) }
 func (i BentoItem) FilterValue() string { return i.Name }
 
 // SettingsItem represents a settings option
@@ -128,8 +129,8 @@ func NewTUI() (*Model, error) {
 	// Create settings list
 	settingsItems := []list.Item{
 		SettingsItem{
-			Name:   "Configure Bento Home",
-			Desc:   fmt.Sprintf("Current: %s", currentHome),
+			Name:   "Bento Home",
+			Desc:   fmt.Sprintf("Current: %s", CompressPath(currentHome)),
 			Action: "bentohome",
 		},
 		SettingsItem{

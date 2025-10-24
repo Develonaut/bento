@@ -23,16 +23,21 @@ func expandHomePath(path string) string {
 // configureBentoHome prompts for bento home directory configuration
 func (m Model) configureBentoHome() (tea.Model, tea.Cmd) {
 	currentHome := LoadBentoHome()
-	displayHome := expandHomePath(currentHome)
-	newHome := displayHome
+	// Resolve the path for the file picker to start in the right place
+	resolvedHome, err := ResolvePath(currentHome)
+	if err != nil {
+		resolvedHome = expandHomePath(currentHome)
+	}
+
+	newHome := resolvedHome
 	m.varHolders = map[string]*string{"BENTO_HOME": &newHome}
 
 	m.form = huh.NewForm(
 		huh.NewGroup(
 			huh.NewFilePicker().
 				Title("Bento Home Directory").
-				Description(fmt.Sprintf("Current: %s", currentHome)).
-				CurrentDirectory(displayHome).
+				Description(fmt.Sprintf("Current: %s (Tip: Use {{GDRIVE}} for cross-platform paths)", CompressPath(resolvedHome))).
+				CurrentDirectory(resolvedHome).
 				DirAllowed(true).
 				FileAllowed(false).
 				ShowHidden(true).
@@ -106,13 +111,21 @@ func (m Model) completeSettingsForm() (tea.Model, tea.Cmd) {
 func (m Model) completeBentoHomeForm() (tea.Model, tea.Cmd) {
 	currentHome := LoadBentoHome()
 	newHome := getFormValue(m.varHolders, "BENTO_HOME")
-	displayHome := expandHomePath(currentHome)
 
-	if newHome == "" || newHome == displayHome {
+	// Resolve current home for comparison
+	resolvedCurrentHome, err := ResolvePath(currentHome)
+	if err != nil {
+		resolvedCurrentHome = expandHomePath(currentHome)
+	}
+
+	if newHome == "" || newHome == resolvedCurrentHome {
 		return m.completeSettingsForm()
 	}
 
-	if err := SaveBentoHome(newHome); err != nil {
+	// Compress the path to use {{GDRIVE}} markers for portability
+	compressedPath := CompressPath(newHome)
+
+	if err := SaveBentoHome(compressedPath); err != nil {
 		// Return to settings on error
 		m.activeSettingsForm = noSettingsForm
 		m.currentView = settingsView

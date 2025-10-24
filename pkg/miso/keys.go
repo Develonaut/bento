@@ -6,6 +6,7 @@ import "github.com/charmbracelet/bubbles/key"
 type listKeyMap struct {
 	Enter    key.Binding
 	Settings key.Binding
+	Reorder  key.Binding
 	Quit     key.Binding
 }
 
@@ -57,6 +58,10 @@ func newListKeyMap() listKeyMap {
 		Settings: key.NewBinding(
 			key.WithKeys("s"),
 			key.WithHelp("s", "settings"),
+		),
+		Reorder: key.NewBinding(
+			key.WithKeys("o"),
+			key.WithHelp("o", "reorder"),
 		),
 		Quit: key.NewBinding(
 			key.WithKeys("q", "ctrl+c"),

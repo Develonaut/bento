@@ -76,6 +76,9 @@ func sortVariablesByPriority(vars []Variable) []Variable {
 
 // startExecution runs the bento with collected variables
 func (m Model) startExecution() (tea.Model, tea.Cmd) {
+	// Clear logs from previous execution
+	m.logs = fmt.Sprintf("🍱 Executing: %s\n\n", filepath.Base(m.selectedBento))
+
 	// Set environment variables from form value holders
 	if m.varHolders != nil {
 		for name, valuePtr := range m.varHolders {
@@ -88,8 +91,6 @@ func (m Model) startExecution() (tea.Model, tea.Cmd) {
 		m.logs += "\n"
 	}
 
-	// Initialize execution view
-	m.logs = fmt.Sprintf("🍱 Executing: %s\n\n", filepath.Base(m.selectedBento))
 	m.currentView = executionView
 	m.executing = true
 

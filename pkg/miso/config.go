@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 )
 
@@ -203,6 +204,7 @@ func bentoHomeConfigPath() (string, error) {
 
 // LoadBentoHome loads the configured bento home directory from disk.
 // Returns the default ~/.bento if no custom home is configured.
+// Automatically resolves {{GDRIVE}} and other special markers.
 func LoadBentoHome() string {
 	path, err := bentoHomeConfigPath()
 	if err != nil {
@@ -219,7 +221,28 @@ func LoadBentoHome() string {
 		return defaultBentoHome()
 	}
 
-	return dir
+	// Resolve special markers like {{GDRIVE}}
+	// Note: Can't call ResolvePath here due to circular dependency
+	// (ResolvePath calls LoadBentoHome for {{BENTO_HOME}})
+	// So we handle other markers manually
+	resolved := dir
+	if strings.Contains(resolved, "{{GDRIVE}}") {
+		if gdrivePath := detectGoogleDrive(); gdrivePath != "" {
+			resolved = strings.ReplaceAll(resolved, "{{GDRIVE}}", gdrivePath)
+		}
+	}
+	if strings.Contains(resolved, "{{DROPBOX}}") {
+		if dropboxPath := detectDropbox(); dropboxPath != "" {
+			resolved = strings.ReplaceAll(resolved, "{{DROPBOX}}", dropboxPath)
+		}
+	}
+	if strings.Contains(resolved, "{{ONEDRIVE}}") {
+		if onedrivePath := detectOneDrive(); onedrivePath != "" {
+			resolved = strings.ReplaceAll(resolved, "{{ONEDRIVE}}", onedrivePath)
+		}
+	}
+
+	return filepath.Clean(resolved)
 }
 
 // SaveBentoHome saves the bento home directory to disk.
@@ -250,4 +273,109 @@ func defaultBentoHome() string {
 		return "./.bento"
 	}
 	return filepath.Join(home, ".bento")
+}
+
+// detectGoogleDrive attempts to detect the Google Drive root path.
+// Duplicated from path_resolver.go to avoid circular dependency.
+func detectGoogleDrive() string {
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		return ""
+	}
+
+	switch runtime.GOOS {
+	case "darwin":
+		// Mac: ~/Library/CloudStorage/GoogleDrive-{email}/My Drive
+		cloudStorageDir := filepath.Join(homeDir, "Library", "CloudStorage")
+		if entries, err := os.ReadDir(cloudStorageDir); err == nil {
+			for _, entry := range entries {
+				if entry.IsDir() && strings.HasPrefix(entry.Name(), "GoogleDrive-") {
+					myDrive := filepath.Join(cloudStorageDir, entry.Name(), "My Drive")
+					if stat, err := os.Stat(myDrive); err == nil && stat.IsDir() {
+						return myDrive
+					}
+				}
+			}
+		}
+
+	case "windows":
+		// Windows: Check common drive letters for "My Drive"
+		driveLetters := []string{"G", "H", "I", "J", "K", "L", "M", "N", "O"}
+		for _, letter := range driveLetters {
+			myDrive := filepath.Join(letter+":", "My Drive")
+			if stat, err := os.Stat(myDrive); err == nil && stat.IsDir() {
+				return myDrive
+			}
+		}
+
+		// Also check %USERPROFILE%\Google Drive
+		googleDrive := filepath.Join(homeDir, "Google Drive")
+		if stat, err := os.Stat(googleDrive); err == nil && stat.IsDir() {
+			return googleDrive
+		}
+
+	case "linux":
+		// Linux: ~/Google Drive (older Drive File Stream)
+		googleDrive := filepath.Join(homeDir, "Google Drive")
+		if stat, err := os.Stat(googleDrive); err == nil && stat.IsDir() {
+			return googleDrive
+		}
+	}
+
+	return ""
+}
+
+// detectDropbox attempts to detect the Dropbox root path.
+// Duplicated from path_resolver.go to avoid circular dependency.
+func detectDropbox() string {
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		return ""
+	}
+
+	dropboxPath := filepath.Join(homeDir, "Dropbox")
+	if stat, err := os.Stat(dropboxPath); err == nil && stat.IsDir() {
+		return dropboxPath
+	}
+
+	return ""
+}
+
+// detectOneDrive attempts to detect the OneDrive root path.
+// Duplicated from path_resolver.go to avoid circular dependency.
+func detectOneDrive() string {
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		return ""
+	}
+
+	switch runtime.GOOS {
+	case "darwin":
+		// Mac: ~/Library/CloudStorage/OneDrive-{org}
+		cloudStorageDir := filepath.Join(homeDir, "Library", "CloudStorage")
+		if entries, err := os.ReadDir(cloudStorageDir); err == nil {
+			for _, entry := range entries {
+				if entry.IsDir() && strings.HasPrefix(entry.Name(), "OneDrive") {
+					oneDrivePath := filepath.Join(cloudStorageDir, entry.Name())
+					return oneDrivePath
+				}
+			}
+		}
+
+	case "windows":
+		// Windows: %USERPROFILE%\OneDrive
+		oneDrivePath := filepath.Join(homeDir, "OneDrive")
+		if stat, err := os.Stat(oneDrivePath); err == nil && stat.IsDir() {
+			return oneDrivePath
+		}
+
+	case "linux":
+		// Linux: ~/OneDrive
+		oneDrivePath := filepath.Join(homeDir, "OneDrive")
+		if stat, err := os.Stat(oneDrivePath); err == nil && stat.IsDir() {
+			return oneDrivePath
+		}
+	}
+
+	return ""
 }

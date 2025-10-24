@@ -11,15 +11,47 @@ func (m Model) updateList(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "enter":
-			// Select bento
-			if selected, ok := m.list.SelectedItem().(BentoItem); ok {
-				m.selectedBento = selected.FilePath
-				return m.runBento()
+			// Select bento (only if not in reorder mode)
+			if !m.reorderMode {
+				if selected, ok := m.list.SelectedItem().(BentoItem); ok {
+					m.selectedBento = selected.FilePath
+					return m.runBento()
+				}
 			}
 		case "s":
-			// Go to settings
-			m.currentView = settingsView
+			// Go to settings (only if not in reorder mode)
+			if !m.reorderMode {
+				m.currentView = settingsView
+				return m, nil
+			}
+		case "o":
+			// Toggle reorder mode
+			m.reorderMode = !m.reorderMode
 			return m, nil
+		case "esc":
+			// Exit reorder mode and save
+			if m.reorderMode {
+				m.reorderMode = false
+				// Save current order
+				items := m.list.Items()
+				bentoItems := make([]BentoItem, len(items))
+				for i, item := range items {
+					bentoItems[i] = item.(BentoItem)
+				}
+				order := extractBentoOrder(bentoItems)
+				_ = saveBentoOrder(order) // Ignore errors
+				return m, nil
+			}
+		case "up", "k":
+			// Move item up in reorder mode
+			if m.reorderMode {
+				return m.moveItem(-1)
+			}
+		case "down", "j":
+			// Move item down in reorder mode
+			if m.reorderMode {
+				return m.moveItem(1)
+			}
 		}
 	}
 

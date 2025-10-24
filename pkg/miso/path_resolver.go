@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"runtime"
 	"strings"
 )
 
@@ -65,107 +64,8 @@ func expandSpecialMarkers(path string) string {
 	return path
 }
 
-// detectGoogleDrive attempts to detect the Google Drive root path
-func detectGoogleDrive() string {
-	homeDir, err := os.UserHomeDir()
-	if err != nil {
-		return ""
-	}
-
-	switch runtime.GOOS {
-	case "darwin":
-		// Mac: ~/Library/CloudStorage/GoogleDrive-{email}/My Drive
-		cloudStorageDir := filepath.Join(homeDir, "Library", "CloudStorage")
-		if entries, err := os.ReadDir(cloudStorageDir); err == nil {
-			for _, entry := range entries {
-				if entry.IsDir() && strings.HasPrefix(entry.Name(), "GoogleDrive-") {
-					myDrive := filepath.Join(cloudStorageDir, entry.Name(), "My Drive")
-					if stat, err := os.Stat(myDrive); err == nil && stat.IsDir() {
-						return myDrive
-					}
-				}
-			}
-		}
-
-	case "windows":
-		// Windows: Check common drive letters for "My Drive"
-		driveLetters := []string{"G", "H", "I", "J", "K", "L", "M", "N", "O"}
-		for _, letter := range driveLetters {
-			myDrive := filepath.Join(letter+":", "My Drive")
-			if stat, err := os.Stat(myDrive); err == nil && stat.IsDir() {
-				return myDrive
-			}
-		}
-
-		// Also check %USERPROFILE%\Google Drive
-		googleDrive := filepath.Join(homeDir, "Google Drive")
-		if stat, err := os.Stat(googleDrive); err == nil && stat.IsDir() {
-			return googleDrive
-		}
-
-	case "linux":
-		// Linux: ~/Google Drive (older Drive File Stream)
-		googleDrive := filepath.Join(homeDir, "Google Drive")
-		if stat, err := os.Stat(googleDrive); err == nil && stat.IsDir() {
-			return googleDrive
-		}
-	}
-
-	return ""
-}
-
-// detectDropbox attempts to detect the Dropbox root path
-func detectDropbox() string {
-	homeDir, err := os.UserHomeDir()
-	if err != nil {
-		return ""
-	}
-
-	dropboxPath := filepath.Join(homeDir, "Dropbox")
-	if stat, err := os.Stat(dropboxPath); err == nil && stat.IsDir() {
-		return dropboxPath
-	}
-
-	return ""
-}
-
-// detectOneDrive attempts to detect the OneDrive root path
-func detectOneDrive() string {
-	homeDir, err := os.UserHomeDir()
-	if err != nil {
-		return ""
-	}
-
-	switch runtime.GOOS {
-	case "darwin":
-		// Mac: ~/Library/CloudStorage/OneDrive-{org}
-		cloudStorageDir := filepath.Join(homeDir, "Library", "CloudStorage")
-		if entries, err := os.ReadDir(cloudStorageDir); err == nil {
-			for _, entry := range entries {
-				if entry.IsDir() && strings.HasPrefix(entry.Name(), "OneDrive") {
-					oneDrivePath := filepath.Join(cloudStorageDir, entry.Name())
-					return oneDrivePath
-				}
-			}
-		}
-
-	case "windows":
-		// Windows: %USERPROFILE%\OneDrive
-		oneDrivePath := filepath.Join(homeDir, "OneDrive")
-		if stat, err := os.Stat(oneDrivePath); err == nil && stat.IsDir() {
-			return oneDrivePath
-		}
-
-	case "linux":
-		// Linux: ~/OneDrive
-		oneDrivePath := filepath.Join(homeDir, "OneDrive")
-		if stat, err := os.Stat(oneDrivePath); err == nil && stat.IsDir() {
-			return oneDrivePath
-		}
-	}
-
-	return ""
-}
+// Note: detectGoogleDrive, detectDropbox, and detectOneDrive are defined in config.go
+// to avoid circular dependency issues (config.go needs them for LoadBentoHome)
 
 // ResolvePathsInMap resolves all paths in a string map (useful for variables)
 func ResolvePathsInMap(m map[string]string) (map[string]string, error) {
@@ -183,4 +83,71 @@ func ResolvePathsInMap(m map[string]string) (map[string]string, error) {
 	}
 
 	return resolved, nil
+}
+
+// CompressPath converts absolute paths to use special markers for portability.
+// This is the inverse of ResolvePath - useful for displaying paths in a platform-independent way.
+// Example: "/Users/Ryan/Library/CloudStorage/GoogleDrive-email/My Drive/foo" -> "{{GDRIVE}}/foo"
+func CompressPath(path string) string {
+	if path == "" {
+		return ""
+	}
+
+	// Clean the path first
+	cleaned := filepath.Clean(path)
+
+	// Try to compress special markers in order of specificity
+	// Check GDRIVE first
+	if gdrivePath := detectGoogleDrive(); gdrivePath != "" {
+		cleanedGDrive := filepath.Clean(gdrivePath)
+		if strings.HasPrefix(cleaned, cleanedGDrive) {
+			rel := strings.TrimPrefix(cleaned, cleanedGDrive)
+			rel = strings.TrimPrefix(rel, string(filepath.Separator))
+			if rel == "" {
+				return "{{GDRIVE}}"
+			}
+			return "{{GDRIVE}}" + string(filepath.Separator) + rel
+		}
+	}
+
+	// Check DROPBOX
+	if dropboxPath := detectDropbox(); dropboxPath != "" {
+		cleanedDropbox := filepath.Clean(dropboxPath)
+		if strings.HasPrefix(cleaned, cleanedDropbox) {
+			rel := strings.TrimPrefix(cleaned, cleanedDropbox)
+			rel = strings.TrimPrefix(rel, string(filepath.Separator))
+			if rel == "" {
+				return "{{DROPBOX}}"
+			}
+			return "{{DROPBOX}}" + string(filepath.Separator) + rel
+		}
+	}
+
+	// Check ONEDRIVE
+	if onedrivePath := detectOneDrive(); onedrivePath != "" {
+		cleanedOneDrive := filepath.Clean(onedrivePath)
+		if strings.HasPrefix(cleaned, cleanedOneDrive) {
+			rel := strings.TrimPrefix(cleaned, cleanedOneDrive)
+			rel = strings.TrimPrefix(rel, string(filepath.Separator))
+			if rel == "" {
+				return "{{ONEDRIVE}}"
+			}
+			return "{{ONEDRIVE}}" + string(filepath.Separator) + rel
+		}
+	}
+
+	// Check BENTO_HOME
+	bentoHome := LoadBentoHome()
+	cleanedBentoHome := filepath.Clean(bentoHome)
+	if strings.HasPrefix(cleaned, cleanedBentoHome) {
+		rel := strings.TrimPrefix(cleaned, cleanedBentoHome)
+		rel = strings.TrimPrefix(rel, string(filepath.Separator))
+		if rel == "" {
+			return "{{BENTO_HOME}}"
+		}
+		return "{{BENTO_HOME}}" + string(filepath.Separator) + rel
+	}
+
+	// If no marker applies, return the original cleaned path
+	return cleaned
 }
