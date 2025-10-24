@@ -21,7 +21,7 @@ func TestConfigDir(t *testing.T) {
 		t.Fatalf("UserHomeDir() failed: %v", err)
 	}
 
-	expected := filepath.Join(home, ".bento")
+	expected := filepath.Join(home, ".bento", "config")
 	if dir != expected {
 		t.Errorf("configDir() = %s, want %s", dir, expected)
 	}
@@ -39,7 +39,7 @@ func TestThemeConfigPath(t *testing.T) {
 		t.Fatalf("UserHomeDir() failed: %v", err)
 	}
 
-	expected := filepath.Join(home, ".bento", "theme")
+	expected := filepath.Join(home, ".bento", "config", "theme")
 	if path != expected {
 		t.Errorf("themeConfigPath() = %s, want %s", path, expected)
 	}

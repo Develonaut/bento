@@ -84,12 +84,15 @@ func (m Model) configureTheme() (tea.Model, tea.Cmd) {
 	// Create value holder for form
 	m.varHolders = map[string]*string{"THEME": &selectedTheme}
 
+	// Build description with current theme colors
+	descriptionText := buildThemeDescription(currentTheme)
+
 	// Create form
 	m.form = huh.NewForm(
 		huh.NewGroup(
 			huh.NewSelect[string]().
 				Title("Select Theme").
-				Description(fmt.Sprintf("Current: %s", currentTheme)).
+				Description(descriptionText).
 				Options(buildThemeOptions()...).
 				Value(&selectedTheme),
 		),
@@ -101,6 +104,21 @@ func (m Model) configureTheme() (tea.Model, tea.Cmd) {
 	m.activeSettingsForm = themeForm
 	m.currentView = formView
 	return m, m.form.Init()
+}
+
+// buildThemeDescription creates a description showing current theme colors
+func buildThemeDescription(variant Variant) string {
+	palette := GetPalette(variant)
+	return fmt.Sprintf("Current: %s\n\nColors:\n  Primary:   %s\n  Secondary: %s\n  Success:   %s\n  Error:     %s\n  Warning:   %s\n  Text:      %s\n  Muted:     %s",
+		variant,
+		palette.Primary,
+		palette.Secondary,
+		palette.Success,
+		palette.Error,
+		palette.Warning,
+		palette.Text,
+		palette.Muted,
+	)
 }
 
 // getFormValue retrieves a value from form holders
