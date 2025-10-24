@@ -205,7 +205,7 @@ func TestEnsureLogsDirectory(t *testing.T) {
 	}
 
 	// Ensure it's created
-	if err := EnsureLogsDirectory(); err != nil {
+	if err := EnsureLogsDirectory(""); err != nil {
 		t.Fatalf("Failed to ensure logs directory: %v", err)
 	}
 

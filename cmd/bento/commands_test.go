@@ -202,13 +202,20 @@ func TestNewCommand_OverwriteProtection(t *testing.T) {
 	createExistingFile(t, tmpDir, "existing.bento.json")
 	changeToDir(t, tmpDir)
 
-	cmd := exec.Command("bento", "new", "existing")
+	cmd := exec.Command("bento", "new", "existing", "--local")
 	output, err := cmd.CombinedOutput()
 
+	// Command should error because file exists
 	if err == nil {
 		outputStr := strings.ToLower(string(output))
 		if !strings.Contains(outputStr, "exists") && !strings.Contains(outputStr, "already") {
-			t.Error("Should warn or error about existing file")
+			t.Errorf("Should warn or error about existing file, got output: %s", output)
+		}
+	} else {
+		// If it errored (which is expected), check that the error message mentions the file exists
+		outputStr := strings.ToLower(string(output))
+		if !strings.Contains(outputStr, "exists") && !strings.Contains(outputStr, "already") {
+			t.Errorf("Error should mention file exists, got: %s", output)
 		}
 	}
 }
