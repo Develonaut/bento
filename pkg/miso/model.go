@@ -119,6 +119,7 @@ func NewTUI() (*Model, error) {
 	l := list.New(items, list.NewDefaultDelegate(), 0, 0)
 	l.Title = "🍱 Bentos"
 	l.SetShowStatusBar(false)
+	l.SetShowHelp(false) // Disable built-in help - we provide our own
 
 	// Load current values for settings display
 	currentHome := LoadBentoHome()
@@ -150,16 +151,19 @@ func NewTUI() (*Model, error) {
 	sl := list.New(settingsItems, list.NewDefaultDelegate(), 0, 0)
 	sl.Title = "⚙️  Settings"
 	sl.SetShowStatusBar(false)
+	sl.SetShowHelp(false) // Disable built-in help - we provide our own
 
 	// Create empty secrets list (loaded on demand)
 	secretsl := list.New([]list.Item{}, list.NewDefaultDelegate(), 0, 0)
 	secretsl.Title = "🔐 Secrets"
 	secretsl.SetShowStatusBar(false)
+	secretsl.SetShowHelp(false) // Disable built-in help - we provide our own
 
 	// Create empty variables list (loaded on demand)
 	variablesl := list.New([]list.Item{}, list.NewDefaultDelegate(), 0, 0)
 	variablesl.Title = "📝 Variables"
 	variablesl.SetShowStatusBar(false)
+	variablesl.SetShowHelp(false) // Disable built-in help - we provide our own
 
 	return &Model{
 		currentView:   listView,

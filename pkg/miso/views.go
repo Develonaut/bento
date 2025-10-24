@@ -6,8 +6,13 @@ import (
 
 // viewList renders the list view
 func (m Model) viewList() string {
-	help := "\n" + helpText(m.listKeys.Enter, m.listKeys.Settings, m.listKeys.Quit)
-	content := m.list.View() + help
+	helpStr := helpText(m.listKeys.Enter, m.listKeys.Settings, m.listKeys.Quit)
+	helpStyled := lipgloss.NewStyle().
+		Faint(true).
+		Padding(1, 0).
+		Render(helpStr)
+
+	content := m.list.View() + "\n" + helpStyled
 	return lipgloss.NewStyle().
 		Padding(1, 2).
 		Render(content)
@@ -15,8 +20,13 @@ func (m Model) viewList() string {
 
 // viewSettings renders the settings view
 func (m Model) viewSettings() string {
-	help := "\n" + helpText(m.settingsKeys.Enter, m.settingsKeys.Back, m.settingsKeys.Quit)
-	content := m.settingsList.View() + help
+	helpStr := helpText(m.settingsKeys.Enter, m.settingsKeys.Back, m.settingsKeys.Quit)
+	helpStyled := lipgloss.NewStyle().
+		Faint(true).
+		Padding(1, 0).
+		Render(helpStr)
+
+	content := m.settingsList.View() + "\n" + helpStyled
 	return lipgloss.NewStyle().
 		Padding(1, 2).
 		Render(content)
@@ -24,8 +34,13 @@ func (m Model) viewSettings() string {
 
 // viewSecrets renders the secrets view
 func (m Model) viewSecrets() string {
-	help := "\n" + helpText(m.secretsKeys.Add, m.secretsKeys.Delete, m.secretsKeys.Back, m.secretsKeys.Quit)
-	content := m.secretsList.View() + help
+	helpStr := helpText(m.secretsKeys.Add, m.secretsKeys.Delete, m.secretsKeys.Back, m.secretsKeys.Quit)
+	helpStyled := lipgloss.NewStyle().
+		Faint(true).
+		Padding(1, 0).
+		Render(helpStr)
+
+	content := m.secretsList.View() + "\n" + helpStyled
 	return lipgloss.NewStyle().
 		Padding(1, 2).
 		Render(content)
@@ -33,8 +48,13 @@ func (m Model) viewSecrets() string {
 
 // viewVariables renders the variables view
 func (m Model) viewVariables() string {
-	help := "\n" + helpText(m.variablesKeys.Add, m.variablesKeys.Delete, m.variablesKeys.Back, m.variablesKeys.Quit)
-	content := m.variablesList.View() + help
+	helpStr := helpText(m.variablesKeys.Add, m.variablesKeys.Delete, m.variablesKeys.Back, m.variablesKeys.Quit)
+	helpStyled := lipgloss.NewStyle().
+		Faint(true).
+		Padding(1, 0).
+		Render(helpStr)
+
+	content := m.variablesList.View() + "\n" + helpStyled
 	return lipgloss.NewStyle().
 		Padding(1, 2).
 		Render(content)
