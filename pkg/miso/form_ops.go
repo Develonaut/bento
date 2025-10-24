@@ -107,7 +107,9 @@ func (m Model) startExecution() (tea.Model, tea.Cmd) {
 		viewportWidth = 40
 	}
 	m.logViewport = viewport.New(viewportWidth, viewportHeight)
-	m.logViewport.SetContent(m.logs)
+	// Wrap initial log content to viewport width
+	wrappedLogs := wrapLogContent(m.logs, viewportWidth)
+	m.logViewport.SetContent(wrappedLogs)
 
 	// Create log channel for streaming logs
 	m.logChan = make(chan string, 100)

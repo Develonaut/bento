@@ -2,9 +2,32 @@ package miso
 
 import (
 	"fmt"
+	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/muesli/reflow/wordwrap"
 )
+
+// wrapLogContent wraps log content to fit within viewport width.
+// Handles ANSI escape codes and prevents horizontal overflow.
+func wrapLogContent(content string, width int) string {
+	if width <= 0 {
+		return content
+	}
+
+	// Split into lines and wrap each line individually
+	lines := strings.Split(content, "\n")
+	wrappedLines := make([]string, 0, len(lines))
+
+	for _, line := range lines {
+		// Use wordwrap to wrap each line to the viewport width
+		// This handles ANSI codes properly and prevents overflow
+		wrapped := wordwrap.String(line, width)
+		wrappedLines = append(wrappedLines, wrapped)
+	}
+
+	return strings.Join(wrappedLines, "\n")
+}
 
 // Update handles messages
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -47,7 +70,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case executionOutputMsg:
 		m.logs += string(msg)
-		m.logViewport.SetContent(m.logs)
+		// Wrap log content to viewport width to prevent horizontal overflow
+		wrappedLogs := wrapLogContent(m.logs, m.logViewport.Width)
+		m.logViewport.SetContent(wrappedLogs)
 		m.logViewport.GotoBottom()
 		// Continue listening for more logs
 		return m, listenForLogs(m.logChan)
@@ -59,7 +84,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		} else {
 			m.logs += fmt.Sprintf("\n\n✅ Completed successfully in %s\n\n", msg.duration)
 		}
-		m.logViewport.SetContent(m.logs)
+		// Wrap log content to viewport width to prevent horizontal overflow
+		wrappedLogs := wrapLogContent(m.logs, m.logViewport.Width)
+		m.logViewport.SetContent(wrappedLogs)
 		m.logViewport.GotoBottom()
 		return m, nil
 	}
