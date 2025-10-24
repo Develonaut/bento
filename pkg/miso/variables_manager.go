@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"runtime"
 )
 
 // VariablesManager handles storage and retrieval of user-defined variables.
@@ -38,14 +39,46 @@ func NewVariablesManager() (*VariablesManager, error) {
 	return mgr, nil
 }
 
-// load reads variables from JSON file
+// load reads variables from JSON file and platform-specific overrides
 func (m *VariablesManager) load() error {
+	// Load base variables.json
 	data, err := os.ReadFile(m.filePath)
 	if err != nil {
 		return err
 	}
 
-	return json.Unmarshal(data, &m.variables)
+	if err := json.Unmarshal(data, &m.variables); err != nil {
+		return err
+	}
+
+	// Try to load platform-specific overrides (e.g., variables.darwin.json)
+	m.loadPlatformOverrides()
+
+	return nil
+}
+
+// loadPlatformOverrides loads platform-specific variable overrides
+func (m *VariablesManager) loadPlatformOverrides() {
+	// Construct platform-specific filename
+	baseDir := filepath.Dir(m.filePath)
+	platformFile := filepath.Join(baseDir, fmt.Sprintf("variables.%s.json", runtime.GOOS))
+
+	// Try to read platform-specific file
+	data, err := os.ReadFile(platformFile)
+	if err != nil {
+		return // Platform file doesn't exist or can't be read - that's OK
+	}
+
+	// Parse platform overrides
+	var overrides map[string]string
+	if err := json.Unmarshal(data, &overrides); err != nil {
+		return // Invalid JSON - ignore silently
+	}
+
+	// Merge overrides into variables (overrides take precedence)
+	for k, v := range overrides {
+		m.variables[k] = v
+	}
 }
 
 // save writes variables to JSON file
@@ -72,13 +105,20 @@ func (m *VariablesManager) Set(key, value string) error {
 	return m.save()
 }
 
-// Get retrieves a variable
+// Get retrieves a variable with path resolution
 func (m *VariablesManager) Get(key string) (string, error) {
 	value, ok := m.variables[key]
 	if !ok {
 		return "", fmt.Errorf("variable %s not found", key)
 	}
-	return value, nil
+
+	// Resolve any special markers or environment variables
+	resolved, err := ResolvePath(value)
+	if err != nil {
+		return value, nil // Return original if resolution fails
+	}
+
+	return resolved, nil
 }
 
 // Delete removes a variable
@@ -100,11 +140,17 @@ func (m *VariablesManager) List() []string {
 	return keys
 }
 
-// GetAll returns all variables as a map
+// GetAll returns all variables with path resolution
 func (m *VariablesManager) GetAll() map[string]string {
 	result := make(map[string]string, len(m.variables))
 	for k, v := range m.variables {
-		result[k] = v
+		// Resolve paths for each variable
+		resolved, err := ResolvePath(v)
+		if err != nil {
+			result[k] = v // Use original if resolution fails
+		} else {
+			result[k] = resolved
+		}
 	}
 	return result
 }
