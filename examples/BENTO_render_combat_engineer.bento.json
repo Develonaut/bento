@@ -68,6 +68,8 @@
           "stormcaller",
           "--filename-prefix",
           "combat_engineer_stormcaller",
+          "--offset-modifier",
+          "0.0",
           "--quiet"
         ],
         "timeout": 1800,

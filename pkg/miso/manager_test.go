@@ -3,7 +3,11 @@
 // Tests for theme manager.
 package miso
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/Develonaut/bento/pkg/kombu"
+)
 
 // TestNewManager verifies manager initialization with current variant.
 func TestNewManager(t *testing.T) {
@@ -35,14 +39,7 @@ func TestNewManager(t *testing.T) {
 // TestSetVariant verifies variant switching.
 func TestSetVariant(t *testing.T) {
 	tmpDir := t.TempDir()
-	originalConfigDir := configDir
-
-	configDir = func() (string, error) {
-		return tmpDir, nil
-	}
-	t.Cleanup(func() {
-		configDir = originalConfigDir
-	})
+	t.Cleanup(kombu.SetConfigDirForTesting(tmpDir))
 
 	m := NewManager()
 
@@ -68,14 +65,7 @@ func TestSetVariant(t *testing.T) {
 // TestNextVariant verifies cycling through variants.
 func TestNextVariant(t *testing.T) {
 	tmpDir := t.TempDir()
-	originalConfigDir := configDir
-
-	configDir = func() (string, error) {
-		return tmpDir, nil
-	}
-	t.Cleanup(func() {
-		configDir = originalConfigDir
-	})
+	t.Cleanup(kombu.SetConfigDirForTesting(tmpDir))
 
 	m := NewManager()
 	m.SetVariant(VariantNasu) // Start with first variant
@@ -112,14 +102,7 @@ func TestNextVariant(t *testing.T) {
 // TestCurrentVariant verifies global current variant tracking.
 func TestCurrentVariant(t *testing.T) {
 	tmpDir := t.TempDir()
-	originalConfigDir := configDir
-
-	configDir = func() (string, error) {
-		return tmpDir, nil
-	}
-	t.Cleanup(func() {
-		configDir = originalConfigDir
-	})
+	t.Cleanup(kombu.SetConfigDirForTesting(tmpDir))
 
 	m := NewManager()
 	m.SetVariant(VariantToro)

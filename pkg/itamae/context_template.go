@@ -7,6 +7,8 @@ import (
 	"path/filepath"
 	"strings"
 	"text/template"
+
+	"github.com/Develonaut/bento/pkg/kombu"
 )
 
 // resolveValue recursively resolves template strings in a value.
@@ -58,27 +60,38 @@ func (ec *executionContext) executeGoTemplate(s string) string {
 }
 
 // resolveString resolves template syntax in a string.
-// Secrets ({{SECRETS.X}}) are resolved FIRST, then regular templates ({{.X}}).
+// Resolution order:
+//  1. {{SECRETS.X}} - Keychain secrets
+//  2. {{BENTO_HOME}}, {{GDRIVE}}, etc. - Special path markers
+//  3. {{.X}} - Go template variables from context
+//
 // If the string is ONLY a template (no literal text), return the actual value.
 // Otherwise, return the string interpolation.
 func (ec *executionContext) resolveString(s string) interface{} {
 	// Step 1: Resolve {{SECRETS.X}} placeholders from keychain
 	resolvedSecrets := ec.resolveSecretsInString(s)
 
-	// Step 2: Check if string contains Go template syntax ({{.X}})
-	if !containsTemplate(resolvedSecrets) {
-		return resolvedSecrets
+	// Step 2: Resolve special path markers ({{BENTO_HOME}}, {{GDRIVE}}, etc.)
+	resolvedPaths, err := kombu.ResolvePath(resolvedSecrets)
+	if err != nil {
+		// If path resolution fails, continue with original string
+		resolvedPaths = resolvedSecrets
 	}
 
-	// Step 3: Special case - if entire string is single template, return actual value
-	if isExactTemplate(resolvedSecrets) {
-		if val := ec.resolveExactTemplate(resolvedSecrets); val != nil {
+	// Step 3: Check if string contains Go template syntax ({{.X}})
+	if !containsTemplate(resolvedPaths) {
+		return resolvedPaths
+	}
+
+	// Step 4: Special case - if entire string is single template, return actual value
+	if isExactTemplate(resolvedPaths) {
+		if val := ec.resolveExactTemplate(resolvedPaths); val != nil {
 			return val
 		}
 	}
 
-	// Step 4: Parse and execute Go template (returns string interpolation)
-	return ec.executeGoTemplate(resolvedSecrets)
+	// Step 5: Parse and execute Go template (returns string interpolation)
+	return ec.executeGoTemplate(resolvedPaths)
 }
 
 // isExactTemplate checks if a string is EXACTLY one template (no literal text).

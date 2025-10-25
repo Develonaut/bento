@@ -34,7 +34,7 @@
       "parameters": {
         "operation": "read",
         "format": "csv",
-        "path": "{{.PRODUCTS_PATH}}/Miniatures/Bite The Bullet/Test Bento/products.csv",
+        "path": "tests/fixtures/products-test.csv",
         "hasHeaders": true
       },
       "inputPorts": [],
@@ -84,7 +84,7 @@
           },
           "parameters": {
             "operation": "mkdir",
-            "path": "{{.PRODUCTS_PATH}}/Miniatures/Bite The Bullet/Test Bento/{{.item.name}}",
+            "path": "products/{{.item.name}}",
             "recursive": true
           },
           "inputPorts": [],
@@ -104,8 +104,8 @@
           },
           "parameters": {
             "operation": "copy",
-            "source": "{{.PRODUCTS_PATH}}/Miniatures/Bite The Bullet/Test Bento/overlays/{{.index}}.png",
-            "dest": "{{.PRODUCTS_PATH}}/Miniatures/Bite The Bullet/Test Bento/{{.item.name}}/overlay.png"
+            "source": "tests/fixtures/overlays/{{.index}}.png",
+            "dest": "products/{{.item.name}}/overlay.png"
           },
           "inputPorts": [],
           "outputPorts": []

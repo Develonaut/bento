@@ -40,6 +40,7 @@ const (
 	bentoHomeForm
 	themeForm
 	variableForm
+	verboseForm
 )
 
 // Model holds the TUI state
@@ -55,9 +56,9 @@ type Model struct {
 	bentoVars          []Variable
 	varHolders         map[string]*string // Pointers to form values
 	logs               string
-	logViewport        viewport.Model      // Viewport for scrollable log display
-	logChan            chan string         // Channel for streaming execution logs
-	executionCancel    context.CancelFunc  // Cancel function for running execution
+	logViewport        viewport.Model     // Viewport for scrollable log display
+	logChan            chan string        // Channel for streaming execution logs
+	executionCancel    context.CancelFunc // Cancel function for running execution
 	executing          bool
 	width              int
 	height             int
@@ -65,6 +66,9 @@ type Model struct {
 	quitting           bool
 	activeSettingsForm settingsFormType // Tracks which settings form is active
 	reorderMode        bool             // Tracks if we're in bento reorder mode
+	formStage          int              // Tracks multi-step form progress (0=path, 1=config)
+	pathVariables      []Variable       // Path variables for first form stage
+	configVariables    []Variable       // Config variables for second form stage
 
 	// Key bindings for each view
 	listKeys      listKeyMap
@@ -135,115 +139,19 @@ func (i ThemeItem) FilterValue() string { return i.DisplayName }
 
 // NewTUI creates a new TUI model
 func NewTUI() (*Model, error) {
-	// Load bentos from ~/.bento/bentos
-	items, err := loadBentos()
+	l, err := createBentoList()
 	if err != nil {
-		return nil, fmt.Errorf("failed to load bentos: %w", err)
+		return nil, err
 	}
-
-	// Create bento list
-	l := list.New(items, list.NewDefaultDelegate(), 0, 0)
-	l.Title = "🍱 Bentos"
-	l.SetShowStatusBar(false)
-	l.SetShowHelp(false) // Disable built-in help - we provide our own
-
-	// Load current values for settings display
-	currentHome := LoadBentoHome()
-	currentTheme := LoadSavedTheme()
-
-	// Create settings list
-	settingsItems := []list.Item{
-		SettingsItem{
-			Name:   "Bento Home",
-			Desc:   fmt.Sprintf("Current: %s", CompressPath(currentHome)),
-			Action: "bentohome",
-		},
-		SettingsItem{
-			Name:   "Manage Secrets",
-			Desc:   "Add, view, or delete secrets",
-			Action: "secrets",
-		},
-		SettingsItem{
-			Name:   "Manage Variables",
-			Desc:   "Add, view, or delete configuration variables",
-			Action: "variables",
-		},
-		SettingsItem{
-			Name:   "Change Theme",
-			Desc:   fmt.Sprintf("Current: %s", currentTheme),
-			Action: "theme",
-		},
-	}
-	sl := list.New(settingsItems, list.NewDefaultDelegate(), 0, 0)
-	sl.Title = "⚙️  Settings"
-	sl.SetShowStatusBar(false)
-	sl.SetShowHelp(false) // Disable built-in help - we provide our own
-
-	// Create empty secrets list (loaded on demand)
-	secretsl := list.New([]list.Item{}, list.NewDefaultDelegate(), 0, 0)
-	secretsl.Title = "🔐 Secrets"
-	secretsl.SetShowStatusBar(false)
-	secretsl.SetShowHelp(false) // Disable built-in help - we provide our own
-
-	// Create empty variables list (loaded on demand)
-	variablesl := list.New([]list.Item{}, list.NewDefaultDelegate(), 0, 0)
-	variablesl.Title = "📝 Variables"
-	variablesl.SetShowStatusBar(false)
-	variablesl.SetShowHelp(false) // Disable built-in help - we provide our own
-
-	// Create theme list with all available themes
-	themeItems := []list.Item{
-		ThemeItem{
-			Variant:     VariantNasu,
-			DisplayName: "Nasu",
-			Desc:        "Purple - eggplant sushi",
-		},
-		ThemeItem{
-			Variant:     VariantWasabi,
-			DisplayName: "Wasabi",
-			Desc:        "Green - wasabi",
-		},
-		ThemeItem{
-			Variant:     VariantToro,
-			DisplayName: "Toro",
-			Desc:        "Pink - fatty tuna",
-		},
-		ThemeItem{
-			Variant:     VariantTamago,
-			DisplayName: "Tamago",
-			Desc:        "Yellow - egg sushi",
-		},
-		ThemeItem{
-			Variant:     VariantTonkotsu,
-			DisplayName: "Tonkotsu",
-			Desc:        "Red - pork bone broth",
-		},
-		ThemeItem{
-			Variant:     VariantSaba,
-			DisplayName: "Saba",
-			Desc:        "Cyan - mackerel",
-		},
-		ThemeItem{
-			Variant:     VariantIka,
-			DisplayName: "Ika",
-			Desc:        "White - squid",
-		},
-	}
-	themel := list.New(themeItems, list.NewDefaultDelegate(), 0, 0)
-	themel.Title = "🎨 Themes"
-	themel.SetShowStatusBar(false)
-	themel.SetShowHelp(false) // Disable built-in help - we provide our own
 
 	return &Model{
 		currentView:   listView,
 		list:          l,
-		settingsList:  sl,
-		secretsList:   secretsl,
-		variablesList: variablesl,
-		themeList:     themel,
-		theme:         VariantNasu, // Default theme
-
-		// Initialize key bindings
+		settingsList:  createSettingsList(),
+		secretsList:   createSecretsList(),
+		variablesList: createVariablesList(),
+		themeList:     createThemeList(),
+		theme:         VariantNasu,
 		listKeys:      newListKeyMap(),
 		settingsKeys:  newSettingsKeyMap(),
 		secretsKeys:   newSecretsKeyMap(),
@@ -252,6 +160,82 @@ func NewTUI() (*Model, error) {
 		executionKeys: newExecutionKeyMap(),
 		themeKeys:     newThemeKeyMap(),
 	}, nil
+}
+
+// createBentoList loads bentos and creates the bento list
+func createBentoList() (list.Model, error) {
+	items, err := loadBentos()
+	if err != nil {
+		return list.Model{}, fmt.Errorf("failed to load bentos: %w", err)
+	}
+
+	l := list.New(items, list.NewDefaultDelegate(), 0, 0)
+	l.Title = "🍱 Bentos"
+	l.SetShowStatusBar(false)
+	l.SetShowHelp(false)
+	return l, nil
+}
+
+// createSettingsList creates the settings list with current configuration values
+func createSettingsList() list.Model {
+	currentHome := LoadBentoHome()
+	currentTheme := LoadSavedTheme()
+	verboseEnabled := LoadVerboseLogging()
+	verboseStatus := "Disabled"
+	if verboseEnabled {
+		verboseStatus = "Enabled"
+	}
+
+	settingsItems := []list.Item{
+		SettingsItem{Name: "Bento Home", Desc: fmt.Sprintf("Current: %s", CompressPath(currentHome)), Action: "bentohome"},
+		SettingsItem{Name: "Manage Secrets", Desc: "Add, view, or delete secrets", Action: "secrets"},
+		SettingsItem{Name: "Manage Variables", Desc: "Add, view, or delete configuration variables", Action: "variables"},
+		SettingsItem{Name: "Change Theme", Desc: fmt.Sprintf("Current: %s", currentTheme), Action: "theme"},
+		SettingsItem{Name: "Verbose Logging", Desc: fmt.Sprintf("Current: %s", verboseStatus), Action: "verbose"},
+	}
+
+	sl := list.New(settingsItems, list.NewDefaultDelegate(), 0, 0)
+	sl.Title = "⚙️  Settings"
+	sl.SetShowStatusBar(false)
+	sl.SetShowHelp(false)
+	return sl
+}
+
+// createSecretsList creates an empty secrets list (loaded on demand)
+func createSecretsList() list.Model {
+	l := list.New([]list.Item{}, list.NewDefaultDelegate(), 0, 0)
+	l.Title = "🔐 Secrets"
+	l.SetShowStatusBar(false)
+	l.SetShowHelp(false)
+	return l
+}
+
+// createVariablesList creates an empty variables list (loaded on demand)
+func createVariablesList() list.Model {
+	l := list.New([]list.Item{}, list.NewDefaultDelegate(), 0, 0)
+	l.Title = "📝 Variables"
+	l.SetShowStatusBar(false)
+	l.SetShowHelp(false)
+	return l
+}
+
+// createThemeList creates the theme list with all available themes
+func createThemeList() list.Model {
+	themeItems := []list.Item{
+		ThemeItem{Variant: VariantNasu, DisplayName: "Nasu", Desc: "Purple - eggplant sushi"},
+		ThemeItem{Variant: VariantWasabi, DisplayName: "Wasabi", Desc: "Green - wasabi"},
+		ThemeItem{Variant: VariantToro, DisplayName: "Toro", Desc: "Pink - fatty tuna"},
+		ThemeItem{Variant: VariantTamago, DisplayName: "Tamago", Desc: "Yellow - egg sushi"},
+		ThemeItem{Variant: VariantTonkotsu, DisplayName: "Tonkotsu", Desc: "Red - pork bone broth"},
+		ThemeItem{Variant: VariantSaba, DisplayName: "Saba", Desc: "Cyan - mackerel"},
+		ThemeItem{Variant: VariantIka, DisplayName: "Ika", Desc: "White - squid"},
+	}
+
+	l := list.New(themeItems, list.NewDefaultDelegate(), 0, 0)
+	l.Title = "🎨 Themes"
+	l.SetShowStatusBar(false)
+	l.SetShowHelp(false)
+	return l
 }
 
 // Init initializes the TUI

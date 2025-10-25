@@ -52,6 +52,7 @@ func getDefaultValue(name string) string {
 		"RENDER_THEME":    "wasteland_blaze",
 		"PRODUCT_PATH":    "",
 		"ZOOM_MULTIPLIER": "1.5",
+		"OFFSET_MODIFIER": "0.0",
 	}
 
 	if val, ok := defaults[name]; ok {

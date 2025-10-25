@@ -104,3 +104,50 @@ func (m Model) completeBentoHomeForm() (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
+// configureVerbose prompts for verbose logging toggle
+func (m Model) configureVerbose() (tea.Model, tea.Cmd) {
+	currentVerbose := LoadVerboseLogging()
+	verboseChoice := "false"
+	if currentVerbose {
+		verboseChoice = "true"
+	}
+
+	m.varHolders = map[string]*string{"VERBOSE": &verboseChoice}
+
+	m.form = huh.NewForm(
+		huh.NewGroup(
+			huh.NewSelect[string]().
+				Title("Verbose Logging").
+				Description("Enable detailed Blender output for debugging render issues").
+				Options(
+					huh.NewOption("Disabled - Show only progress and errors", "false"),
+					huh.NewOption("Enabled - Show all Blender output", "true"),
+				).
+				Value(&verboseChoice),
+		),
+	).WithTheme(huh.ThemeCharm()).
+		WithWidth(m.width).
+		WithHeight(m.height)
+
+	m.activeSettingsForm = verboseForm
+	m.currentView = formView
+	return m, m.form.Init()
+}
+
+// completeVerboseForm handles verbose logging form completion
+func (m Model) completeVerboseForm() (tea.Model, tea.Cmd) {
+	verboseChoice := getFormValue(m.varHolders, "VERBOSE")
+	enabled := verboseChoice == "true"
+
+	if err := SaveVerboseLogging(enabled); err != nil {
+		// Return to settings on error
+		m.activeSettingsForm = noSettingsForm
+		m.currentView = settingsView
+		return m, nil
+	}
+
+	// Successfully changed verbose logging - return to settings
+	m.activeSettingsForm = noSettingsForm
+	m.currentView = settingsView
+	return m, nil
+}

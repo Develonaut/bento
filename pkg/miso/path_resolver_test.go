@@ -6,6 +6,8 @@ import (
 	"runtime"
 	"strings"
 	"testing"
+
+	"github.com/Develonaut/bento/pkg/kombu"
 )
 
 func TestResolvePath_BentoHome(t *testing.T) {
@@ -87,9 +89,9 @@ func TestResolvePath_EmptyString(t *testing.T) {
 }
 
 func TestDetectGoogleDrive(t *testing.T) {
-	// This test verifies that detectGoogleDrive doesn't crash
+	// This test verifies that DetectGoogleDrive doesn't crash
 	// We can't reliably test the actual detection without a Google Drive setup
-	path := detectGoogleDrive()
+	path := kombu.DetectGoogleDrive()
 
 	// On Mac, if Google Drive is installed, path should contain "My Drive"
 	if runtime.GOOS == "darwin" && path != "" {
@@ -103,16 +105,16 @@ func TestDetectGoogleDrive(t *testing.T) {
 }
 
 func TestDetectDropbox(t *testing.T) {
-	// This test verifies that detectDropbox doesn't crash
-	path := detectDropbox()
+	// This test verifies that DetectDropbox doesn't crash
+	path := kombu.DetectDropbox()
 
 	// Just verify it returns a string (empty is OK if Dropbox isn't installed)
 	t.Logf("Detected Dropbox path: %s", path)
 }
 
 func TestDetectOneDrive(t *testing.T) {
-	// This test verifies that detectOneDrive doesn't crash
-	path := detectOneDrive()
+	// This test verifies that DetectOneDrive doesn't crash
+	path := kombu.DetectOneDrive()
 
 	// Just verify it returns a string (empty is OK if OneDrive isn't installed)
 	t.Logf("Detected OneDrive path: %s", path)
@@ -167,10 +169,13 @@ func TestResolvePathsInMap_NilInput(t *testing.T) {
 
 func TestExpandSpecialMarkers_GoogleDrive(t *testing.T) {
 	testPath := "{{GDRIVE}}/Projects/MyProject"
-	expanded := expandSpecialMarkers(testPath)
+	expanded, err := ResolvePath(testPath)
+	if err != nil {
+		t.Fatalf("ResolvePath failed: %v", err)
+	}
 
 	// If Google Drive is detected, path should be expanded
-	gdrivePath := detectGoogleDrive()
+	gdrivePath := kombu.DetectGoogleDrive()
 	if gdrivePath != "" {
 		expected := filepath.Join(gdrivePath, "Projects", "MyProject")
 		if expanded != expected {

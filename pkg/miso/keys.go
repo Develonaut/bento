@@ -7,12 +7,12 @@ import (
 
 // listKeyMap defines key bindings for the bento list view
 type listKeyMap struct {
-	Enter      key.Binding
-	Settings   key.Binding
-	Reorder    key.Binding
-	Quit       key.Binding
-	MoveUp     key.Binding
-	MoveDown   key.Binding
+	Enter       key.Binding
+	Settings    key.Binding
+	Reorder     key.Binding
+	Quit        key.Binding
+	MoveUp      key.Binding
+	MoveDown    key.Binding
 	SaveReorder key.Binding
 }
 

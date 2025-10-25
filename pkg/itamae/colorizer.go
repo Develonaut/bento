@@ -13,11 +13,8 @@ var (
 	colorBreadcrumb = lipgloss.NewStyle().Foreground(lipgloss.Color("205")) // Hot Pink
 
 	// NETA type colors
-	colorNETALabel = lipgloss.NewStyle().Foreground(lipgloss.Color("51")) // Cyan
+	colorNETALabel = lipgloss.NewStyle().Foreground(lipgloss.Color("51"))  // Cyan
 	colorNETAType  = lipgloss.NewStyle().Foreground(lipgloss.Color("141")) // Purple
-
-	// Node name color
-	colorNodeName = lipgloss.NewStyle().Foreground(lipgloss.Color("118")) // Green
 
 	// Status word colors
 	colorStatusRunning   = lipgloss.NewStyle().Foreground(lipgloss.Color("220")) // Gold (for running)

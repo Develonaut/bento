@@ -77,6 +77,8 @@ func (m Model) updateSettings(msg tea.Msg) (tea.Model, tea.Cmd) {
 					return m.configureBentoHome()
 				case "theme":
 					return m.configureTheme()
+				case "verbose":
+					return m.configureVerbose()
 				}
 			}
 		case "esc":
@@ -148,8 +150,22 @@ func (m Model) updateForm(msg tea.Msg) (tea.Model, tea.Cmd) {
 	// Check for ESC to cancel before updating form
 	if keyMsg, ok := msg.(tea.KeyMsg); ok {
 		if keyMsg.String() == "esc" {
-			m.activeSettingsForm = noSettingsForm
-			m.currentView = settingsView
+			// If we're in a settings form, go back to settings
+			if m.activeSettingsForm != noSettingsForm {
+				m.activeSettingsForm = noSettingsForm
+				m.currentView = settingsView
+				return m, nil
+			}
+
+			// If we're in stage 2 of a multi-step form, go back to stage 1
+			if m.formStage == 1 {
+				m.formStage = 0
+				return m.showForm()
+			}
+
+			// Otherwise, go back to bento list
+			m.formStage = 0
+			m.currentView = listView
 			return m, nil
 		}
 	}
@@ -168,8 +184,19 @@ func (m Model) updateForm(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m.completeBentoHomeForm()
 		case variableForm:
 			return m.completeVariableForm()
+		case verboseForm:
+			return m.completeVerboseForm()
 		default:
-			// Bento variable form - start execution
+			// Bento variable form
+			// Check if this is a multi-step form and we're on stage 1
+			if len(m.pathVariables) > 0 && len(m.configVariables) > 0 && m.formStage == 0 {
+				// Move to stage 2 (config form with loaded render.json values)
+				m.formStage = 1
+				return m.showConfigForm(m.configVariables)
+			}
+
+			// Form complete - reset stage and start execution
+			m.formStage = 0
 			return m.startExecution()
 		}
 	}

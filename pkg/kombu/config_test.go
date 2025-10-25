@@ -1,7 +1,4 @@
-// Package miso provides terminal output "seasoning" - themed styling and progress display.
-//
-// Tests for theme configuration persistence.
-package miso
+package kombu
 
 import (
 	"os"
@@ -59,18 +56,19 @@ func TestSaveAndLoadTheme(t *testing.T) {
 		configDir = originalConfigDir
 	})
 
-	// Test each variant
-	for _, variant := range AllVariants() {
-		t.Run(string(variant), func(t *testing.T) {
+	// Test themes
+	testThemes := []string{"nasu", "wasabi", "toro", "tamago", "tonkotsu", "saba", "ika"}
+	for _, theme := range testThemes {
+		t.Run(theme, func(t *testing.T) {
 			// Save theme
-			if err := SaveTheme(variant); err != nil {
-				t.Fatalf("SaveTheme(%s) failed: %v", variant, err)
+			if err := SaveTheme(theme); err != nil {
+				t.Fatalf("SaveTheme(%s) failed: %v", theme, err)
 			}
 
 			// Load theme
 			loaded := LoadSavedTheme()
-			if loaded != variant {
-				t.Errorf("LoadSavedTheme() = %s, want %s", loaded, variant)
+			if loaded != theme {
+				t.Errorf("LoadSavedTheme() = %s, want %s", loaded, theme)
 			}
 		})
 	}
@@ -88,14 +86,15 @@ func TestLoadSavedTheme_NoFile(t *testing.T) {
 		configDir = originalConfigDir
 	})
 
-	// Should return Tonkotsu default when no file exists
-	variant := LoadSavedTheme()
-	if variant != VariantTonkotsu {
-		t.Errorf("LoadSavedTheme() with no file = %s, want %s", variant, VariantTonkotsu)
+	// Should return tonkotsu default when no file exists
+	theme := LoadSavedTheme()
+	if theme != "tonkotsu" {
+		t.Errorf("LoadSavedTheme() with no file = %s, want tonkotsu", theme)
 	}
 }
 
-// TestLoadSavedTheme_InvalidContent verifies default for invalid content.
+// TestLoadSavedTheme_InvalidContent verifies that invalid content is returned as-is.
+// Note: Validation happens in the miso layer, kombu just reads/writes strings.
 func TestLoadSavedTheme_InvalidContent(t *testing.T) {
 	tmpDir := t.TempDir()
 	originalConfigDir := configDir
@@ -109,14 +108,15 @@ func TestLoadSavedTheme_InvalidContent(t *testing.T) {
 
 	// Write invalid content
 	path := filepath.Join(tmpDir, "theme")
-	if err := os.WriteFile(path, []byte("InvalidVariant"), 0644); err != nil {
+	testContent := "InvalidVariant"
+	if err := os.WriteFile(path, []byte(testContent), 0644); err != nil {
 		t.Fatal(err)
 	}
 
-	// Should return Tonkotsu default
-	variant := LoadSavedTheme()
-	if variant != VariantTonkotsu {
-		t.Errorf("LoadSavedTheme() with invalid content = %s, want %s", variant, VariantTonkotsu)
+	// Kombu returns raw string - validation happens in miso layer
+	theme := LoadSavedTheme()
+	if theme != testContent {
+		t.Errorf("LoadSavedTheme() = %s, want %s", theme, testContent)
 	}
 }
 
@@ -139,12 +139,59 @@ func TestSaveTheme_CreatesDirectory(t *testing.T) {
 	}
 
 	// SaveTheme should create it
-	if err := SaveTheme(VariantNasu); err != nil {
+	if err := SaveTheme("nasu"); err != nil {
 		t.Fatalf("SaveTheme() failed: %v", err)
 	}
 
 	// Directory should now exist
 	if _, err := os.Stat(tmpSubDir); err != nil {
 		t.Fatalf("Directory was not created: %v", err)
+	}
+}
+
+// TestVerboseLogging verifies verbose logging persistence.
+func TestVerboseLogging(t *testing.T) {
+	tmpDir := t.TempDir()
+	originalConfigDir := configDir
+
+	configDir = func() (string, error) {
+		return tmpDir, nil
+	}
+	t.Cleanup(func() {
+		configDir = originalConfigDir
+	})
+
+	// Test saving and loading true
+	if err := SaveVerboseLogging(true); err != nil {
+		t.Fatalf("SaveVerboseLogging(true) failed: %v", err)
+	}
+	if loaded := LoadVerboseLogging(); !loaded {
+		t.Errorf("LoadVerboseLogging() = false, want true")
+	}
+
+	// Test saving and loading false
+	if err := SaveVerboseLogging(false); err != nil {
+		t.Fatalf("SaveVerboseLogging(false) failed: %v", err)
+	}
+	if loaded := LoadVerboseLogging(); loaded {
+		t.Errorf("LoadVerboseLogging() = true, want false")
+	}
+}
+
+// TestVerboseLogging_NoFile verifies default when no file exists.
+func TestVerboseLogging_NoFile(t *testing.T) {
+	tmpDir := t.TempDir()
+	originalConfigDir := configDir
+
+	configDir = func() (string, error) {
+		return tmpDir, nil
+	}
+	t.Cleanup(func() {
+		configDir = originalConfigDir
+	})
+
+	// Should return false default when no file exists
+	if loaded := LoadVerboseLogging(); loaded {
+		t.Errorf("LoadVerboseLogging() with no file = true, want false")
 	}
 }

@@ -16,9 +16,10 @@ type BentoOrder struct {
 
 // stripNumberPrefix removes leading numbers and delimiters from bento names.
 // Examples:
-//   "1. My Bento" -> "My Bento"
-//   "01 - My Bento" -> "My Bento"
-//   "2_My_Bento" -> "My_Bento"
+//
+//	"1. My Bento" -> "My Bento"
+//	"01 - My Bento" -> "My Bento"
+//	"2_My_Bento" -> "My_Bento"
 func stripNumberPrefix(name string) string {
 	// Match: optional digits, optional separator (. - _ space), rest of string
 	re := regexp.MustCompile(`^\d+[\.\-_\s]*(.+)$`)

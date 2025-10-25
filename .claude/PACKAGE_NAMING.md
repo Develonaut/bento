@@ -73,19 +73,36 @@ The Bubble Tea TUI (Terminal User Interface) - the interactive "shop" where user
 
 ---
 
+### 🌿 kombu (`pkg/kombu/`)
+**昆布** - "Kelp" - Foundational ingredient for dashi stock
+
+A foundation package providing cross-platform path resolution utilities. Like kombu forms the base of many Japanese dishes, this package provides the foundational path resolution that other packages depend on.
+
+- Path marker resolution ({{BENTO_HOME}}, {{GDRIVE}}, etc.)
+- Cloud storage auto-detection
+- Environment variable expansion
+- Configuration file management
+- Cross-platform path handling
+
+**Dependencies**: None (foundation package)
+
+---
+
 ## Dependency Graph
 
 ```
 Foundation (no dependencies):
-└── neta
+├── neta
+└── kombu
 
 Depends on foundation:
-├── itamae → neta
+├── itamae → neta, kombu
 ├── pantry → neta
-└── hangiri → neta
+├── hangiri → neta
+└── miso → kombu
 
 Application layer:
-└── omise → neta, itamae, pantry, hangiri
+└── omise → neta, itamae, pantry, hangiri, miso, kombu
 ```
 
 ## Package Boundaries
@@ -110,6 +127,7 @@ Each package is kept small and focused:
 The naming reflects the organized, compartmentalized nature of both bento boxes and our architecture:
 
 - **Neta** = The ingredients/nodes
+- **Kombu** = Foundational kelp for dashi stock
 - **Itamae** = The chef who orchestrates
 - **Pantry** = Where ingredients are stored and retrieved
 - **hangiri** = Stacked containers for organized storage
